@@ -1,0 +1,15 @@
+{
+  "id": "laravel-events-listeners",
+  "track": "laravel",
+  "phase": 2,
+  "order": 6,
+  "title": "Events, listeners, observers, broadcasting",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Events, listeners, observers, broadcasting — decoupling side effects.",
+    "picture": "A bell rings when an order is placed; the kitchen, the SMS system, and the accounting sheet each react without the cashier knowing they exist.",
+    "why": "Asked as: 'how would you add an email on signup without touching the controller?'",
+    "bn": "Order হলে ঘণ্টা বাজে — kitchen, SMS, হিসাব সবাই সাড়া দেয়, cashier জানেই না তারা আছে।"
+  }
+}

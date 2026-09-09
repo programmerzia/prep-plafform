@@ -1,0 +1,15 @@
+{
+  "id": "laravel-auth-policies",
+  "track": "security-auth",
+  "phase": 2,
+  "order": 1,
+  "title": "Auth, Sanctum/Passport, policies & gates",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Authentication and authorization: Sanctum/Passport, guards, policies, gates.",
+    "picture": "Authentication is showing your ID at the door; authorization is which rooms your keycard opens. Policies are the rules per room.",
+    "why": "Token strategy for SPA vs mobile is asked in nearly every Laravel API interview.",
+    "bn": "Authentication = দরজায় ID দেখানো, authorization = কোন ঘর কার্ডে খোলে, policy = ঘরের নিয়ম।"
+  }
+}

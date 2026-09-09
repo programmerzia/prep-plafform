@@ -1,0 +1,15 @@
+{
+  "id": "laravel-queues-jobs",
+  "track": "laravel",
+  "phase": 2,
+  "order": 5,
+  "title": "Queues, jobs, retries, backoff, failed jobs, Horizon",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Queues: jobs, retries, backoff, failed jobs, Horizon, and what can go wrong.",
+    "picture": "A restaurant ticket rail: the waiter (web request) posts the ticket and moves on; cooks (workers) pick tickets up. Some dishes fail and need re-cooking — but not forever.",
+    "why": "Queues are where most 'tell me about a production incident' stories live.",
+    "bn": "Restaurant-এর টিকিট রেল: waiter টিকিট দিয়ে চলে যায়, cook তোলে; ব্যর্থ হলে আবার, কিন্তু চিরকাল না।"
+  }
+}

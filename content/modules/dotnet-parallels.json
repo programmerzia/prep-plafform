@@ -1,0 +1,15 @@
+{
+  "id": "dotnet-parallels",
+  "track": "dotnet",
+  "phase": 3,
+  "order": 1,
+  "title": ".NET parallels: DI, EF Core, middleware, LINQ N+1",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Your .NET year mapped to Laravel: DI, EF Core, middleware, LINQ's own N+1.",
+    "picture": "The same restaurant with different signage — once you see the mapping, both stacks stay alive in interviews.",
+    "why": "Lets you answer 'how is Laravel different from ASP.NET Core?' with substance.",
+    "bn": "একই restaurant, আলাদা সাইনবোর্ড — mapping দেখলে দুই stack-ই interview-এ জীবন্ত থাকে।"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "id": "react-effects-race-conditions",
+  "track": "react",
+  "phase": 4,
+  "order": 1,
+  "title": "React effects, deps & race conditions",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "useEffect done right: dependencies, cleanup, and race conditions with async data.",
+    "picture": "Ordering two coffees, the second arriving first, and you drinking the wrong one — that is an effect race. Cleanup is cancelling the first order.",
+    "why": "The single most common React senior screen question.",
+    "bn": "দুটো কফি order, দ্বিতীয়টা আগে এল, ভুলটা খেলে — এটাই effect race; cleanup = প্রথম order বাতিল।"
+  }
+}

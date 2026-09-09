@@ -1,0 +1,15 @@
+{
+  "id": "design-multi-tenant-saas-corebari",
+  "track": "architecture",
+  "phase": 6,
+  "order": 5,
+  "title": "Multi-tenant SaaS (CoreBari dissected)",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Multi-tenant SaaS design — your CoreBari, dissected.",
+    "picture": "Explaining your own product's architecture like a case study, including what you'd change.",
+    "why": "Your strongest interview story if you can defend the trade-offs.",
+    "bn": "নিজের product-এর architecture case study-র মতো বলা, কী বদলাতে চাও সেটাও।"
+  }
+}

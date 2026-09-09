@@ -1,0 +1,15 @@
+{
+  "id": "design-scaling",
+  "track": "architecture",
+  "phase": 6,
+  "order": 6,
+  "title": "Scaling: load balancers, replicas, sharding, CDN",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Scaling: load balancers, replicas, sharding, CDNs, when NOT to.",
+    "picture": "Adding more cashiers, then more shops, then a warehouse per region — and knowing that one shop was enough.",
+    "why": "'How would this handle 100× traffic?'",
+    "bn": "আরও cashier, তারপর আরও দোকান, তারপর অঞ্চলে গুদাম — আর জানা যে একটা দোকানই যথেষ্ট ছিল।"
+  }
+}

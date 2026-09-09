@@ -1,0 +1,15 @@
+{
+  "id": "problem-stacks-queues-lru",
+  "track": "problems",
+  "phase": 7,
+  "order": 5,
+  "title": "Stacks & queues: brackets, LRU cache",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Stacks and queues: matching brackets, LRU cache.",
+    "picture": "A stack of plates; a queue at a counter; an LRU cache is a small shelf where the least-used item falls off.",
+    "why": "LRU cache is a classic senior live-coding task.",
+    "bn": "প্লেটের স্তূপ (stack), counter-এর লাইন (queue), LRU = ছোট তাক যেখান থেকে কম ব্যবহৃত জিনিস পড়ে যায়।"
+  }
+}

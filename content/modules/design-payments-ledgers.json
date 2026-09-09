@@ -1,0 +1,15 @@
+{
+  "id": "design-payments-ledgers",
+  "track": "payments",
+  "phase": 6,
+  "order": 2,
+  "title": "Payments & ledgers: consistency, reconciliation",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Payments and ledgers: consistency, reconciliation, never losing money.",
+    "picture": "An accountant's double-entry book: every movement recorded twice and balanced.",
+    "why": "Fintech-adjacent roles love this.",
+    "bn": "হিসাবরক্ষকের double-entry খাতা: প্রতিটা টাকার নড়াচড়া দুবার লেখা, ব্যালান্স মেলানো।"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "id": "design-notification-job-scheduler",
+  "track": "architecture",
+  "phase": 6,
+  "order": 4,
+  "title": "Notification system & job scheduler",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Notification system and job scheduler.",
+    "picture": "The post office: queues, retries, priorities, and 'do not send twice'.",
+    "why": "Tests queues, idempotency, and fan-out together.",
+    "bn": "Post office: queue, retry, priority, আর 'দুবার পাঠিও না'।"
+  }
+}

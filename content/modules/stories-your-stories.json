@@ -1,0 +1,15 @@
+{
+  "id": "stories-your-stories",
+  "track": "stories",
+  "phase": 8,
+  "order": 1,
+  "title": "Your stories: Norwegian contract, CoreBari, PHP→.NET",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Your own stories, polished: the Norwegian contract, CoreBari, PHP→.NET, back to Laravel.",
+    "picture": "Five stories you can tell in two minutes each, from memory.",
+    "why": "You'll reuse these in every interview.",
+    "bn": "পাঁচটা গল্প, প্রতিটা দুই মিনিটে, মুখস্থ না, মন থেকে।"
+  }
+}

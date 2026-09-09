@@ -1,0 +1,15 @@
+{
+  "id": "react-custom-hooks-react-query",
+  "track": "react",
+  "phase": 4,
+  "order": 3,
+  "title": "Custom hooks, data fetching, React Query",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Custom hooks and data fetching, including React Query-style caching.",
+    "picture": "A custom hook is a reusable recipe card; React Query is a pantry that remembers what you fetched and when it goes stale.",
+    "why": "Shows you can structure a real React app, not just components.",
+    "bn": "Custom hook = reusable রেসিপি কার্ড; React Query = pantry যা মনে রাখে কী আনা হয়েছে, কখন পুরনো হবে।"
+  }
+}

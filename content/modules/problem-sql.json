@@ -1,0 +1,15 @@
+{
+  "id": "problem-sql",
+  "track": "problems",
+  "phase": 7,
+  "order": 7,
+  "title": "SQL problems: top-N per group, gaps, running totals",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "SQL problems: top-N per group, finding gaps, running totals.",
+    "picture": "The same puzzles reporting teams actually hit.",
+    "why": "Written SQL screens for backend roles.",
+    "bn": "Reporting team যেসব ধাঁধায় সত্যি পড়ে: top-N per group, gap, running total।"
+  }
+}

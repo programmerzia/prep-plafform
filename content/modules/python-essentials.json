@@ -1,0 +1,15 @@
+{
+  "id": "python-essentials",
+  "track": "python-llm",
+  "phase": 5,
+  "order": 1,
+  "title": "Python essentials: types, async, packaging",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Python essentials for services: typing, async, packaging, virtualenvs.",
+    "picture": "Enough to own a small service confidently, not to compete with Python specialists.",
+    "why": "Your CV lists a Python service; expect a question.",
+    "bn": "ছোট একটা service নিজে চালানোর মতো Python — Python specialist-দের সাথে লড়ার জন্য না।"
+  }
+}

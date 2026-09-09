@@ -1,0 +1,15 @@
+{
+  "id": "ts-essentials",
+  "track": "js-ts",
+  "phase": 1,
+  "order": 4,
+  "title": "TypeScript essentials: generics, unions, narrowing",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Enough TypeScript to read and write typed React/Next code confidently.",
+    "picture": "Types are the label on a jar. Generics are a jar whose label says 'contents: whatever you put in'. Narrowing is opening the lid to check before you use it.",
+    "why": "Next.js roles assume TypeScript; being unsure looks junior.",
+    "bn": "Type = জারের লেবেল, generic = 'যা রাখবে তাই', narrowing = খোলার আগে ঢাকনা দেখে নেওয়া।"
+  }
+}

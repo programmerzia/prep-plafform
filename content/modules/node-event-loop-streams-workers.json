@@ -1,0 +1,15 @@
+{
+  "id": "node-event-loop-streams-workers",
+  "track": "node",
+  "phase": 5,
+  "order": 1,
+  "title": "Node: event loop, streams, worker threads",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Node internals: event loop phases, streams, worker threads.",
+    "picture": "The same single-chef kitchen as browser JS, but now handling files and sockets — streams are a conveyor belt instead of a full plate.",
+    "why": "Full-stack roles often add one Node internals question.",
+    "bn": "Browser-এর মতোই এক chef-এর kitchen, এখন file আর socket-ও সামলায়; stream = পুরো প্লেট না, conveyor belt।"
+  }
+}

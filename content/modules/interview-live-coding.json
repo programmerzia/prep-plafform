@@ -1,0 +1,15 @@
+{
+  "id": "interview-live-coding",
+  "track": "interview",
+  "phase": 8,
+  "order": 3,
+  "title": "Live coding & pair-programming etiquette",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Live coding and pair-programming etiquette.",
+    "picture": "Thinking out loud, asking before assuming, testing as you go.",
+    "why": "How you code matters more than the answer.",
+    "bn": "জোরে ভেবে বলা, ধরে নেওয়ার আগে জিজ্ঞেস করা, লিখতে লিখতে test করা।"
+  }
+}

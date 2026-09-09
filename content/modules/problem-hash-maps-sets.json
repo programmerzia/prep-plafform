@@ -1,0 +1,15 @@
+{
+  "id": "problem-hash-maps-sets",
+  "track": "problems",
+  "phase": 7,
+  "order": 4,
+  "title": "Hash maps & sets: frequency, grouping, dedupe",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Hash maps and sets: counting, grouping, de-duplicating.",
+    "picture": "Tally marks on a board — the trick behind most O(n) solutions.",
+    "why": "Most common interview pattern.",
+    "bn": "বোর্ডে দাগ কেটে গোনা — বেশিরভাগ O(n) সমাধানের কৌশল।"
+  }
+}

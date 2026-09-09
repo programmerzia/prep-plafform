@@ -1,0 +1,15 @@
+{
+  "id": "http-rest-caching-cors",
+  "track": "http-api",
+  "phase": 1,
+  "order": 1,
+  "title": "HTTP, REST, status codes, caching headers, CORS",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "How HTTP really works: methods, status codes, caching headers, CORS, REST conventions.",
+    "picture": "Postal system: the method is the type of letter, status codes are the reply stamps, cache headers say 'valid until', CORS is the receptionist asking which buildings may talk to this one.",
+    "why": "Explaining a 401 vs 403, or why a CORS error happens, is a routine screen.",
+    "bn": "Method = চিঠির ধরন, status code = উত্তরের সিল, cache header = কতদিন valid, CORS = কে কথা বলতে পারবে।"
+  }
+}

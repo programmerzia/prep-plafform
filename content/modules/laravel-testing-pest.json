@@ -1,0 +1,15 @@
+{
+  "id": "laravel-testing-pest",
+  "track": "laravel",
+  "phase": 2,
+  "order": 8,
+  "title": "Testing: feature vs unit, factories, mocking, Pest",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Testing that pays for itself: feature vs unit, factories, mocking, Pest.",
+    "picture": "A feature test is a customer walking through the restaurant; a unit test is checking one knife is sharp. Factories are the prop department; mocks are stand-in actors for the payment API.",
+    "why": "Being able to say what you would NOT test is the senior part.",
+    "bn": "Feature test = customer পুরো restaurant হেঁটে দেখে, unit test = একটা ছুরি ধার কিনা; mock = বদলি অভিনেতা।"
+  }
+}

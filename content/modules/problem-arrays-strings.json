@@ -1,0 +1,15 @@
+{
+  "id": "problem-arrays-strings",
+  "track": "problems",
+  "phase": 7,
+  "order": 3,
+  "title": "Arrays & strings: sliding window, two pointers",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Arrays and strings: sliding window and two pointers.",
+    "picture": "Two people walking toward each other along a line; a window sliding across a sentence.",
+    "why": "Warm-up live-coding questions.",
+    "bn": "দুজন লাইনের দুই মাথা থেকে হাঁটছে (two pointers); বাক্যের ওপর জানালা সরছে (sliding window)।"
+  }
+}

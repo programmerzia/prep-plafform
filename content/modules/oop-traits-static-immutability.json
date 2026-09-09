@@ -1,0 +1,15 @@
+{
+  "id": "oop-traits-static-immutability",
+  "track": "oop",
+  "phase": 1,
+  "order": 2,
+  "title": "OOP deep: traits, static, late binding, immutability",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "How PHP objects really behave: traits, static, late static binding, immutability.",
+    "picture": "A trait is a plug-in skill you copy into several classes; static is the noticeboard shared by all instances; an immutable object is a printed receipt — you issue a new one instead of editing it.",
+    "why": "Senior screens probe why static state breaks tests and when traits become a smell.",
+    "bn": "Trait = copy করা দক্ষতা, static = সবার শেয়ার করা বোর্ড, immutable = ছাপানো রিসিট, edit না, নতুন দাও।"
+  }
+}

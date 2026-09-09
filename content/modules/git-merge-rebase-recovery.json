@@ -1,0 +1,15 @@
+{
+  "id": "git-merge-rebase-recovery",
+  "track": "cloud-devops",
+  "phase": 1,
+  "order": 1,
+  "title": "Git: merge vs rebase, bisect, recovery, PR hygiene",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Git beyond commit: merge vs rebase, bisect, undoing mistakes, clean PRs.",
+    "picture": "Rebase is retyping your notes onto a fresh page so history reads straight; merge staples both pages together. Bisect is finding the bad page by halving the notebook.",
+    "why": "Teams test whether you can recover from a bad force-push calmly.",
+    "bn": "Rebase = নোট নতুন পাতায় সোজা করে লেখা, merge = দুই পাতা স্ট্যাপল, bisect = অর্ধেক করে খারাপ পাতা খোঁজা।"
+  }
+}

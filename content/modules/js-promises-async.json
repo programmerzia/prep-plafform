@@ -1,0 +1,15 @@
+{
+  "id": "js-promises-async",
+  "track": "js-ts",
+  "phase": 1,
+  "order": 3,
+  "title": "Promises, async/await, error handling, cancellation",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Promises and async/await, error handling, and cancelling requests.",
+    "picture": "A restaurant buzzer: you get the buzzer now (promise), food later (resolution). await is waiting at the counter without blocking other customers. AbortController is walking away and telling the kitchen to stop.",
+    "why": "Unhandled rejections and sequential-vs-parallel awaits are common live-coding traps.",
+    "bn": "Promise = বাজার, await = কাউন্টারে দাঁড়ানো কিন্তু অন্যদের আটকানো না, AbortController = 'থামো'।"
+  }
+}

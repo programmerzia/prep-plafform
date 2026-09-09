@@ -1,0 +1,15 @@
+{
+  "id": "laravel-cache-sessions-octane",
+  "track": "laravel",
+  "phase": 2,
+  "order": 7,
+  "title": "Cache, sessions, config, env, Octane basics",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Cache, sessions, config, env, and Octane basics in Laravel specifically.",
+    "picture": "A sticky note on the fridge (cache) vs the recipe book (database). Sessions are the coat-check ticket. Octane keeps the kitchen open between customers instead of relighting the stove.",
+    "why": "Config caching mistakes in production are a classic screen story.",
+    "bn": "Fridge-এর sticky note (cache) বনাম রান্নার বই (DB); session = কোট রাখার টোকেন; Octane চুলা জ্বালিয়ে রাখে।"
+  }
+}

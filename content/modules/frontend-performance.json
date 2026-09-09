@@ -1,0 +1,15 @@
+{
+  "id": "frontend-performance",
+  "track": "react",
+  "phase": 4,
+  "order": 4,
+  "title": "Frontend perf: bundles, lazy load, web vitals",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Frontend performance: bundles, lazy loading, web vitals.",
+    "picture": "Don't ship the whole warehouse to a customer who bought one shirt.",
+    "why": "'The page is slow — what do you check?' for frontend.",
+    "bn": "একটা শার্ট কেনা customer-কে পুরো গুদাম পাঠিও না — bundle, lazy load, web vitals।"
+  }
+}

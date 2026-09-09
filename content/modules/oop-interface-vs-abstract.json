@@ -1,0 +1,52 @@
+{
+  "id": "oop-interface-vs-abstract",
+  "track": "oop",
+  "phase": 1,
+  "order": 1,
+  "title": "Interface vs abstract class",
+  "status": "unlocked",
+  "star": true,
+  "lesson": {
+    "picture": "An interface is a job contract: 'must be able to Drive'. An abstract class is a half-built car chassis: engine already mounted, you add the body. You can sign many contracts, but you build on one chassis.",
+    "concept": "Interface = contract only: method signatures (and constants). A class may implement many. Use it when different, unrelated classes must be interchangeable — PaymentGateway implemented by Stripe, bKash, Nagad — and to decouple via dependency injection.\n\nAbstract class = partial implementation: can hold properties, a constructor, concrete methods, plus abstract ones. A class extends only one. Use it when subclasses share real code and state — a BaseReport with formatting helpers, subclasses fill in fetchRows().\n\nSenior rule: depend on interfaces at boundaries; use abstract classes to remove duplication inside a hierarchy. Prefer composition over deep inheritance.",
+    "right": {
+      "lang": "php",
+      "code": "interface PaymentGateway {\n    public function charge(int $amountInPaisa, string $token): PaymentResult;\n}\n\nabstract class BaseReport {\n    public function __construct(protected Formatter $fmt) {}\n    abstract protected function rows(): array;          // subclass must supply\n    public function render(): string {                  // shared code\n        return $this->fmt->table($this->rows());\n    }\n}\n\nclass SalesReport extends BaseReport {\n    protected function rows(): array { return Order::query()->toBase()->get()->all(); }\n}\n\n// Laravel: bind interface → implementation, inject the interface\n$this->app->bind(PaymentGateway::class, BkashGateway::class);"
+    },
+    "bn": "Interface = শুধু চুক্তি, কোনো code নেই, অনেকগুলো implement করা যায় — অচেনা class-গুলোকে অদলবদল করার জন্য (Stripe/bKash)। Abstract class = আধা-তৈরি class, property, constructor, শেয়ার করা method থাকে, একটাই extend করা যায় — subclass-গুলোর common code সরাতে। Boundary-তে interface, hierarchy-র ভেতরে abstract।"
+  },
+  "practice": [
+    {
+      "task": "Design the types: a NotificationChannel that can be Email, SMS or Push. Some share a formatMessage() implementation. What is an interface and what is abstract here? Write the skeleton.",
+      "solution": "interface NotificationChannel { public function send(User $u, Message $m): void; }\n\nabstract class TemplatedChannel implements NotificationChannel {\n    protected function formatMessage(Message $m): string { /* shared */ }\n}\n\nclass EmailChannel extends TemplatedChannel { public function send(User $u, Message $m): void { /* uses formatMessage */ } }\nclass PushChannel implements NotificationChannel { /* no template needed */ }\n\nThe interface is the contract every channel must meet (so a Notifier can accept any); the abstract class removes duplication for those that share formatting. Push skips the abstract class — proof you shouldn't force everything into one hierarchy."
+    },
+    {
+      "task": "Your Laravel controller type-hints PaymentGateway (an interface). Write the binding and say what happens if you forget it.",
+      "solution": "// AppServiceProvider::register()\n$this->app->bind(PaymentGateway::class, BkashGateway::class);\n\nWithout it: BindingResolutionException — 'Target [PaymentGateway] is not instantiable' — because the container can't construct an interface."
+    }
+  ],
+  "interview": [],
+  "cards": [
+    {
+      "q": "Interface vs abstract class — three differences",
+      "a": "Interface: signatures only, no state, implement many. Abstract: properties/constructor/concrete methods, extend one, can mix abstract + concrete."
+    },
+    {
+      "q": "When do you choose an interface?",
+      "a": "When unrelated classes must be swappable behind one contract, and for DI/testing (bind interface to a fake)."
+    },
+    {
+      "q": "When do you choose an abstract class?",
+      "a": "When subclasses share real code and state — a template method pattern: base does the flow, subclasses fill one step."
+    },
+    {
+      "q": "What is 'composition over inheritance' in one line?",
+      "a": "Build behaviour by injecting collaborators rather than deep extends chains; changes stay local and classes stay testable."
+    },
+    {
+      "q": "How does Laravel resolve an interface type-hinted in a constructor?",
+      "a": "Through the service container: a bind()/singleton() in a service provider maps the interface to a concrete class; the container reflects the constructor and injects it."
+    }
+  ],
+  "glossary": []
+}

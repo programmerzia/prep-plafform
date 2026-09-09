@@ -1,0 +1,44 @@
+{
+  "id": "problem-two-sum",
+  "track": "problems",
+  "phase": 7,
+  "order": 2,
+  "title": "Problem: two sum (PHP) — hash map thinking",
+  "status": "unlocked",
+  "star": true,
+  "lesson": {
+    "picture": "You're looking for a dance partner whose height plus yours equals 340 cm. Instead of asking every pair (O(n²)), you write everyone's height on a board as they arrive and just check 'is 340 − mine on the board?' (O(n)).",
+    "concept": "Given an array and a target, return indices of two numbers that sum to target. Brute force is O(n²). The senior answer trades memory for time: one pass, keep a map value → index, and for each number check whether target − number is already in the map.\n\nThis pattern (lookup table for the complement) shows up everywhere: duplicate detection, pairing transactions, matching webhook events.",
+    "right": {
+      "lang": "php",
+      "code": "function twoSum(array $nums, int $target): ?array {\n    $seen = [];                         // value => index\n    foreach ($nums as $i => $n) {\n        $need = $target - $n;\n        if (array_key_exists($need, $seen)) {\n            return [$seen[$need], $i];\n        }\n        $seen[$n] = $i;\n    }\n    return null;\n}\n// twoSum([2, 7, 11, 15], 9) → [0, 1]   O(n) time, O(n) space"
+    },
+    "bn": "প্রতিটা সংখ্যার জন্য দেখো target − সংখ্যা আগে দেখা হয়েছে কিনা (hash map-এ value → index)। এক pass, O(n) সময়, O(n) memory। Brute force O(n²)। 'complement খোঁজা' pattern-টা অনেক জায়গায় লাগে।"
+  },
+  "practice": [
+    {
+      "task": "Variation: return ALL pairs of indices whose values sum to target (values may repeat). Keep it O(n).",
+      "solution": "function allPairs(array $nums, int $target): array {\n    $seen = []; $out = [];          // value => [indexes]\n    foreach ($nums as $i => $n) {\n        foreach ($seen[$target - $n] ?? [] as $j) $out[] = [$j, $i];\n        $seen[$n][] = $i;\n    }\n    return $out;\n}\n// O(n) average; output size can be large but each pair is found once."
+    },
+    {
+      "task": "Explain in two sentences to a junior why the hash-map version is faster than two nested loops, using the 'dance partner' picture.",
+      "solution": "Nested loops ask every pair 'do you two add up?' — that's n×n questions. The map writes each height on a board as people arrive, so each new person asks one question: 'is my partner already on the board?' — n questions total."
+    }
+  ],
+  "interview": [],
+  "cards": [
+    {
+      "q": "Two sum: brute force complexity vs optimal, and the trade-off",
+      "a": "O(n²) vs O(n) time; optimal uses O(n) extra memory for a value→index map."
+    },
+    {
+      "q": "Why check the map before inserting the current number?",
+      "a": "So a number isn't paired with itself when target = 2 × number."
+    },
+    {
+      "q": "Name another problem solved by the same 'lookup the complement' idea",
+      "a": "Detecting duplicate transactions / finding pairs with a given difference / matching webhook events to orders."
+    }
+  ],
+  "glossary": []
+}

@@ -1,0 +1,15 @@
+{
+  "id": "sql-transactions-locking",
+  "track": "sql",
+  "phase": 3,
+  "order": 5,
+  "title": "Transactions, isolation levels & locking",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Transactions, isolation levels, and locking — correctness when two things happen at once.",
+    "picture": "Two people booking the last seat at the same second. A transaction is 'all or nothing'; a lock is putting your hand on the seat while you pay.",
+    "why": "Double-spend and overselling scenarios appear in almost every senior backend loop.",
+    "bn": "শেষ সিট দুজন একই সেকেন্ডে বুক করছে: transaction = হয় সব না হয় কিছুই না, lock = দাম দেওয়ার সময় হাত রাখা।"
+  }
+}

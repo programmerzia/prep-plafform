@@ -1,0 +1,15 @@
+{
+  "id": "php-profiling-performance",
+  "track": "laravel",
+  "phase": 3,
+  "order": 9,
+  "title": "Profiling & performance: Telescope, Blackfire, slow logs",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Profiling PHP: Telescope, Blackfire, slow query logs, finding the real bottleneck.",
+    "picture": "A stopwatch on each kitchen station instead of guessing which cook is slow.",
+    "why": "'The endpoint is slow — walk me through what you do' is nearly universal.",
+    "bn": "অনুমান না করে প্রতিটা station-এ stopwatch — Telescope, Blackfire, slow log।"
+  }
+}

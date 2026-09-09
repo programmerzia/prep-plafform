@@ -1,0 +1,15 @@
+{
+  "id": "idempotency-keys-retries",
+  "track": "payments",
+  "phase": 3,
+  "order": 1,
+  "title": "Idempotency keys & retries",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Idempotency: making retries safe so a repeated request doesn't double-charge.",
+    "picture": "Pressing the lift button twice doesn't call two lifts. The idempotency key is the button remembering it was already pressed.",
+    "why": "Payments and webhooks questions always land here.",
+    "bn": "Lift-এর বোতাম দুবার চাপলে দুটো lift আসে না — idempotency key = বোতামের মনে থাকা যে চাপা হয়েছে।"
+  }
+}

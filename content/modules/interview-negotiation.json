@@ -1,0 +1,15 @@
+{
+  "id": "interview-negotiation",
+  "track": "interview",
+  "phase": 8,
+  "order": 4,
+  "title": "Remote-role negotiation & red flags",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Remote-role negotiation and red flags.",
+    "picture": "Knowing your number, asking about time zones and contracts, and spotting a bad client early.",
+    "why": "Protects the outcome of all the rest.",
+    "bn": "নিজের number জানা, time zone আর contract জিজ্ঞেস করা, খারাপ client আগেই চেনা।"
+  }
+}

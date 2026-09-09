@@ -1,0 +1,60 @@
+{
+  "id": "eloquent-n-plus-one",
+  "track": "orm",
+  "phase": 2,
+  "order": 1,
+  "title": "Eloquent & the N+1 problem",
+  "status": "unlocked",
+  "star": true,
+  "lesson": {
+    "picture": "You need 50 books. N+1 is asking the librarian for the list, then walking to the counter 50 separate times for one book each. Eager loading is handing over the list and getting one cart back. The walk (DB round trip) is the cost, not the books.",
+    "concept": "N+1: one query for the parent rows, then one more query per row for a relation accessed in a loop. 100 posts → 101 queries.\n\nFix: Post::with('author') runs SELECT * FROM users WHERE id IN (...) — one query — then matches in PHP memory. Stays 2 queries for any N.\n\nSenior tools: Model::preventLazyLoading(!app()->isProduction()) makes the mistake throw in dev; withCount() instead of loading a whole relation just to count; $collection->load() to eager-load after the fact; constrained eager loads to avoid pulling every child row.\n\nEager loading is not always right: 20 posts × 5,000 comments each is 100k rows into memory. Paginate the relation, load per-post on demand, or withCount + a separate paginated endpoint.",
+    "right": {
+      "lang": "php",
+      "code": "// bug: 1 + N queries\n$posts = Post::all();\nforeach ($posts as $post) echo $post->author->name;\n\n// fix: 2 queries, any N\n$posts = Post::with('author')->get();\n\n// nested + constrained\n$posts = Post::with(['author', 'comments' => fn($q) => $q->where('approved', true)->limit(5)])->get();\n\n// fail loudly in dev (AppServiceProvider::boot)\nModel::preventLazyLoading(!app()->isProduction());\n\n// count without loading\nPost::withCount('comments')->get();   // $post->comments_count\n\n// already have the collection\n$posts->load('author');"
+    },
+    "bn": "N+1 = একটা মূল query + প্রতিটা row-র জন্য আলাদা query। with() দিয়ে eager load করলে Laravel একবারে WHERE id IN (...) চালায়, ২টা query-তেই শেষ। Dev-এ preventLazyLoading চালু রাখো। শুধু গুনতে হলে withCount(), হাজার হাজার child row থাকলে eager load না করে paginate।"
+  },
+  "practice": [
+    {
+      "task": "Fix this and explain the query count before/after:\n$orders = Order::where('status','paid')->get();\nforeach ($orders as $o) { echo $o->customer->name; echo $o->items->count(); }",
+      "solution": "$orders = Order::where('status','paid')->with('customer')->withCount('items')->get();\nforeach ($orders as $o) { echo $o->customer->name; echo $o->items_count; }\n\nBefore: 1 + N (customers) + N (items) = 2N+1 queries. After: 3 queries total, any N. withCount avoids loading every item row just to count."
+    },
+    {
+      "task": "Write the one line that makes any lazy load throw an exception in local/dev but not production, and say where it goes.",
+      "solution": "Model::preventLazyLoading(!app()->isProduction());\n\nIn App\\Providers\\AppServiceProvider::boot()."
+    },
+    {
+      "task": "Posts page: 20 posts, each with thousands of comments. Write the eager load that shows only the 3 newest approved comments per post.",
+      "solution": "Post::with(['comments' => fn($q) => $q->where('approved', true)->latest()->limit(3)])->paginate(20);\n\nNote: limit inside an eager load is per-post only in Laravel 11+ (via a window function). Older versions need a package or a separate query; be ready to say that in an interview."
+    }
+  ],
+  "interview": [],
+  "cards": [
+    {
+      "q": "Define N+1 in one sentence",
+      "a": "One query for parents, then one extra query per parent for a relation touched inside a loop."
+    },
+    {
+      "q": "What SQL does with('author') actually run?",
+      "a": "SELECT * FROM users WHERE id IN (1,2,3,…) — one query — then Laravel matches rows to posts in PHP memory."
+    },
+    {
+      "q": "with() applied but the single query takes 4s. First two suspects?",
+      "a": "1) Missing index on the foreign key / filter column — check EXPLAIN. 2) The eager load pulls a huge relation (thousands of child rows) — check row counts; use withCount, constrain, or paginate."
+    },
+    {
+      "q": "How do you catch N+1 automatically in development?",
+      "a": "Model::preventLazyLoading(!app()->isProduction()) in AppServiceProvider::boot — any lazy load throws. Also Laravel Debugbar / Telescope query counts."
+    },
+    {
+      "q": "20 posts, each with 5,000 comments. Eager load comments?",
+      "a": "No — 100k rows into memory. withCount('comments') for the list, load comments per post via a paginated endpoint, or constrain the eager load with limit."
+    },
+    {
+      "q": "Difference between with() and load()",
+      "a": "with() is on the query builder before execution; load() eager-loads onto a collection you already have."
+    }
+  ],
+  "glossary": []
+}

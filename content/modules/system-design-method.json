@@ -1,0 +1,15 @@
+{
+  "id": "system-design-method",
+  "track": "architecture",
+  "phase": 6,
+  "order": 2,
+  "title": "System design method: requirements → estimate → sketch → trade-offs",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "The system design method: clarify → estimate → sketch → deep-dive → trade-offs.",
+    "picture": "Architect's site visit: ask what the building is for before drawing anything.",
+    "why": "The framework you use for every design question.",
+    "bn": "Architect-এর site visit: আঁকার আগে জিজ্ঞেস করো বাড়িটা কিসের জন্য — clarify → estimate → sketch → trade-off।"
+  }
+}

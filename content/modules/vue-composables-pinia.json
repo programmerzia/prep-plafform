@@ -1,0 +1,15 @@
+{
+  "id": "vue-composables-pinia",
+  "track": "vue-nuxt",
+  "phase": 4,
+  "order": 2,
+  "title": "Vue composables, Pinia, component patterns",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Composables, Pinia, and component patterns for larger Vue apps.",
+    "picture": "Composables are recipe cards again, Vue-flavoured; Pinia is the shared pantry.",
+    "why": "Eight years of Vue means you'll be asked how you organised a big app.",
+    "bn": "Composable = Vue-এর রেসিপি কার্ড, Pinia = শেয়ার করা pantry।"
+  }
+}

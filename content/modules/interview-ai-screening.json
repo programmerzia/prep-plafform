@@ -1,0 +1,15 @@
+{
+  "id": "interview-ai-screening",
+  "track": "interview",
+  "phase": 8,
+  "order": 1,
+  "title": "AI screening interviews: structure, pacing, keywords",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "AI screening interviews: how they score, how to structure spoken answers.",
+    "picture": "Talking to a strict, literal listener: context, decision, trade-off, outcome, in that order.",
+    "why": "Most 2026 applications start with one of these.",
+    "bn": "কড়া, আক্ষরিক শ্রোতার সাথে কথা: context, decision, trade-off, outcome — এই ক্রমে।"
+  }
+}

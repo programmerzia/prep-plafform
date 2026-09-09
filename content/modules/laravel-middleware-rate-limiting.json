@@ -1,0 +1,15 @@
+{
+  "id": "laravel-middleware-rate-limiting",
+  "track": "laravel",
+  "phase": 2,
+  "order": 4,
+  "title": "Middleware, rate limiting, request lifecycle hooks",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Middleware and rate limiting: the pipeline every request walks through.",
+    "picture": "Security checkpoints in a row; each can inspect, modify, or turn you back. Rate limiting is the doorman counting how many times you came in this minute.",
+    "why": "'Where would you put X?' questions test whether you understand the pipeline.",
+    "bn": "সারি সারি checkpoint — দেখতে, বদলাতে, ফেরাতে পারে; rate limit = দারোয়ান গুনছে কতবার এলে।"
+  }
+}

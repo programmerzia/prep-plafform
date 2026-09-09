@@ -1,0 +1,15 @@
+{
+  "id": "problem-recursion-trees",
+  "track": "problems",
+  "phase": 7,
+  "order": 6,
+  "title": "Recursion & trees: flatten, traverse, depth",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Recursion and trees: flattening, traversal, depth.",
+    "picture": "Russian dolls: solve the small one inside, the big one follows.",
+    "why": "Nested menus and category trees are everyday backend work.",
+    "bn": "রাশিয়ান পুতুল: ভেতরের ছোটটা সমাধান করো, বড়টা আপনিই হয়।"
+  }
+}

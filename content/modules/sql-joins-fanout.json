@@ -1,0 +1,73 @@
+{
+  "id": "sql-joins-fanout",
+  "track": "sql",
+  "phase": 1,
+  "order": 2,
+  "title": "SQL joins, GROUP BY & the fan-out bug",
+  "status": "unlocked",
+  "star": true,
+  "lesson": {
+    "picture": "Two wedding guest lists — the bride's and the groom's. INNER JOIN = people on both lists. LEFT JOIN = everyone on the bride's list, groom's details filled in where they exist, blank (NULL) where not. GROUP BY = 'how many guests per table?' — collapse rows into buckets and count each bucket.",
+    "concept": "THE TABLES WE USE (one customer, one order of 500, three items):\n\ncustomers: (1, Ziaur)\norders:    (10, customer_id 1, total 500)\norder_items: (1, order 10, product 42) (2, order 10, product 7) (3, order 10, product 42)\n\nJOIN TYPES\n• INNER JOIN — only rows that match on both sides.\n• LEFT JOIN — every row from the left table; right side NULL when no match.\n• 'Rows with NO match' = LEFT JOIN + WHERE right.id IS NULL, or NOT EXISTS.\n\nTHE LEFT JOIN TRAP\nA condition on the RIGHT table in WHERE (WHERE o.status = 'paid') silently turns LEFT into INNER, because NULL <> 'paid' is never true — unmatched rows vanish. Put right-table conditions in ON instead.\n\nTHE FAN-OUT BUG (the #1 reporting bug)\nJoin orders → order_items and the single order row is copied once per item. SUM(o.total) becomes 500+500+500 = 1500. GROUP BY does NOT fix it — the copies just sit inside one group.\nFix: never bring a one-to-many table into the row set just to filter. Ask it a yes/no question with EXISTS, or aggregate the many side first in a subquery/CTE.\n\nEXISTS and SELECT 1\nEXISTS asks 'does at least one row match?' and stops at the first hit. It never reads the columns, so people write SELECT 1 to say 'I don't care what, only whether'. The outer row stays exactly one row. JOIN = 'bring me those rows'; EXISTS = 'just tell me if they're there'.\n\nWHY DISTINCT IS THE WRONG FIX\nDISTINCT dedupes whole rows AFTER the join, so aggregates are already wrong; it forces a sort over the inflated set; and it deletes rows that are legitimately identical (two 500 orders by the same customer). It hides the cause instead of removing it.\n\nWHERE vs HAVING\nWHERE filters rows before grouping. HAVING filters groups after. You cannot WHERE COUNT(*) > 5 — the count doesn't exist yet.\n\n'HAS NONE OF X'\nLook FOR X, keep the rows where the match came back empty. Never search for not-X: a customer with one paid and one cancelled order would match the cancelled row and be wrongly listed as 'never paid'.",
+    "right": {
+      "lang": "sql",
+      "code": "-- users with NO orders\nSELECT u.name FROM users u\nLEFT JOIN orders o ON o.user_id = u.id\nWHERE o.id IS NULL;\n\n-- customers who have NEVER placed a PAID order (look for paid, keep the misses)\nSELECT c.name FROM customers c\nWHERE NOT EXISTS (SELECT 1 FROM orders o\n                  WHERE o.customer_id = c.id AND o.status = 'paid');\n\n-- LEFT JOIN trap: this drops users without a pro plan\nSELECT u.name, s.plan FROM users u\nLEFT JOIN subscriptions s ON s.user_id = u.id\nWHERE s.plan = 'pro';                 -- WRONG: became an INNER JOIN\n-- fix: condition in ON\nLEFT JOIN subscriptions s ON s.user_id = u.id AND s.plan = 'pro'\n\n-- FAN-OUT: wrong (1500)\nSELECT c.name, SUM(o.total)\nFROM customers c\nJOIN orders o      ON o.customer_id = c.id\nJOIN order_items i ON i.order_id = o.id       -- multiplies rows\nWHERE i.product_id = 42\nGROUP BY c.name;\n\n-- right (500): filter with EXISTS, never join the many side\nSELECT c.name, SUM(o.total)\nFROM customers c\nJOIN orders o ON o.customer_id = c.id\nWHERE EXISTS (SELECT 1 FROM order_items i\n              WHERE i.order_id = o.id AND i.product_id = 42)\nGROUP BY c.name;\n\n-- GROUP BY + HAVING: users with 5+ orders\nSELECT u.id, u.name, COUNT(o.id) AS orders_count\nFROM users u LEFT JOIN orders o ON o.user_id = u.id\nGROUP BY u.id, u.name\nHAVING COUNT(o.id) >= 5;\n\n-- Laravel equivalents\nUser::doesntHave('orders')->get();\nUser::whereDoesntHave('orders', fn($q) => $q->where('status','paid'))->get();\nUser::withCount('orders')->having('orders_count', '>=', 5)->get();\nCustomer::whereHas('orders.items', fn($q) => $q->where('product_id', 42))->get();"
+    },
+    "bn": "INNER JOIN = দুই পাশে মিল আছে যারা। LEFT JOIN = বাম টেবিলের সবাই, ডানে মিল না থাকলে NULL। 'যাদের নেই' = LEFT JOIN + WHERE right.id IS NULL, বা NOT EXISTS। ডান টেবিলের শর্ত WHERE-এ দিলে LEFT JOIN গোপনে INNER হয়ে যায় — শর্ত ON-এ দাও। Fan-out: order-এর ৩টা item থাকলে join-এ order row ৩ বার আসে, SUM ৩ গুণ; GROUP BY ঠিক করে না। EXISTS join করে না, শুধু জিজ্ঞেস করে 'আছে কি?' — row একটাই থাকে। SELECT 1 মানে 'column লাগবে না, শুধু আছে কিনা'। DISTINCT duplicate লুকায়, কারণ সরায় না। WHERE grouping-এর আগে, HAVING পরে।",
+    "simulator": "join-fanout"
+  },
+  "practice": [
+    {
+      "task": "Write: each order with its total and the amount paid so far (payments has many rows per order, some orders have none). One row per order.",
+      "solution": "SELECT o.id, o.total, COALESCE(p.paid, 0) AS paid\nFROM orders o\nLEFT JOIN (\n    SELECT order_id, SUM(amount) AS paid FROM payments GROUP BY order_id\n) p ON p.order_id = o.id;\n\nAggregate the many side first so the join is one-to-one; LEFT JOIN keeps unpaid orders; COALESCE turns NULL into 0."
+    },
+    {
+      "task": "Write: customers with at least 3 paid orders in 2026, with the count.",
+      "solution": "SELECT c.id, c.name, COUNT(*) AS paid_orders\nFROM customers c\nJOIN orders o ON o.customer_id = c.id\nWHERE o.status = 'paid' AND o.created_at >= '2026-01-01' AND o.created_at < '2027-01-01'\nGROUP BY c.id, c.name\nHAVING COUNT(*) >= 3;\n\nWHERE filters rows first (cheap), HAVING filters the groups. Use a half-open date range so the index on created_at can be used."
+    },
+    {
+      "task": "Bug hunt: SELECT u.name, s.plan FROM users u LEFT JOIN subscriptions s ON s.user_id = u.id WHERE s.status = 'active'. Product says 'users without a subscription disappeared'. Fix it two ways.",
+      "solution": "1) Move the condition into ON: LEFT JOIN subscriptions s ON s.user_id = u.id AND s.status = 'active'\n2) Allow the NULL explicitly: WHERE s.status = 'active' OR s.id IS NULL\n\nThe WHERE on the right table turned LEFT into INNER because NULL = 'active' is never true."
+    }
+  ],
+  "interview": [],
+  "cards": [
+    {
+      "q": "INNER JOIN vs LEFT JOIN in one line each",
+      "a": "INNER: only rows matching on both sides. LEFT: every left row, right side NULL when no match."
+    },
+    {
+      "q": "How do you find users with no orders? Two ways",
+      "a": "LEFT JOIN orders ... WHERE o.id IS NULL, or WHERE NOT EXISTS (SELECT 1 FROM orders WHERE user_id = u.id)."
+    },
+    {
+      "q": "LEFT JOIN subscriptions s ... WHERE s.plan = 'pro'. What silently happened and how do you fix it?",
+      "a": "The WHERE on the right table turned LEFT into INNER (NULL <> 'pro'), dropping users with no pro plan. Move the condition into ON: ... ON s.user_id = u.id AND s.plan = 'pro'."
+    },
+    {
+      "q": "Revenue per customer is 3× after joining order_items. Why?",
+      "a": "Fan-out: each order row is copied once per item, so SUM(o.total) adds the same total three times. GROUP BY does not fix it — the copies are inside the group."
+    },
+    {
+      "q": "The correct fix for fan-out when you only need to filter by the child table",
+      "a": "WHERE EXISTS (SELECT 1 FROM order_items i WHERE i.order_id = o.id AND ...). EXISTS returns yes/no per order without adding rows. Or aggregate the child table first and join one row per parent."
+    },
+    {
+      "q": "What does SELECT 1 inside EXISTS mean?",
+      "a": "'I don't care about columns, only whether at least one row matches.' EXISTS stops at the first hit and returns true/false."
+    },
+    {
+      "q": "Why is SELECT DISTINCT the wrong fix for duplicated join rows?",
+      "a": "It dedupes whole rows after the join, so aggregates are already wrong; it sorts the inflated set; and it deletes rows that are legitimately identical. It hides the cause instead of removing the multiplying join."
+    },
+    {
+      "q": "Customers who have never placed a PAID order — what's the trap?",
+      "a": "Don't search for status != 'paid': a customer with one paid and one cancelled order matches the cancelled row. Look FOR paid orders and keep customers where none is found (NOT EXISTS / LEFT JOIN ... AND status='paid' WHERE o.id IS NULL)."
+    },
+    {
+      "q": "WHERE vs HAVING",
+      "a": "WHERE filters rows before grouping; HAVING filters groups after aggregation. You can't WHERE COUNT(*) > 5."
+    }
+  ],
+  "glossary": []
+}

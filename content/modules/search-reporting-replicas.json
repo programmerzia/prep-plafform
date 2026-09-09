@@ -1,0 +1,15 @@
+{
+  "id": "search-reporting-replicas",
+  "track": "sql",
+  "phase": 3,
+  "order": 6,
+  "title": "Search & reporting: full-text, Scout, read replicas",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Search and reporting at scale: full-text indexes, Scout, read replicas, reporting DBs.",
+    "picture": "Don't do your accounting on the checkout counter — move heavy reads to a replica or a search engine.",
+    "why": "Reporting pages that time out are a common take-home scenario.",
+    "bn": "Checkout counter-এ হিসাব কষো না — ভারী পড়া replica বা search engine-এ সরাও।"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "id": "react-state-context-memo",
+  "track": "react",
+  "phase": 4,
+  "order": 2,
+  "title": "React state, context, memo, re-render rules",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "State, context, memoization, and why components re-render.",
+    "picture": "A noticeboard everyone reads (context) vs a note passed hand to hand (props). Memo is 'don't repaint the wall if nothing changed'.",
+    "why": "'Why is this re-rendering?' live-debugging is standard.",
+    "bn": "Noticeboard (context) বনাম হাতে হাতে চিঠি (props); memo = কিছু না বদলালে দেয়াল আবার রং করো না।"
+  }
+}

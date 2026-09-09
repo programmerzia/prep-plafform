@@ -1,0 +1,64 @@
+{
+  "id": "sql-indexes",
+  "track": "sql",
+  "phase": 1,
+  "order": 1,
+  "title": "Database indexes",
+  "status": "unlocked",
+  "star": true,
+  "lesson": {
+    "picture": "A 1,000-page textbook. No index → read every page to find 'photosynthesis' (full table scan). With the index at the back → flip to P, jump to the page. But every new paragraph means updating the index too. Fast reads, slower writes, extra space.",
+    "concept": "An index is a separate sorted structure (a B-tree) that maps a column value to a row location. Sorted means binary search: ~20 steps to find one row in a million. It has nothing to do with foreign keys — you index any column you filter, join, or sort on.\n\nWhy not index everything: every INSERT/UPDATE/DELETE must update every index (write tax); each index costs disk and RAM; low-selectivity columns (is_active, status) barely help and the optimizer may ignore them.\n\nComposite index rule: the DB can only use it from the left-most column. Put equality columns first, then the ORDER BY column. A range condition (price < 100) in the middle breaks the sort for anything after it.\n\nB-tree = sorted list, so LIKE 'zia%' uses the index; LIKE '%gmail.com' never can. A function on the column (LOWER(email)) or a type mismatch (email = 12345) also disables it.",
+    "right": {
+      "lang": "sql",
+      "code": "CREATE INDEX idx_orders_user_created ON orders (user_id, created_at);\n\n-- uses the index (left-most column present, sorted walk, stops at 20)\nSELECT * FROM orders WHERE user_id = 42 ORDER BY created_at DESC LIMIT 20;\n\n-- CANNOT use it: skips the left-most column\nSELECT * FROM orders WHERE created_at > '2026-01-01';\n\n-- index killers\nWHERE LOWER(email) = 'a@b.com'   -- function on column\nWHERE email LIKE '%gmail.com'    -- leading wildcard\nWHERE email = 12345              -- type mismatch → implicit cast\n\nEXPLAIN SELECT ...;  -- type ALL = full scan (bad); ref / range = index used"
+    },
+    "bn": "Index হলো বইয়ের শেষের সূচিপত্রের মতো — sorted আলাদা structure। Foreign key-র সাথে সম্পর্ক নেই; WHERE, JOIN, ORDER BY-এর column-এ index লাগে। সব column-এ দিলে write ধীর হয়, RAM খায়। Composite index বাম দিক থেকে কাজ করে; range column মাঝে রাখলে পরের sort নষ্ট। 'zia%' index পায়, '%gmail' পায় না।"
+  },
+  "practice": [
+    {
+      "task": "orders(id, user_id, status, created_at, total). Slow query: SELECT * FROM orders WHERE user_id = ? AND status = 'paid' ORDER BY created_at DESC LIMIT 10. Write the CREATE INDEX and say why the column order.",
+      "solution": "CREATE INDEX idx_orders_user_status_created ON orders (user_id, status, created_at);\n\nBoth WHERE columns are equalities, so they go first (either order works; put the more selective one first if unsure). created_at last so the DB walks it already sorted and stops after 10 rows — no filesort."
+    },
+    {
+      "task": "EXPLAIN shows type: ALL on WHERE email = ? even though email has an index. List three things you check, in order.",
+      "solution": "1) possible_keys — is the index listed? If not: type mismatch (email = 12345), a function on the column, or a collation mismatch.\n2) Selectivity — does this value match a huge share of rows? Then a scan is correct.\n3) ANALYZE TABLE for stale statistics, then FORCE INDEX to compare timings (diagnosis only, never ship it)."
+    },
+    {
+      "task": "Laravel migration: add an index for 'find posts by slug within a tenant' on posts(tenant_id, slug), and make the pair unique.",
+      "solution": "$table->unique(['tenant_id', 'slug']);\n\nA unique constraint IS an index, so no separate index() is needed. tenant_id first because every query in a multi-tenant app filters by tenant first."
+    }
+  ],
+  "interview": [],
+  "cards": [
+    {
+      "q": "What does a database index actually do?",
+      "a": "A separate sorted structure (B-tree) mapping column value → row location, so the DB can binary-search instead of scanning every row."
+    },
+    {
+      "q": "Three costs of adding an index",
+      "a": "Write tax on every INSERT/UPDATE/DELETE; disk + RAM; low-selectivity columns give little back and can mislead the optimizer."
+    },
+    {
+      "q": "Query: WHERE category_id=7 AND price<100 ORDER BY created_at DESC LIMIT 20. Best index and why?",
+      "a": "(category_id, created_at). Equality first, then the ORDER BY column so the DB walks the index pre-sorted and stops at 20. price is a range — putting it in the middle would break the sort; leave it as a row filter."
+    },
+    {
+      "q": "LIKE 'zia%' vs LIKE '%gmail.com' with an index on email",
+      "a": "'zia%' → index range scan (sorted list, known prefix). '%gmail.com' → always full scan; a B-tree can't search by suffix. Store a reversed/domain column if you need it."
+    },
+    {
+      "q": "Index on email, but WHERE email = 12345 is a full scan. Why?",
+      "a": "Type mismatch. MySQL casts every row's email to a number to compare, which disables the index. Always compare with the column's type."
+    },
+    {
+      "q": "Why can't a composite index (a, b) serve WHERE b = ?",
+      "a": "B-tree is sorted by a first, then b within each a. Without a, the b values are scattered — no ordered range to walk."
+    },
+    {
+      "q": "Senior code-review answer to 'just index everything'",
+      "a": "Cost → memory → selectivity → evidence: write tax compounds on hot tables; indexes that don't fit in RAM slow reads; low-cardinality columns give nothing; index from slow-query log + EXPLAIN + real WHERE/JOIN/ORDER BY patterns, then measure."
+    }
+  ],
+  "glossary": []
+}

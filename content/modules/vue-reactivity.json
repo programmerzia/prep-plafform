@@ -1,0 +1,15 @@
+{
+  "id": "vue-reactivity",
+  "track": "vue-nuxt",
+  "phase": 4,
+  "order": 1,
+  "title": "Vue reactivity: ref/reactive/computed/watch",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Vue reactivity: ref, reactive, computed, watch — and their traps.",
+    "picture": "A spreadsheet: change a cell (ref) and dependent cells (computed) update themselves. Watchers are someone standing by to react when a cell changes.",
+    "why": "Losing reactivity by destructuring is the classic Vue screen question.",
+    "bn": "Spreadsheet: একটা cell (ref) বদলালে নির্ভরশীল cell (computed) নিজে বদলায়; watcher = পাশে দাঁড়ানো লোক।"
+  }
+}

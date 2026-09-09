@@ -1,0 +1,15 @@
+{
+  "id": "oop-design-patterns",
+  "track": "oop",
+  "phase": 1,
+  "order": 4,
+  "title": "Design patterns you actually use: strategy, factory, observer, repository",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "The handful of design patterns that show up in real Laravel work.",
+    "picture": "Strategy = choosing bKash/Stripe/Nagad behind one interface; Factory = a kitchen that assembles the right object; Observer = 'text me when the order ships'; Repository = the librarian between you and the shelves.",
+    "why": "Interviewers ask for a pattern you used and a time one was overkill.",
+    "bn": "Strategy (bKash/Stripe এক interface-এর পিছনে), Factory, Observer, Repository — যেগুলো সত্যি লাগে।"
+  }
+}

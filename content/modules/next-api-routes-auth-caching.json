@@ -1,0 +1,15 @@
+{
+  "id": "next-api-routes-auth-caching",
+  "track": "next",
+  "phase": 4,
+  "order": 2,
+  "title": "Next.js API routes, auth, caching",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Next.js API routes, authentication, and caching in a full-stack Next app.",
+    "picture": "One building with both the kitchen and the dining room — when to cook on the server and when to call an external Laravel API.",
+    "why": "Common in Laravel-backend + Next-frontend teams.",
+    "bn": "Kitchen আর dining এক বাড়িতে — কখন server-এ রান্না, কখন বাইরের Laravel API ডাকা।"
+  }
+}

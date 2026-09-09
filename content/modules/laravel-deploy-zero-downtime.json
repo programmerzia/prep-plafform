@@ -1,0 +1,15 @@
+{
+  "id": "laravel-deploy-zero-downtime",
+  "track": "cloud-devops",
+  "phase": 2,
+  "order": 2,
+  "title": "Deploy: Forge/Docker, zero-downtime, migrations in prod",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Deploying Laravel: Docker/Forge, zero-downtime, running migrations in production safely.",
+    "picture": "Changing the tires while the car is moving: build the new version beside the old one, switch the symlink, never lock a big table at noon.",
+    "why": "'How do you deploy a schema change without downtime?' is a favourite.",
+    "bn": "চলন্ত গাড়ির চাকা বদলানো: নতুন version পাশে বানাও, symlink ঘোরাও, দুপুরে বড় table lock করো না।"
+  }
+}

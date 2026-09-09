@@ -1,0 +1,56 @@
+{
+  "id": "laravel-request-lifecycle",
+  "track": "laravel",
+  "phase": 2,
+  "order": 1,
+  "title": "Laravel request lifecycle",
+  "status": "unlocked",
+  "star": true,
+  "lesson": {
+    "picture": "An airport. public/index.php is the front door. The kernel is security + check-in (global middleware). Service providers are the ground crew who set everything up before the first flight. The router is the departure board sending you to the right gate (controller).",
+    "concept": "1) public/index.php loads Composer autoload and bootstraps the app (container). 2) The HTTP kernel runs bootstrappers: env, config, exceptions, facades, then registers and boots all service providers — this is where bindings, event listeners, routes are set up. 3) The request passes through global middleware, then the router matches a route, runs route/group middleware (auth, throttle). 4) The controller is resolved from the container (constructor + method injection). 5) The response bubbles back through middleware in reverse and is sent. 6) Terminable middleware runs after the response.\n\nService providers: register() = only bind things into the container; boot() = safe to use other services (routes, policies, listeners, preventLazyLoading).",
+    "right": {
+      "lang": "php",
+      "code": "// route → controller resolved by the container\nRoute::get('/users', [UserController::class, 'index'])->middleware('auth');\n\nclass UserController {\n    public function __construct(private UserRepository $repo) {}   // injected\n    public function index(Request $request) {                       // injected\n        return UserResource::collection($this->repo->paginate());\n    }\n}\n\n// AppServiceProvider\npublic function register(): void { $this->app->bind(UserRepository::class, EloquentUserRepository::class); }\npublic function boot(): void { Model::preventLazyLoading(!app()->isProduction()); }"
+    },
+    "bn": "index.php → app bootstrap → HTTP kernel → service provider register/boot → global middleware → router → route middleware → controller (container থেকে DI) → response উল্টো পথে middleware দিয়ে ফেরত। register()-এ শুধু bind, boot()-এ অন্য service ব্যবহার করা যায়।"
+  },
+  "practice": [
+    {
+      "task": "A colleague puts Route::model bindings and an event listener registration inside register() of a provider and it breaks intermittently. Why, and where should it go?",
+      "solution": "register() runs before all providers are registered, so the router/event dispatcher it depends on may not be bound yet. Anything that USES other services belongs in boot(), which runs after every provider's register()."
+    },
+    {
+      "task": "Order these for a request to GET /orders/5 with auth middleware: controller method, global middleware, route middleware, kernel bootstrap, providers boot, response back through middleware.",
+      "solution": "kernel bootstrap → providers boot → global middleware → (router matches) → route middleware (auth) → controller method → response back through middleware in reverse → terminable middleware after send."
+    },
+    {
+      "task": "Write a middleware that rejects requests without header X-Tenant and stores the tenant on the request. Where do you register it for API routes only?",
+      "solution": "public function handle(Request $r, Closure $next) {\n    $tenant = Tenant::where('key', $r->header('X-Tenant'))->first();\n    abort_unless($tenant, 400, 'Missing tenant');\n    $r->attributes->set('tenant', $tenant);\n    return $next($r);\n}\n\nRegister in bootstrap/app.php (Laravel 11): ->withMiddleware(fn($m) => $m->api(append: [EnsureTenant::class])) — or append to the 'api' group in Kernel.php on older versions."
+    }
+  ],
+  "interview": [],
+  "cards": [
+    {
+      "q": "Order: middleware, router, service providers, kernel, index.php",
+      "a": "index.php → kernel bootstrap → service providers (register then boot) → global middleware → router → route middleware → controller → response back through middleware."
+    },
+    {
+      "q": "register() vs boot() in a service provider",
+      "a": "register(): only bind into the container, don't use other services (they may not exist yet). boot(): all providers are registered, safe to use anything."
+    },
+    {
+      "q": "How does the controller get its constructor dependencies?",
+      "a": "The container reflects the constructor's type-hints, resolves each (via bindings or auto-wiring), and builds the controller."
+    },
+    {
+      "q": "Global vs route middleware — give an example of each",
+      "a": "Global: TrimStrings, HandleCors — runs on every request. Route: auth, throttle, verified — attached to routes/groups."
+    },
+    {
+      "q": "What is terminable middleware?",
+      "a": "Middleware with terminate() that runs after the response is sent — e.g. session save, logging — so the user isn't kept waiting."
+    }
+  ],
+  "glossary": []
+}

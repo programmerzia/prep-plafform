@@ -1,0 +1,15 @@
+{
+  "id": "security-owasp-laravel",
+  "track": "security-auth",
+  "phase": 3,
+  "order": 2,
+  "title": "Security: OWASP top 10 in Laravel",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Security: the OWASP top 10 as they appear in Laravel apps.",
+    "picture": "Locks, cameras, and not leaving the keys under the mat: mass assignment, SQL injection, XSS, CSRF, broken access control, secrets in git.",
+    "why": "Every senior role has at least one security scenario question.",
+    "bn": "তালা, ক্যামেরা, চাবি পাপোশের নিচে না রাখা: mass assignment, SQL injection, XSS, CSRF, secrets in git।"
+  }
+}

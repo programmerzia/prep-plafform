@@ -1,0 +1,15 @@
+{
+  "id": "architecture-monolith-vs-microservices",
+  "track": "architecture",
+  "phase": 6,
+  "order": 7,
+  "title": "Architecture: modular monolith vs microservices, DDD lite",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Modular monolith vs microservices, DDD-lite boundaries.",
+    "picture": "One well-organised house with clear rooms vs a village of huts with roads between them.",
+    "why": "'Would you split this into services?' — the right answer is usually no, with reasons.",
+    "bn": "গোছানো এক বাড়ি (modular monolith) বনাম রাস্তা দিয়ে জোড়া অনেক কুঁড়েঘর (microservices) — সাধারণত না-ই উত্তর।"
+  }
+}

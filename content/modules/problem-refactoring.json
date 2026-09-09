@@ -1,0 +1,15 @@
+{
+  "id": "problem-refactoring",
+  "track": "problems",
+  "phase": 7,
+  "order": 8,
+  "title": "Refactoring problems: spot the smell, fix the code",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Refactoring problems: spot the smell, fix the code, explain why.",
+    "picture": "Editing someone else's essay — the most realistic senior test there is.",
+    "why": "Many companies replaced algorithm puzzles with these.",
+    "bn": "অন্যের লেখা সম্পাদনা — senior test-এর সবচেয়ে বাস্তব রূপ।"
+  }
+}

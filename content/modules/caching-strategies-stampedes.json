@@ -1,0 +1,15 @@
+{
+  "id": "caching-strategies-stampedes",
+  "track": "redis",
+  "phase": 3,
+  "order": 1,
+  "title": "Caching strategies, invalidation, stampedes",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Caching strategies: what to cache, invalidation, and stampedes.",
+    "picture": "A newspaper stand: print the front page once and hand out copies, but know when to reprint. A stampede is 1,000 people asking for the paper the second it sells out.",
+    "why": "'How do you cache this endpoint and keep it correct?' is asked constantly.",
+    "bn": "খবরের কাগজ একবার ছাপো, কপি দাও, কিন্তু জানো কখন আবার ছাপতে হবে; stampede = এক সেকেন্ডে হাজার জন চাওয়া।"
+  }
+}

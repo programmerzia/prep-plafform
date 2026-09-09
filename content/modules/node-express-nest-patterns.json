@@ -1,0 +1,15 @@
+{
+  "id": "node-express-nest-patterns",
+  "track": "node",
+  "phase": 5,
+  "order": 2,
+  "title": "Express/Nest: middleware, validation, errors",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Express/Nest patterns: middleware, validation, error handling.",
+    "picture": "Laravel's pipeline, in JavaScript clothes.",
+    "why": "Lets you say yes to Node work without bluffing.",
+    "bn": "Laravel-এর pipeline, JavaScript-এর পোশাকে।"
+  }
+}

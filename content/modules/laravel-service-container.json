@@ -1,0 +1,15 @@
+{
+  "id": "laravel-service-container",
+  "track": "laravel",
+  "phase": 2,
+  "order": 2,
+  "title": "Service container, providers, contextual binding",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "The service container: bindings, singletons, contextual binding, auto-wiring.",
+    "picture": "A hotel concierge: you ask for 'a payment gateway' and it hands you the right one, already set up, without you knowing which company it called.",
+    "why": "'How does Laravel know what to inject?' is the classic Laravel senior opener.",
+    "bn": "Hotel-এর concierge: 'একটা payment gateway দাও' বললে ঠিকটা সাজিয়ে দেয়, তুমি জানো না কাকে ডাকল।"
+  }
+}

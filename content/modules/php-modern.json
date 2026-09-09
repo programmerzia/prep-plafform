@@ -1,0 +1,15 @@
+{
+  "id": "php-modern",
+  "track": "php",
+  "phase": 1,
+  "order": 1,
+  "title": "Modern PHP 8: enums, readonly, match, attributes, fibers",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "The modern PHP features that separate 2026 code from 2018 code.",
+    "picture": "Enums are a fixed menu (Status::Paid, not the string 'paid'); readonly is a sealed envelope; match is a smarter switch; attributes are sticky notes on code that frameworks read.",
+    "why": "Recruiters check whether your PHP stopped in the Laravel 5 era.",
+    "bn": "Enum (নির্দিষ্ট মেনু), readonly (সিল করা খাম), match, attribute — আধুনিক PHP-এর ভাষা।"
+  }
+}

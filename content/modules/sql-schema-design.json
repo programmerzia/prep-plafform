@@ -1,0 +1,15 @@
+{
+  "id": "sql-schema-design",
+  "track": "sql",
+  "phase": 1,
+  "order": 4,
+  "title": "Normalisation, keys, constraints, schema design",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Designing tables so data is stored once and stays consistent.",
+    "picture": "One address book, not five: if a customer's phone lives in one place, changing it changes it everywhere. Normalisation is deciding what goes in which table and how they link.",
+    "why": "Interviewers give you a messy spreadsheet and ask you to design the tables.",
+    "bn": "Data একবার রাখো, table-এ ভাগ করো, key দিয়ে জোড়ো — বদলালে এক জায়গায়ই বদলাবে।"
+  }
+}

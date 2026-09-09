@@ -1,0 +1,15 @@
+{
+  "id": "eloquent-relations-advanced",
+  "track": "orm",
+  "phase": 2,
+  "order": 2,
+  "title": "Eloquent relations: hasManyThrough, polymorphic, pivots",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Advanced relations: hasManyThrough, polymorphic, pivot data, morph maps.",
+    "picture": "Friend-of-a-friend links: hasManyThrough is 'countries → users → posts' in one step; polymorphic is one comments table that can point at posts, videos, or products.",
+    "why": "Modeling a real domain with relations is a common take-home.",
+    "bn": "hasManyThrough = বন্ধুর বন্ধু এক ধাপে, polymorphic = এক comments table যা post/video/product-এ যেতে পারে।"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "id": "laravel-validation-resources",
+  "track": "laravel",
+  "phase": 2,
+  "order": 3,
+  "title": "Validation, Form Requests, API Resources",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Validation, Form Requests, API Resources — clean boundaries in and out.",
+    "picture": "Airport security on the way in (Form Request), a tailored outfit on the way out (Resource) — the controller in between stays thin.",
+    "why": "Interviewers ask where validation belongs and how to version an API response.",
+    "bn": "ঢোকার সময় security (Form Request), বেরোনোর সময় সাজানো পোশাক (Resource), মাঝে controller পাতলা।"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "id": "oop-solid",
+  "track": "oop",
+  "phase": 1,
+  "order": 3,
+  "title": "SOLID with real Laravel examples",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Five habits that keep code changeable, shown with Laravel code you'd actually write.",
+    "picture": "A kitchen where each station does one job, new dishes don't require rewiring the stove, and any chef can swap in because the tools follow the same contract.",
+    "why": "'Give me an example of SOLID from your own code' is a top-5 senior question.",
+    "bn": "পাঁচটা অভ্যাস যাতে code বদলানো সহজ থাকে — Laravel-এর নিজের code দিয়ে।"
+  }
+}

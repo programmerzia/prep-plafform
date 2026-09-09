@@ -1,0 +1,15 @@
+{
+  "id": "next-app-router-rendering",
+  "track": "next",
+  "phase": 4,
+  "order": 1,
+  "title": "Next.js: App Router, SSR/ISR, server components",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Next.js App Router: server components, SSR, ISR, data fetching.",
+    "picture": "Pre-cooked meals (static), cooked-to-order (SSR), and cooked-then-kept-warm-for-a-while (ISR). Server components are dishes prepared in the kitchen, not at the table.",
+    "why": "Next roles ask you to choose a rendering strategy and defend it.",
+    "bn": "আগে রান্না (static), order-এ রান্না (SSR), রান্না করে কিছুক্ষণ গরম রাখা (ISR); server component = kitchen-এ তৈরি।"
+  }
+}

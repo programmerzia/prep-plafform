@@ -1,0 +1,15 @@
+{
+  "id": "python-fastapi-cv-scoring",
+  "track": "python-llm",
+  "phase": 5,
+  "order": 2,
+  "title": "FastAPI service: your CV-scoring design, explained",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Your CV-scoring FastAPI service, explained end to end.",
+    "picture": "Turning the thing you built into a clear five-minute story with trade-offs.",
+    "why": "This is a story you'll tell in every interview.",
+    "bn": "তোমার বানানো CV-scoring service-কে পাঁচ মিনিটের স্পষ্ট গল্পে বদলানো, trade-off সহ।"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "id": "sql-window-functions",
+  "track": "sql",
+  "phase": 1,
+  "order": 3,
+  "title": "Window functions: ROW_NUMBER, running totals, top-N per group",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Ranking and running totals inside SQL without collapsing rows.",
+    "picture": "A race leaderboard: every runner keeps their own row, but each row also shows their rank and the time gap to the leader. GROUP BY would throw the runners away and keep only totals; window functions keep everyone.",
+    "why": "'Top 3 orders per customer' and 'running revenue by month' are standard senior SQL screens.",
+    "bn": "Row না মুছে rank, running total বের করা — GROUP BY রেখা মুছে দেয়, window function সবাইকে রাখে।"
+  }
+}

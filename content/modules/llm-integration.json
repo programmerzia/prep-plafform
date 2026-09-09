@@ -1,0 +1,15 @@
+{
+  "id": "llm-integration",
+  "track": "python-llm",
+  "phase": 5,
+  "order": 3,
+  "title": "LLM integration: prompts, structured output, evals, cost",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Integrating LLMs: prompts, structured output, evaluation, cost, failure modes.",
+    "picture": "Hiring a brilliant intern who sometimes lies confidently: you give clear instructions, check the work, and never let them touch money unsupervised.",
+    "why": "2026 senior roles expect a grounded view of AI features.",
+    "bn": "দুর্দান্ত কিন্তু মাঝে মাঝে আত্মবিশ্বাসে মিথ্যা বলা intern: স্পষ্ট নির্দেশ, কাজ চেক, টাকায় হাত না।"
+  }
+}

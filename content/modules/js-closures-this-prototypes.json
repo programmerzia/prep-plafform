@@ -1,0 +1,15 @@
+{
+  "id": "js-closures-this-prototypes",
+  "track": "js-ts",
+  "phase": 1,
+  "order": 2,
+  "title": "JS closures, scope, this, prototypes",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Closures, scope, this, and prototypes — how JavaScript actually resolves names.",
+    "picture": "A closure is a backpack: a function carries the variables from where it was born. 'this' is a name tag that changes depending on who is calling you. Prototypes are a chain of 'ask my parent if I don't know'.",
+    "why": "Every JS screen has one closure-in-a-loop or lost-this question.",
+    "bn": "Closure = ব্যাকপ্যাক, this = কে ডাকছে তার নাম, prototype = 'না জানলে বাবাকে জিজ্ঞেস করো'।"
+  }
+}

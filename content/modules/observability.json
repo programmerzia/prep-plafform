@@ -1,0 +1,15 @@
+{
+  "id": "observability",
+  "track": "cloud-devops",
+  "phase": 6,
+  "order": 3,
+  "title": "Observability: logs, metrics, tracing, alerts",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Observability: logs, metrics, tracing, alerts that don't wake you for nothing.",
+    "picture": "Dashboard lights in a car: you want the right ones, not all of them.",
+    "why": "'How do you know your system is healthy?'",
+    "bn": "গাড়ির dashboard-এর বাতি: ঠিক বাতিগুলো চাও, সবগুলো না।"
+  }
+}

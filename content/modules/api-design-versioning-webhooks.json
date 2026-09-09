@@ -1,0 +1,15 @@
+{
+  "id": "api-design-versioning-webhooks",
+  "track": "http-api",
+  "phase": 3,
+  "order": 2,
+  "title": "API design, versioning, pagination, webhooks",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "API design: resources, versioning, pagination, filtering, webhooks.",
+    "picture": "A well-labelled shop: predictable aisles, prices on everything, and a delivery service (webhooks) that tells the customer when things change.",
+    "why": "Cursor vs offset pagination and versioning strategy are standard senior questions.",
+    "bn": "গোছানো দোকান: চেনা তাক, সবকিছুর দাম, আর delivery (webhook) যা বদল হলে জানায়।"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "id": "eloquent-scopes-casts-query-builder",
+  "track": "orm",
+  "phase": 2,
+  "order": 3,
+  "title": "Scopes, casts, accessors, query builder vs raw",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Scopes, casts, accessors/mutators, and when to drop to the query builder or raw SQL.",
+    "picture": "Scopes are saved filters on a spreadsheet; casts translate the DB's language (JSON, dates) to PHP's; accessors are a display formatter on read.",
+    "why": "Knowing when Eloquent hurts performance is a senior signal.",
+    "bn": "Scope = সেভ করা filter, cast = DB-র ভাষা PHP-তে অনুবাদ, accessor = পড়ার সময় সাজানো; কখন raw SQL।"
+  }
+}

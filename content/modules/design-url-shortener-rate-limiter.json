@@ -1,0 +1,15 @@
+{
+  "id": "design-url-shortener-rate-limiter",
+  "track": "architecture",
+  "phase": 6,
+  "order": 3,
+  "title": "URL shortener & rate limiter",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "URL shortener and rate limiter: the two warm-up designs.",
+    "picture": "A coat check with numbered tickets; a doorman with a counter per guest.",
+    "why": "Common first-round design questions.",
+    "bn": "কোট রাখার নম্বর টোকেন (shortener); প্রতি অতিথির counter হাতে দারোয়ান (rate limiter)।"
+  }
+}

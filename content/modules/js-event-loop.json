@@ -1,0 +1,57 @@
+{
+  "id": "js-event-loop",
+  "track": "js-ts",
+  "phase": 1,
+  "order": 1,
+  "title": "JavaScript event loop",
+  "status": "unlocked",
+  "star": true,
+  "lesson": {
+    "picture": "A restaurant with one chef (the single thread). The chef finishes the current dish (synchronous code) no matter what. Then checks the VIP tray (microtasks: promises) and clears it completely. Only then takes the next ticket from the regular queue (macrotasks: setTimeout, I/O).",
+    "concept": "JavaScript has one call stack. All synchronous code runs to completion first. When the stack is empty, the loop drains the microtask queue entirely (Promise .then, queueMicrotask, await continuations), then takes ONE macrotask (setTimeout, setInterval, I/O callback), then drains microtasks again, and repeats.\n\nConsequences: setTimeout(fn, 0) never runs before the current synchronous code or pending promises. A long synchronous loop blocks everything, including UI. await splits a function: the part after await is a microtask.",
+    "right": {
+      "lang": "js",
+      "code": "console.log(1);\nsetTimeout(() => console.log(2), 0);      // macrotask\nPromise.resolve().then(() => console.log(3)); // microtask\nconsole.log(4);\n// → 1 4 3 2\n\nasync function f() {\n  console.log('a');\n  await null;            // everything below becomes a microtask\n  console.log('b');\n}\nf(); console.log('c');\n// → a c b"
+    },
+    "bn": "JS-এ একটাই thread। আগে সব synchronous code শেষ হয়। তারপর microtask queue (Promise.then, await-এর পরের অংশ) পুরোটা খালি হয়, তারপর একটা macrotask (setTimeout)। তাই setTimeout 0 দিলেও Promise-এর পরে চলে। Output: 1 4 3 2।",
+    "simulator": "event-loop"
+  },
+  "practice": [
+    {
+      "task": "Predict the output, then explain each line's queue:\nsetTimeout(()=>console.log('A'),0);\nPromise.resolve().then(()=>{console.log('B');setTimeout(()=>console.log('C'),0);});\n(async()=>{console.log('D');await null;console.log('E');})();\nconsole.log('F');",
+      "solution": "D F B E A C\n\nSync: D, F. Microtasks in order queued: B (then it queues macrotask C), E (await continuation). Macrotasks: A (queued first), then C."
+    },
+    {
+      "task": "Rewrite so the three fetches run in parallel, and explain why the original is slow:\nconst a = await getUser(); const b = await getOrders(); const c = await getInvoices();",
+      "solution": "const [a, b, c] = await Promise.all([getUser(), getOrders(), getInvoices()]);\n\nThe original awaits each promise before starting the next — three round trips in series. Promise.all starts all three immediately and waits once. Use Promise.allSettled if one failing shouldn't fail the others."
+    },
+    {
+      "task": "A button click handler runs a 3-second loop. The UI freezes. Give two fixes and say which you'd choose for CPU-heavy work.",
+      "solution": "1) Chunk the work and yield between chunks (setTimeout/requestIdleCallback/await) so rendering gets a turn.\n2) Move it to a Web Worker — a separate thread. Choose the worker for genuinely CPU-heavy work; chunking for moderate work that must touch the DOM."
+    }
+  ],
+  "interview": [],
+  "cards": [
+    {
+      "q": "console.log(1); setTimeout(()=>log(2),0); Promise.resolve().then(()=>log(3)); console.log(4). Output?",
+      "a": "1 4 3 2. Sync first, then microtasks (promise), then macrotasks (timeout)."
+    },
+    {
+      "q": "Microtask vs macrotask — name two of each",
+      "a": "Micro: Promise.then/catch/finally, queueMicrotask, await continuation, MutationObserver. Macro: setTimeout, setInterval, I/O callbacks, setImmediate (Node)."
+    },
+    {
+      "q": "Why does a for-loop of 5 seconds freeze the browser UI?",
+      "a": "Single thread: rendering and event handling wait for the call stack to empty. Nothing async can run until sync code finishes."
+    },
+    {
+      "q": "What happens to the code after await?",
+      "a": "It is scheduled as a microtask when the awaited promise settles; the function returns to the caller immediately."
+    },
+    {
+      "q": "Can a microtask starve macrotasks?",
+      "a": "Yes — the microtask queue is drained fully, so a microtask that keeps queueing microtasks blocks timers and rendering forever."
+    }
+  ],
+  "glossary": []
+}

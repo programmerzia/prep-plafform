@@ -1,0 +1,15 @@
+{
+  "id": "multi-tenancy",
+  "track": "architecture",
+  "phase": 3,
+  "order": 1,
+  "title": "Multi-tenancy: shared vs DB-per-tenant, tenancy packages",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Multi-tenancy: shared schema vs database-per-tenant, and the packages that help.",
+    "picture": "An apartment building (shared DB, tenant_id on every row) vs a row of houses (one database each). Cheaper vs safer, and the trade-offs of each.",
+    "why": "You run a multi-tenant SaaS; expect to defend your choice.",
+    "bn": "Apartment building (এক DB, প্রতি row-এ tenant_id) বনাম আলাদা বাড়ি (প্রতি tenant এক DB) — সস্তা বনাম নিরাপদ।"
+  }
+}

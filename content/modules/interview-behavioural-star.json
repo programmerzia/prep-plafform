@@ -1,0 +1,15 @@
+{
+  "id": "interview-behavioural-star",
+  "track": "interview",
+  "phase": 8,
+  "order": 2,
+  "title": "Behavioural (STAR): ownership, conflict, failure",
+  "status": "preview",
+  "star": false,
+  "preview": {
+    "what": "Behavioural questions with STAR: ownership, conflict, failure, learning.",
+    "picture": "Telling a true story with a beginning, a decision, and a result — not a rant.",
+    "why": "Every final round.",
+    "bn": "সত্যি গল্প: শুরু, একটা সিদ্ধান্ত, একটা ফল — অভিযোগ না।"
+  }
+}
