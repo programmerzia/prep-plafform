@@ -1,0 +1,19 @@
+# Changelog
+
+## 0.1.0 — 2026-09-09
+
+First scaffold of the platform.
+
+### Added
+- Vite + React 18 + TypeScript, Tailwind v4, vite-plugin-pwa (offline-first, precaches app shell, content and fonts), React Router, `idb`, Zod, Vitest.
+- GitHub Pages workflow (`.github/workflows/deploy.yml`): tests → build → deploy, with `404.html` fallback for deep links.
+- Content loader: every `content/modules/*.json` is validated with the Zod schema in `src/content/schema.ts` at build and test time.
+- Spaced repetition (`src/logic/leitner.ts`): Leitner boxes [0,1,3,7,21,60] days, mastery = average box / 5, streak, weak spots. Tested.
+- Mock builder and weak-spot report (`src/logic/mock.ts`). Tested.
+- Screens: Today, Learn (tracks → modules → lesson/preview), Practice, Drill, Interview (offline + Gemini/Groq/OpenRouter, AI-screen 90 s timer with structure check), Mock (45 min, 6 questions, written report), More (Design canvas, Stories with rehearsal mode, Cheat sheets, Glossary, Progress, Settings with export/import/reset).
+- Simulators ported from the legacy page: `event-loop`, `join-fanout`.
+- Migration script `scripts/migrate-legacy.mjs`: 71 modules from `legacy/senior-prep.html` (8 unlocked, 63 preview) with text, code and Bangla preserved verbatim; a test checks this against the legacy file.
+- Self-hosted Noto Sans Bengali in `public/fonts`.
+
+### Fixed
+- Event-loop simulator "Nested" preset printed the queued task's name instead of the running one (greedy regex in the legacy demo).

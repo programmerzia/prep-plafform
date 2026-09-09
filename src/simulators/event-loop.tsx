@@ -28,7 +28,9 @@ interface State {
   done: boolean;
 }
 
-const logOf = (s: string) => s.replace(/^.*log\(([^)]*)\).*$/, '$1');
+// Non-greedy on purpose: the legacy demo matched the LAST log() on a line, so the
+// Nested preset printed the queued task's name instead of the one actually running.
+const logOf = (s: string) => s.replace(/^.*?log\(([^)]*)\).*$/, '$1');
 
 function build(key: string): State {
   return { stack: [], micro: [], macro: [], out: [], script: PRESETS[key].lines.map(([t, l]) => ({ t, l })), note: '', done: false };
