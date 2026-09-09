@@ -4,6 +4,7 @@
 
 ### Added
 - `prebuild` content gate: `scripts/validate-content.ts` runs the Zod schema over every module and fails `npm run build` on the first invalid file, duplicate id, or id/filename mismatch.
+- Star field is live: ★ marker in Learn, "60-day progress" line on Today. `design-canvas` is a registered simulator id. crossStack renders as stacked cards under 600px.
 - "Drill weak spots" mode: the 10 most-missed cards, reachable from Today and the drill picker. All chips are at least 44px tall.
 - `git` track; mock grouping renamed to "Track focus"; markdown/plain-text field policy (see CLAUDE.md).
 - Three mentor-delivered modules: core PHP, closures and `this`, subqueries and CTEs.

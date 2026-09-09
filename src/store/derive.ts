@@ -38,7 +38,10 @@ export function usePath() {
     const next = MODULES.find((x) => x.status === 'preview');
     const weak = UNLOCKED.filter((x) => (m[x.id] ?? 0) < 60);
     const passed = UNLOCKED.filter((x) => (m[x.id] ?? 0) >= 60);
-    return { next, weak, passed, unlocked: UNLOCKED.length, total: MODULES.length };
+    // 60-day window: modules the mentor starred; passed = unlocked and mastery >= 60%
+    const starred = MODULES.filter((x) => x.star);
+    const starredPassed = starred.filter((x) => x.status === 'unlocked' && (m[x.id] ?? 0) >= 60);
+    return { next, weak, passed, starred, starredPassed, unlocked: UNLOCKED.length, total: MODULES.length };
   }, [m]);
 }
 

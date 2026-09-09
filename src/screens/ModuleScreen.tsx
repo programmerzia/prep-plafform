@@ -8,6 +8,8 @@ import { Markdown } from '../ui/Markdown';
 import { Bn, Button, Card, Chip, Chips, CodeBlock, H2, H3, Muted, Page, Pill, Reveal, masteryTone } from '../ui/primitives';
 import { SIMULATORS } from '../simulators';
 
+const STACK_LABEL = { laravel: 'Laravel', symfony: 'Symfony', dotnet: '.NET', node: 'Node' } as const;
+
 export function ModuleScreen() {
   const { moduleId } = useParams();
   const m = getModule(moduleId);
@@ -118,7 +120,23 @@ function LessonView({ id }: { id: string }) {
         {L.crossStack.length > 0 && (
           <>
             <H3>Across stacks</H3>
-            <div className="overflow-x-auto">
+            {/* Under 600px: one card per concept. 600px and up: the table. */}
+            <div className="flex flex-col gap-2 min-[600px]:hidden">
+              {L.crossStack.map((r, i) => (
+                <div key={i} className="rounded-xl border border-line p-3 text-[14px] dark:border-[#2a2e38]">
+                  <div className="mb-1 font-semibold">{r.concept}</div>
+                  {(['laravel', 'symfony', 'dotnet', 'node'] as const).map((k) =>
+                    r[k] ? (
+                      <div key={k} className="flex gap-2 py-0.5">
+                        <span className="w-16 shrink-0 text-neutral-500">{STACK_LABEL[k]}</span>
+                        <span className="min-w-0 flex-1">{r[k]}</span>
+                      </div>
+                    ) : null,
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="hidden overflow-x-auto min-[600px]:block">
               <table className="min-w-full text-[13.5px]">
                 <thead>
                   <tr className="text-left text-neutral-500">

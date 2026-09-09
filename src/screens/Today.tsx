@@ -55,6 +55,11 @@ export function Today() {
         <div className="my-2">
           <Bar pct={pct} />
         </div>
+        {path.starred.length > 0 && (
+          <div className="mb-3 rounded-xl bg-warn-soft px-3 py-2 text-[15px] dark:bg-[#2c2410]">
+            <span aria-hidden>★</span> 60-day progress: {path.starredPassed.length} of {path.starred.length} starred modules passed
+          </div>
+        )}
         {path.weak.length > 0 && (
           <div className="mb-3">
             <Muted className="mb-1.5">Finish these first (under 60% in drills)</Muted>

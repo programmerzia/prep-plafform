@@ -19,8 +19,16 @@ function download(name: string, url: string) {
   a.click();
 }
 
-/** Draggable labelled boxes + arrows. Touch first: drag to move, tap to select, Connect mode to link two boxes. */
+/** More → Design canvas screen. */
 export function Canvas() {
+  return <CanvasEditor />;
+}
+
+/**
+ * Draggable labelled boxes + arrows. Touch first: drag to move, tap to select, Connect mode to link two boxes.
+ * `embedded` renders without the page chrome so a module can use it as the `design-canvas` simulator.
+ */
+export function CanvasEditor({ embedded = false }: { embedded?: boolean }) {
   const { canvases, saveCanvas, removeCanvas } = useStore();
   const [doc, setDoc] = useState<CanvasDoc>(() => canvases[0] ?? newDoc());
   const [selected, setSelected] = useState<string | null>(null);
@@ -165,8 +173,14 @@ export function Canvas() {
     return { x: c.x + dx * s, y: c.y + dy * s };
   };
 
-  return (
-    <Page back="/more" title={doc.name} actions={<Button variant="ghost" onClick={save}>Save</Button>}>
+  const body = (
+    <>
+      {embedded && (
+        <div className="flex items-center justify-between">
+          <Muted>{doc.name}</Muted>
+          <Button variant="ghost" onClick={save}>Save</Button>
+        </div>
+      )}
       <Chips>
         <Button variant="primary" onClick={addBox}>+ Box</Button>
         <Chip on={connectMode} onClick={() => { setConnectMode(!connectMode); setConnect(null); setMsg(connectMode ? '' : 'Connect: tap the source box, then the target box.'); }}>
@@ -250,6 +264,13 @@ export function Canvas() {
           </Button>
         )}
       </Card>
+    </>
+  );
+
+  if (embedded) return <div className="flex flex-col gap-3">{body}</div>;
+  return (
+    <Page back="/more" title={doc.name} actions={<Button variant="ghost" onClick={save}>Save</Button>}>
+      {body}
     </Page>
   );
 }
