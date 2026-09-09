@@ -77,7 +77,7 @@ event-loop (call stack / microtask / macrotask stepper), join-fanout (JOIN vs EX
 ## Migration
 `legacy/senior-prep.html` contains the first 8 finished modules and two simulators as inline JS (`TOPICS` array, `demoLoop`, `demoJoin`). Migrate their content into module JSON files and the two simulators into React components. Preserve all text, code and Bangla exactly.
 
-Done (2026-09-09) by `scripts/migrate-legacy.mjs`; `src/content/content.test.ts` checks every migrated string against the legacy file. Re-running the script overwrites the 71 generated files, so once a module is hand-edited, do not re-run it.
+Done (2026-09-09) by `scripts/migrate-legacy.mjs`; `src/content/content.test.ts` checks every migrated string against the legacy file. The script skips files that already exist, so hand edits are safe; `--force` regenerates all 71 legacy files.
 
 ## Decisions made while scaffolding (2026-09-09)
 - Schema leniency: only `id/track/phase/order/title/status` are required. Unlocked modules must have `lesson.concept`, `lesson.bn` and ≥1 card; preview modules must have `preview`. `problem/hook/simple/wrong/right/crossStack/docs/interview/glossary` are optional with empty defaults, because the migrated modules lack them. The lesson page hides empty sections; `right` alone renders under the heading "Code".
@@ -103,3 +103,4 @@ Done (2026-09-09) by `scripts/migrate-legacy.mjs`; `src/content/content.test.ts`
 - Cheat sheets are the one place answers may be shown expanded, because they are printed reference pages.
 - The mock's grouping of tracks is called "Track focus" in the UI and code (`TRACK_FOCUS` in `src/content/tracks.ts`). The word "funnel" is not used in the UI.
 - `git` is its own track.
+- When a mentor delivers an unlocked module that supersedes a legacy preview, keep the preview only if it still covers something the new module does not, and give it a later `order`. Example: `js-closures-this` (unlocked) is order 2, `js-closures-this-prototypes` (preview, prototypes still untaught) is order 3.

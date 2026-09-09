@@ -1,0 +1,165 @@
+{
+  "id": "sql-subqueries-cte",
+  "track": "sql",
+  "phase": 1,
+  "order": 4,
+  "title": "Subqueries, CTEs and EXISTS patterns",
+  "status": "unlocked",
+  "star": true,
+  "preview": {
+    "what": "Breaking a hard query into named steps, and asking yes/no questions of other tables without multiplying rows.",
+    "picture": "Cooking: you don't chop, fry and plate in one motion. You prepare the onions (CTE), prepare the sauce (CTE), then combine. EXISTS is tasting the sauce — you check it, you don't pour it into the pot.",
+    "why": "Every senior SQL screen has a query too big for one SELECT. Whether you reach for a CTE or a tangle of nested parentheses tells them how you think.",
+    "bn": "কঠিন query-কে নাম দেওয়া ধাপে ভাঙা (CTE), আর অন্য table-কে row না বাড়িয়ে হ্যাঁ/না প্রশ্ন করা (EXISTS)।"
+  },
+  "lesson": {
+    "problem": "Finance asks: 'Customers whose total paid in 2026 is above the average customer, who have never had a refund, with their most recent order date.' You start nesting SELECTs inside SELECTs, lose track of the parentheses, and the query works but nobody — including you next week — can read it. A senior writes this as three named steps and one final SELECT.",
+    "picture": "A kitchen. A subquery is 'chop these onions right here in the pan while I'm frying' — it works but it's cramped. A CTE (WITH ... AS) is prep bowls: chop the onions into bowl A, make the sauce in bowl B, label them, then combine. Same ingredients, readable process. EXISTS is tasting from a bowl: you learn 'is there salt in it?' without pouring the bowl into your dish. JOIN pours the bowl in — and if the bowl has three spoonfuls, you get three spoonfuls in your plate.",
+    "hook": "CTEs are prep bowls. EXISTS tastes; JOIN pours.",
+    "concept": "**Subquery** — a SELECT inside another statement. Three places it can live:\n\n- In `WHERE`: `WHERE customer_id IN (SELECT ...)` or `WHERE EXISTS (SELECT 1 ...)`\n- In `FROM`: `FROM (SELECT ...) AS t` — a derived table; you can join to it\n- In `SELECT`: `SELECT (SELECT COUNT(*) FROM orders WHERE customer_id = c.id)` — a scalar subquery; runs once per outer row, so watch it on big sets\n\n**Correlated** subquery: it references the outer row (`WHERE i.order_id = o.id`). Runs once per outer row conceptually; databases optimise most of them into semi-joins, so they are not automatically slow.\n\n**CTE** (`WITH name AS (...)`) — a named subquery you define once at the top and reference by name. Readability first; the optimiser usually inlines it (MySQL 8, Postgres 12+). Use `WITH RECURSIVE` for trees (categories, org charts) and for generating rows.\n\n**EXISTS vs IN vs JOIN** — the choice that shows seniority:\n\n- `EXISTS (SELECT 1 ...)` — 'is there at least one?' Stops at the first match. Never multiplies rows. Handles NULLs safely. This is your default for filtering by another table.\n- `IN (SELECT id ...)` — fine for small lists; `NOT IN` is a trap: if the subquery returns any NULL, `NOT IN` returns no rows at all. Use `NOT EXISTS`.\n- `JOIN` — only when you need columns from the other table in the output. If you only need to filter, you are paying for row multiplication you then have to undo.\n\n**Derived table vs CTE**: same thing; CTE is readable, derived table is inline. In MySQL 8 both can be materialised or merged; if a CTE is referenced twice, it may be computed once. Postgres: `WITH ... AS MATERIALIZED` forces it.\n\n**Rule for readability**: each CTE does one thing and has a name that says what it produces (`paid_2026`, `avg_spend`, `never_refunded`). The final SELECT should read like a sentence.",
+    "simple": "You need to tell the head teacher: 'students who scored above the class average in maths, never failed any subject, and their latest exam date'. If you try to say it in one breath it's a mess. So you make three lists on three sheets of paper: (1) maths marks per student, (2) the class average, (3) students who ever failed. Then you say: 'from sheet 1, take students above the number on sheet 2, remove anyone on sheet 3'. Each sheet is a CTE. Checking 'is this student on sheet 3?' is EXISTS — you look at the sheet, you don't copy it into your answer.",
+    "wrong": {
+      "lang": "sql",
+      "code": "-- Unreadable, and NOT IN is a NULL trap\nSELECT c.id, c.name,\n  (SELECT SUM(total) FROM orders WHERE customer_id = c.id AND status='paid' AND YEAR(created_at)=2026) AS spent,\n  (SELECT MAX(created_at) FROM orders WHERE customer_id = c.id) AS last_order\nFROM customers c\nWHERE (SELECT SUM(total) FROM orders WHERE customer_id = c.id AND status='paid' AND YEAR(created_at)=2026)\n      > (SELECT AVG(s) FROM (SELECT SUM(total) s FROM orders WHERE status='paid' AND YEAR(created_at)=2026 GROUP BY customer_id) x)\n  AND c.id NOT IN (SELECT customer_id FROM orders WHERE status='refunded');",
+      "why": "The same SUM is computed twice per customer; YEAR(created_at) kills the index; and NOT IN returns zero rows if any customer_id in the refund subquery is NULL. It works today by accident."
+    },
+    "right": {
+      "lang": "sql",
+      "code": "WITH paid_2026 AS (\n    SELECT customer_id, SUM(total) AS spent\n    FROM orders\n    WHERE status = 'paid'\n      AND created_at >= '2026-01-01' AND created_at < '2027-01-01'\n    GROUP BY customer_id\n),\navg_spend AS (\n    SELECT AVG(spent) AS avg_spent FROM paid_2026\n),\nlast_order AS (\n    SELECT customer_id, MAX(created_at) AS last_order_at\n    FROM orders GROUP BY customer_id\n)\nSELECT c.id, c.name, p.spent, l.last_order_at\nFROM customers c\nJOIN paid_2026 p  ON p.customer_id = c.id\nJOIN last_order l ON l.customer_id = c.id\nCROSS JOIN avg_spend a\nWHERE p.spent > a.avg_spent\n  AND NOT EXISTS (\n      SELECT 1 FROM orders r\n      WHERE r.customer_id = c.id AND r.status = 'refunded'\n  )\nORDER BY p.spent DESC;",
+      "why": "Each CTE does one job and is computed once. The date range is index-friendly. NOT EXISTS is NULL-safe and stops at the first refund. CROSS JOIN to a one-row CTE is the standard way to compare against a single computed value. Anyone can read it top to bottom."
+    },
+    "bn": "Subquery = SELECT-এর ভেতরে SELECT; WHERE, FROM বা SELECT list-এ বসতে পারে। CTE (WITH নাম AS) = ওপরে নাম দিয়ে ধাপ লেখা — রান্নার prep bowl-এর মতো, পড়া সহজ। EXISTS = 'একটাও আছে কি?' — প্রথম মিলেই থামে, row বাড়ায় না, NULL-safe; অন্য table দিয়ে filter করতে এটাই default। NOT IN বিপদ: subquery-তে একটা NULL থাকলেই কোনো row আসে না — NOT EXISTS ব্যবহার করো। JOIN শুধু তখন যখন অন্য table-এর column output-এ লাগবে। WITH RECURSIVE = tree (category, org chart) আর row generate করার জন্য।",
+    "crossStack": [
+      {
+        "concept": "EXISTS filter",
+        "laravel": "User::whereHas('orders', fn($q) => $q->where('status','paid')) / whereDoesntHave → compiles to EXISTS / NOT EXISTS",
+        "symfony": "Doctrine QueryBuilder: $qb->expr()->exists($sub->getDQL()) inside andWhere",
+        "dotnet": "EF Core: .Where(c => c.Orders.Any(o => o.Status == \"paid\")) → EXISTS; !Any() → NOT EXISTS",
+        "node": "Prisma: where: { orders: { some: { status: 'paid' } } } / none: {...}"
+      },
+      {
+        "concept": "CTE",
+        "laravel": "staudenmeir/laravel-cte package: Order::withExpression('paid_2026', $sub)->from('paid_2026'); or DB::select raw SQL",
+        "symfony": "Native query with ResultSetMapping; DQL has no WITH",
+        "dotnet": "No LINQ CTE; FromSqlRaw with WITH ... works",
+        "node": "Knex: knex.with('paid_2026', qb => ...).select(...)"
+      }
+    ],
+    "docs": [
+      {
+        "label": "MySQL WITH (Common Table Expressions)",
+        "url": "https://dev.mysql.com/doc/refman/8.4/en/with.html"
+      },
+      {
+        "label": "PostgreSQL WITH queries",
+        "url": "https://www.postgresql.org/docs/current/queries-with.html"
+      }
+    ]
+  },
+  "practice": [
+    {
+      "task": "Products that have never been ordered. Write it with NOT EXISTS, then with LEFT JOIN ... IS NULL, and check both return the same count on your prep database.",
+      "hint": "The anti-join pattern. products → order_items on product_id.",
+      "solution": "```sql\nSELECT p.id, p.name FROM products p\nWHERE NOT EXISTS (SELECT 1 FROM order_items i WHERE i.product_id = p.id);\n\nSELECT p.id, p.name FROM products p\nLEFT JOIN order_items i ON i.product_id = p.id\nWHERE i.id IS NULL;\n\n-- With 2,000 products and 1.5M random items, expect very few or zero rows. Both counts must match.\n```",
+      "why": "Two spellings of the same anti-join. NOT EXISTS reads as the question being asked; LEFT JOIN + IS NULL is older and equally valid. Never NOT IN here — one NULL product_id would empty the result."
+    },
+    {
+      "task": "Customers whose average paid order is higher than the overall average paid order. Use CTEs; no repeated aggregates.",
+      "hint": "Two CTEs: per-customer average, and overall average. CROSS JOIN the one-row CTE.",
+      "solution": "```sql\nWITH per_customer AS (\n  SELECT customer_id, AVG(total) AS avg_order\n  FROM orders WHERE status = 'paid' GROUP BY customer_id\n),\noverall AS (\n  SELECT AVG(total) AS avg_all FROM orders WHERE status = 'paid'\n)\nSELECT pc.customer_id, ROUND(pc.avg_order, 2) AS avg_order, ROUND(o.avg_all, 2) AS avg_all\nFROM per_customer pc\nCROSS JOIN overall o\nWHERE pc.avg_order > o.avg_all\nORDER BY pc.avg_order DESC;\n```",
+      "why": "Note the trap: 'average of customer averages' is NOT the same as 'overall average order'. The overall CTE averages orders directly. Interviewers love this distinction."
+    },
+    {
+      "task": "Recursive CTE: create a table categories(id, parent_id, name), insert a 3-level tree (Electronics → Phones → Android), and write the query that returns every category with its full path like 'Electronics > Phones > Android' and its depth.",
+      "hint": "WITH RECURSIVE: anchor = roots (parent_id IS NULL), recursive part joins children to the previous level and appends the name.",
+      "solution": "```sql\nCREATE TABLE categories (id INT PRIMARY KEY, parent_id INT NULL, name VARCHAR(50));\nINSERT INTO categories VALUES (1,NULL,'Electronics'),(2,1,'Phones'),(3,2,'Android'),(4,2,'iPhone'),(5,1,'Laptops');\n\nWITH RECURSIVE tree AS (\n  SELECT id, parent_id, name, CAST(name AS CHAR(500)) AS path, 1 AS depth\n  FROM categories WHERE parent_id IS NULL\n  UNION ALL\n  SELECT c.id, c.parent_id, c.name, CONCAT(t.path, ' > ', c.name), t.depth + 1\n  FROM categories c JOIN tree t ON c.parent_id = t.id\n)\nSELECT id, path, depth FROM tree ORDER BY path;\n```",
+      "why": "Anchor row(s) + UNION ALL + a part that joins back to the CTE itself. The CAST sets the path column wide enough for the recursion. This is how nested menus, org charts and comment threads are queried without a loop in PHP."
+    }
+  ],
+  "interview": [
+    {
+      "q": "When do you use EXISTS instead of a JOIN?",
+      "model": "When I only need to filter by the other table, not show its columns. EXISTS asks 'is there at least one matching row' and stops at the first hit, so it never multiplies my rows and never needs a DISTINCT to clean up. If I need the other table's columns in the output, then it's a JOIN — and if that table is one-to-many I aggregate it first.",
+      "missing": "Add the NULL point: NOT EXISTS is NULL-safe where NOT IN silently returns nothing if the subquery contains a NULL.",
+      "followUp": "Is a correlated EXISTS subquery executed once per outer row?",
+      "bn": "শুধু filter লাগলে EXISTS; অন্য table-এর column output-এ লাগলে JOIN, আর one-to-many হলে আগে aggregate।"
+    },
+    {
+      "q": "What's wrong with NOT IN (SELECT customer_id FROM ...)?",
+      "model": "If that subquery returns even one NULL, NOT IN evaluates to unknown for every row and the whole result is empty — silently. NOT EXISTS doesn't have that problem, so it's my default for 'has none of'. NOT IN is only safe when the column is NOT NULL and I've checked.",
+      "missing": "Explain the mechanism in one line: x NOT IN (1, NULL) becomes x <> 1 AND x <> NULL, and x <> NULL is unknown, so the AND is never true.",
+      "followUp": "Would you ever use NOT IN?",
+      "bn": "Subquery-তে একটা NULL থাকলেই NOT IN খালি ফলাফল দেয় — NOT EXISTS ব্যবহার করো।"
+    },
+    {
+      "q": "Are CTEs slower than subqueries?",
+      "model": "Usually the same. MySQL 8 and Postgres 12+ inline a CTE into the main query unless it's referenced multiple times or marked materialized, so the plan is identical to the subquery version. I choose CTEs for readability and check EXPLAIN when it matters. The exception is a CTE used twice: materializing it once can be faster than computing a subquery twice.",
+      "missing": "Mention that older Postgres (< 12) always materialized CTEs as an optimisation fence — a common gotcha in legacy systems.",
+      "followUp": "How would you force materialization, and why might you want to?",
+      "bn": "সাধারণত একই গতি — MySQL 8 আর Postgres 12+ CTE-কে inline করে; পড়ার সুবিধার জন্য CTE, প্রয়োজনে EXPLAIN দেখো।"
+    },
+    {
+      "q": "How would you query a category tree of unknown depth?",
+      "model": "With a recursive CTE: the anchor selects the root rows, the recursive part joins children to the rows found so far and appends to a path column, and UNION ALL stitches the levels together. One query returns every node with its depth and path. For very deep or very hot trees I'd consider storing a materialized path or a closure table instead.",
+      "missing": "Name the alternatives explicitly — adjacency list (what you have), nested sets, closure table — and that the recursive CTE is the adjacency-list read path.",
+      "followUp": "What stops a recursive CTE from looping forever if the data has a cycle?",
+      "bn": "WITH RECURSIVE: anchor = root, recursive অংশ child join করে path জোড়ে, UNION ALL — এক query-তে পুরো tree।"
+    }
+  ],
+  "cards": [
+    {
+      "q": "What is a CTE and why use one?",
+      "a": "WITH name AS (...) — a named subquery defined once at the top. Readability: each step has a name; the final SELECT reads like a sentence."
+    },
+    {
+      "q": "EXISTS vs JOIN — the rule",
+      "a": "EXISTS to filter (yes/no, no row multiplication); JOIN only when you need the other table's columns."
+    },
+    {
+      "q": "Why is NOT IN dangerous?",
+      "a": "If the subquery returns any NULL, NOT IN returns no rows. Use NOT EXISTS."
+    },
+    {
+      "q": "What is a correlated subquery?",
+      "a": "One that references the outer query's row (WHERE i.order_id = o.id). Conceptually per-row; usually optimised into a semi-join."
+    },
+    {
+      "q": "Three places a subquery can live",
+      "a": "WHERE (IN/EXISTS), FROM (derived table), SELECT list (scalar, runs per row)."
+    },
+    {
+      "q": "How do you compare every row against one computed value (e.g. the average)?",
+      "a": "Put the value in a one-row CTE and CROSS JOIN it."
+    },
+    {
+      "q": "Shape of a recursive CTE",
+      "a": "WITH RECURSIVE t AS (anchor SELECT UNION ALL recursive SELECT that joins to t) SELECT ... FROM t."
+    },
+    {
+      "q": "Do CTEs cost performance?",
+      "a": "Usually inlined by MySQL 8 / Postgres 12+; same plan as a subquery. Referenced twice → may materialize once, which can be faster."
+    }
+  ],
+  "glossary": [
+    {
+      "term": "CTE",
+      "plain": "Common Table Expression — a named temporary result defined with WITH at the top of a query.",
+      "bn": "WITH দিয়ে query-র ওপরে নাম দেওয়া অস্থায়ী result।"
+    },
+    {
+      "term": "correlated subquery",
+      "plain": "A subquery that uses a value from the outer query's current row.",
+      "bn": "বাইরের query-র row-র মান ব্যবহার করা subquery।"
+    },
+    {
+      "term": "anti-join",
+      "plain": "Rows from A that have no match in B — written as NOT EXISTS or LEFT JOIN ... IS NULL.",
+      "bn": "A-র যে row-গুলোর B-তে মিল নেই — NOT EXISTS বা LEFT JOIN ... IS NULL।"
+    },
+    {
+      "term": "derived table",
+      "plain": "A subquery in the FROM clause used like a table.",
+      "bn": "FROM-এ table-এর মতো ব্যবহার করা subquery।"
+    }
+  ]
+}

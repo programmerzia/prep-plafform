@@ -2,7 +2,7 @@
   "id": "js-promises-async",
   "track": "js-ts",
   "phase": 1,
-  "order": 3,
+  "order": 4,
   "title": "Promises, async/await, error handling, cancellation",
   "status": "preview",
   "star": false,

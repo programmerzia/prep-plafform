@@ -1,0 +1,169 @@
+{
+  "id": "php-fundamentals",
+  "track": "php",
+  "phase": 1,
+  "order": 1,
+  "title": "Core PHP: types, arrays, strict mode, null safety",
+  "status": "unlocked",
+  "star": true,
+  "preview": {
+    "what": "The PHP you write in every file: scalar types, arrays as the universal container, strict typing, and handling null without crashes.",
+    "picture": "A toolbox where the same drawer (array) holds screws, a list, or a labelled parts tray — and where 'strict mode' means the drawer refuses a screwdriver when you asked for a hammer.",
+    "why": "Senior PHP screens start with 'what does this print?' on type juggling, array functions and null. Ten years in, most people still get two of five wrong.",
+    "bn": "প্রতিদিনের PHP: scalar type, সব কিছুর পাত্র array, strict typing, আর crash না করে null সামলানো।"
+  },
+  "lesson": {
+    "problem": "A payment check does `if ($amount == '0')` and a request sends `$amount = 'abc'`. In PHP 7 that was true (non-numeric string == 0), the order shipped for free, and it took two days to find. Another day, `$user->profile->city` throws 'Attempt to read property on null' on the account page because one user has no profile. Both are core PHP, not framework.",
+    "picture": "PHP's variables are labelled boxes, and the label can change: the box holds '42' (string) today and 42 (int) after a loose comparison. `==` asks 'could these two be the same if I squint?'; `===` asks 'are they the same thing, same type?'. `declare(strict_types=1)` is telling the function 'I asked for an int; a string that looks like an int is still a string — refuse it'. An array is the universal drawer: an ordered list, a dictionary, or both at once, because PHP arrays are ordered maps.",
+    "hook": "=== always. strict_types=1 at the top of every file. ?-> when null is normal.",
+    "concept": "**Scalar types & juggling.** `int, float, string, bool, null`, plus `array`, `object`, `callable`, `iterable`, `mixed`. PHP converts between them silently in loose contexts. Since PHP 8, `0 == 'abc'` is **false** (the comparison became sane: number vs non-numeric string compares as strings), but `'1' == '01'` and `100 == '1e2'` are still true. Rule: use `===`, and `in_array($x, $arr, true)`.\n\n**strict_types.** `declare(strict_types=1);` as the first line makes scalar type declarations strict for calls made *from that file*: `function f(int $x)` called with `'5'` throws `TypeError` instead of coercing. It does not affect `==`. Every modern codebase (and PSR-12 style guides) expects it.\n\n**Arrays are ordered hash maps.** `[1, 2, 3]` and `['a' => 1]` are the same type. Keys are int or string; `'1'` becomes int `1`, `true` becomes `1`, `null` becomes `''`. The functions you use daily:\n\n- `array_map` (transform), `array_filter` (keep; **preserves keys** — `array_values` after it if you need a list), `array_reduce` (fold), `array_column` (pluck), `array_key_exists` vs `isset` (isset is false for a null value), `array_search`, `usort` (in place, unstable before 8.0, stable since), `array_merge` (renumbers int keys!) vs `+` (keeps left keys), spread `[...$a, ...$b]`.\n- Iterate with `foreach ($items as $key => $item)`; modifying `$item` doesn't touch the array unless `&$item` — and that reference is a classic bug if you reuse `$item` after the loop.\n\n**Null safety.** `??` (null coalescing: `$x ?? 'default'` — also silences undefined index/property), `??=` (assign if null), `?->` (nullsafe: `$user?->profile?->city` returns null instead of throwing). Nullable types: `?string`, or union `string|null`. `empty()` is a trap: `empty('0')` is true.\n\n**Strings.** Single quotes: literal. Double quotes: interpolation `\"Hello {$user->name}\"`. `str_contains`, `str_starts_with`, `sprintf`, `mb_*` for non-ASCII (Bangla text needs `mb_strlen`, not `strlen`).\n\n**Numeric pitfalls.** Integer division `intdiv()`, `/` returns float; float comparison `abs($a - $b) < 0.00001`; money never in float (see schema design).\n\n**Copy vs reference.** Arrays and scalars are copied on assignment (copy-on-write, so cheap). Objects are handles: `$b = $a` makes both names point at the same object. `clone` for a shallow copy.",
+    "simple": "Think of PHP variables as sticky notes on jars. `==` looks at two jars and says 'close enough' — a jar labelled '5' and a jar with five marbles pass. `===` says 'same label, same contents' — they don't. Always use the strict one, or one day a jar labelled 'abc' passes as zero and something ships for free.\n\nAn array is a drawer with numbered or named compartments. The same drawer type does both: a shopping list (0, 1, 2) and a phone book (name → number).\n\n`??` is 'use this, or if the jar is empty use that instead'. `?->` is 'open the jar inside the jar, and if the outer jar is empty just say empty instead of breaking'.\n\n`declare(strict_types=1)` is a sign on the door: 'in this room, if you ask for a number and hand me text, I refuse'. It catches mistakes at the moment they happen instead of three functions later.",
+    "wrong": {
+      "lang": "php",
+      "code": "<?php\nfunction isFree($amount) {\n    return $amount == 0;              // loose: '' == 0 is true, null == 0 is true\n}\n\n$cities = [];\nforeach ($users as $user) {\n    $cities[] = $user->profile->city; // crashes on a user with no profile\n}\n\n$active = array_filter($users, fn($u) => $u->active);\necho json_encode($active);           // {\"0\":..., \"3\":...} — an object, not a list, because keys were preserved\n\nif (empty($qty)) { /* '0' is empty! a quantity of zero as a string is treated as missing */ }",
+      "why": "Loose comparison and empty() treat different things as equal; a missing relation throws; array_filter keeps original keys so JSON becomes an object and your frontend breaks."
+    },
+    "right": {
+      "lang": "php",
+      "code": "<?php\ndeclare(strict_types=1);\n\nfunction isFree(int $amountMinor): bool {\n    return $amountMinor === 0;                 // strict, typed, in minor units\n}\n\n$cities = [];\nforeach ($users as $user) {\n    $cities[] = $user->profile?->city ?? 'unknown';   // nullsafe + default\n}\n\n$active = array_values(array_filter($users, fn (User $u): bool => $u->active));\necho json_encode($active);                    // [...] a real list\n\nif ($qty === null || $qty === '') { /* explicit: missing, not zero */ }\n\n// arrays as maps: pluck and group\n$byCountry = [];\nforeach ($customers as $c) {\n    $byCountry[$c->country][] = $c;            // auto-creates the inner list\n}\n$emails = array_column($customers, 'email', 'id');   // [id => email]\n\n// merge trap\n$a = [10 => 'x']; $b = [10 => 'y'];\narray_merge($a, $b);   // [0 => 'x', 1 => 'y']  — int keys renumbered\n$a + $b;               // [10 => 'x']            — left wins, keys kept",
+      "why": "Strict types and === make the free-order bug impossible. ?-> and ?? handle the missing profile in one expression. array_values after array_filter restores a list so JSON is an array. The array_merge vs + difference is a recurring interview question."
+    },
+    "bn": "সবসময় === ব্যবহার করো; == 'কাছাকাছি হলেই সমান' ধরে (PHP 8-এ 0 == 'abc' মিথ্যা, কিন্তু '1' == '01' এখনো সত্য)। প্রতিটা file-এর প্রথম লাইনে declare(strict_types=1) — int চাইলে '5' দিলে TypeError। Array হলো ordered map: list আর dictionary একই জিনিস। array_filter key রেখে দেয় — JSON list চাইলে array_values করো। array_merge int key নতুন করে গোনে, + বাম পাশ রাখে। null: ?? (default), ??= (null হলে বসাও), ?-> (null হলে crash না করে null)। empty('0') true — quantity চেক-এ বিপদ। Object assignment মানে একই object-এর দুটো নাম; আলাদা কপি চাইলে clone। বাংলা text-এ mb_strlen।",
+    "crossStack": [
+      {
+        "concept": "Strict comparison / null-safe access",
+        "laravel": "PHP: === and ?->; Collections: collect($users)->filter(...)->values() restores keys",
+        "symfony": "Same PHP; Symfony's PropertyAccess handles null paths in forms",
+        "dotnet": "C#: == is type-safe already; ?. null-conditional, ?? null-coalescing — identical spelling",
+        "node": "JS: === (never ==), ?. and ?? — identical to PHP 8"
+      },
+      {
+        "concept": "Pluck a column into a map",
+        "laravel": "collect($rows)->pluck('email', 'id')",
+        "symfony": "array_column($rows, 'email', 'id')",
+        "dotnet": "rows.ToDictionary(r => r.Id, r => r.Email)",
+        "node": "Object.fromEntries(rows.map(r => [r.id, r.email]))"
+      }
+    ],
+    "docs": [
+      {
+        "label": "PHP type juggling & comparison",
+        "url": "https://www.php.net/manual/en/language.types.type-juggling.php"
+      },
+      {
+        "label": "PHP array functions",
+        "url": "https://www.php.net/manual/en/ref.array.php"
+      }
+    ]
+  },
+  "practice": [
+    {
+      "task": "Write your prediction for each line, then run it in ~/prep/php/juggling.php and compare:\n\nvar_dump(0 == 'abc');\nvar_dump('1' == '01');\nvar_dump(100 == '1e2');\nvar_dump(null == false);\nvar_dump([] == false);\nvar_dump('abc' == 0);\nvar_dump(in_array('abc', [0]));\nvar_dump(in_array('abc', [0], true));\nvar_dump(empty('0'));\nvar_dump(isset($x['a']) , array_key_exists('a', ['a' => null]));",
+      "hint": "PHP 8 changed number-vs-non-numeric-string. Everything else is old behaviour.",
+      "solution": "```php\nbool(false)   // PHP 8: 0 vs non-numeric string compares as strings '0' vs 'abc'\nbool(true)    // both numeric strings → compared as numbers\nbool(true)    // '1e2' is numeric = 100\nbool(true)    // null and false are both falsy in loose comparison\nbool(true)    // empty array is falsy\nbool(false)   // same rule as line 1\nbool(false)   // in_array loose uses ==; PHP 8 → false (was TRUE in PHP 7 — the classic bug)\nbool(false)   // strict\nbool(true)    // '0' is empty — the quantity trap\nbool(false) bool(true)   // isset is false for null; array_key_exists sees the key\n```",
+      "why": "Two of these changed in PHP 8 (lines 1, 6, 7). If you learned PHP before 2020 your instinct is wrong on exactly those. That is why interviewers ask them."
+    },
+    {
+      "task": "Given $orders (array of ['id','customer_id','status','total']), produce: (a) total paid per customer_id as [customer_id => sum], (b) the list of ids of cancelled orders, (c) the highest-total order. Use array functions, no foreach for (b) and (c). Then rewrite all three with Laravel Collections.",
+      "hint": "(a) foreach with ??= or array_reduce; (b) array_column(array_filter(...)); (c) usort or array_reduce.",
+      "solution": "```php\n// (a)\n$paid = [];\nforeach ($orders as $o) {\n    if ($o['status'] === 'paid') {\n        $paid[$o['customer_id']] = ($paid[$o['customer_id']] ?? 0) + $o['total'];\n    }\n}\n// (b)\n$cancelledIds = array_column(array_filter($orders, fn($o) => $o['status'] === 'cancelled'), 'id');\n// (c)\n$top = array_reduce($orders, fn($carry, $o) => ($carry === null || $o['total'] > $carry['total']) ? $o : $carry);\n\n// Collections\n$paid = collect($orders)->where('status', 'paid')->groupBy('customer_id')->map->sum('total');\n$cancelledIds = collect($orders)->where('status', 'cancelled')->pluck('id')->all();\n$top = collect($orders)->sortByDesc('total')->first();\n```",
+      "why": "array_column after array_filter works because array_column ignores keys. array_reduce with a null carry is the idiomatic 'max by field'. Knowing both the plain-PHP and the Collection spelling lets you follow any codebase."
+    },
+    {
+      "task": "The reference bug. Predict the output, run it, explain it in one sentence:\n\n$a = [1, 2, 3];\nforeach ($a as &$v) { $v *= 2; }\nforeach ($a as $v) { }\nprint_r($a);",
+      "hint": "After the first loop, $v is still a reference to $a[2].",
+      "solution": "```php\nArray ( [0] => 2 [1] => 4 [2] => 4 )\n\n// After loop 1, $v still references $a[2]. Loop 2 assigns each element INTO that reference,\n// so $a[2] becomes 2, then 4, then 4 (itself). Fix: unset($v) after a by-reference loop,\n// or avoid &: $a = array_map(fn($x) => $x * 2, $a);\n```",
+      "why": "This is the single most famous PHP gotcha and it still appears in senior screens. The one-sentence answer: 'the reference outlives the loop'."
+    }
+  ],
+  "interview": [
+    {
+      "q": "What does declare(strict_types=1) actually change?",
+      "model": "It makes scalar type declarations strict for function calls made from that file: passing '5' to an int parameter throws a TypeError instead of being coerced. It's per-file and applies to the caller's file, not the callee's. It doesn't change == comparisons or arithmetic juggling — just typed parameters and return values. I put it at the top of every file.",
+      "missing": "The per-file, caller-side detail — most people think it's global or affects the function's own file.",
+      "followUp": "If a library file has strict_types and my file doesn't, what happens when I call it with a string?",
+      "bn": "ওই file থেকে করা call-এ scalar type strict হয় — int চাইলে '5' দিলে TypeError; == বা arithmetic বদলায় না; প্রতিটা file-এ দাও।"
+    },
+    {
+      "q": "array_merge vs + vs the spread operator — differences?",
+      "model": "array_merge renumbers integer keys and lets later values overwrite string keys. The + operator keeps the left side's keys and ignores right-side keys that already exist — so it's a 'defaults' operator. Spread [...$a, ...$b] behaves like array_merge, and since PHP 8.1 supports string keys too. For a list, spread; for defaults, +; for config merging by name, array_merge or array_replace.",
+      "missing": "Name array_replace: like array_merge for string keys but does NOT renumber int keys — the one people forget.",
+      "followUp": "Which one would you use to apply user options over a defaults array, and why?",
+      "bn": "array_merge int key নতুন করে গোনে আর ডান পাশ জেতে; + বাম পাশ রাখে (defaults-এর জন্য); spread array_merge-এর মতো।"
+    },
+    {
+      "q": "How do you handle a value that might be null three levels deep — $order->customer->profile->city?",
+      "model": "The nullsafe operator: $order->customer?->profile?->city returns null the moment any link is null, and I combine it with ?? for a default. In a type-hinted codebase I also make the nullability explicit — ?Profile — so the compiler and the reader know it can be missing. What I don't do is chain isset checks or catch the error.",
+      "missing": "Say when NOT to use it: if null there is a bug, let it throw — hiding a data problem with ?-> is worse than a crash.",
+      "followUp": "Does ?-> short-circuit method calls with side effects?",
+      "bn": "?-> দিয়ে: কোনো ধাপে null হলেই null ফেরে, সাথে ?? default; type-এ ?Profile লিখে nullable স্পষ্ট করো।"
+    },
+    {
+      "q": "What's the difference between copying an array and copying an object?",
+      "model": "Arrays are value types with copy-on-write: $b = $a gives an independent copy, cheaply, the actual copy happens only if one is modified. Objects are handles: $b = $a makes two names for the same object, and changing $b->x changes $a->x. For an independent object I use clone, and implement __clone if it holds nested objects that also need copying.",
+      "missing": "The copy-on-write detail — it shows you know why passing large arrays isn't expensive.",
+      "followUp": "What does clone do with a property that holds another object?",
+      "bn": "Array copy-on-write-এ আলাদা কপি; object handle — দুই নাম একই object; আলাদা চাইলে clone, nested হলে __clone।"
+    }
+  ],
+  "cards": [
+    {
+      "q": "PHP 8: 0 == 'abc' — true or false, and why?",
+      "a": "False. PHP 8 compares a number with a non-numeric string as strings ('0' vs 'abc'). It was true in PHP 7."
+    },
+    {
+      "q": "What does declare(strict_types=1) do, and where does it apply?",
+      "a": "Scalar parameter/return types are enforced (TypeError, no coercion) for calls made from that file. Per-file, caller-side."
+    },
+    {
+      "q": "array_filter and JSON — the trap",
+      "a": "array_filter preserves keys, so json_encode gives an object. Wrap in array_values() for a list."
+    },
+    {
+      "q": "array_merge vs + on int keys",
+      "a": "array_merge renumbers int keys; + keeps the left array's keys and ignores existing right-side keys."
+    },
+    {
+      "q": "isset vs array_key_exists",
+      "a": "isset is false when the value is null; array_key_exists only checks the key."
+    },
+    {
+      "q": "empty('0') is …",
+      "a": "true — a zero string is 'empty'. Check for null/'' explicitly when 0 is a valid value."
+    },
+    {
+      "q": "?? , ??= , ?-> in one line each",
+      "a": "??: value or default if null. ??=: assign if null. ?->: return null instead of throwing when the left side is null."
+    },
+    {
+      "q": "The foreach reference bug",
+      "a": "After foreach ($a as &$v), $v still points to the last element; a later loop overwrites it. unset($v) or avoid &."
+    },
+    {
+      "q": "$b = $a for an array vs an object",
+      "a": "Array: independent copy (copy-on-write). Object: same object, two names; use clone for a copy."
+    }
+  ],
+  "glossary": [
+    {
+      "term": "type juggling",
+      "plain": "PHP silently converting a value's type to make an operation work.",
+      "bn": "কাজ চালানোর জন্য PHP নিজে থেকে type বদলে নেওয়া।"
+    },
+    {
+      "term": "strict_types",
+      "plain": "A per-file declaration that makes typed parameters refuse the wrong scalar type.",
+      "bn": "File-ভিত্তিক ঘোষণা যাতে typed parameter ভুল type নেয় না।"
+    },
+    {
+      "term": "nullsafe operator (?->)",
+      "plain": "Property/method access that yields null instead of an error when the left side is null.",
+      "bn": "বাম পাশ null হলে error না দিয়ে null ফেরানো access।"
+    },
+    {
+      "term": "copy-on-write",
+      "plain": "Copies share memory until one of them is modified.",
+      "bn": "কেউ বদলানোর আগ পর্যন্ত কপি গুলো একই memory শেয়ার করে।"
+    }
+  ]
+}

@@ -2,7 +2,7 @@
   "id": "ts-essentials",
   "track": "js-ts",
   "phase": 1,
-  "order": 4,
+  "order": 5,
   "title": "TypeScript essentials: generics, unions, narrowing",
   "status": "preview",
   "star": false,

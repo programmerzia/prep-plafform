@@ -1,0 +1,165 @@
+{
+  "id": "js-closures-this",
+  "track": "js-ts",
+  "phase": 1,
+  "order": 2,
+  "title": "Closures, scope and this",
+  "status": "unlocked",
+  "star": true,
+  "preview": {
+    "what": "How JavaScript decides which variable a name refers to, why functions remember where they were born, and why `this` is the most misunderstood word in the language.",
+    "picture": "A closure is a backpack: a function carries the variables from the room it was created in, wherever it goes. `this` is a name tag that changes depending on who called you.",
+    "why": "Every JS screen has one closure-in-a-loop question and one lost-`this` question. Vue, React hooks and Node middleware are all closures underneath.",
+    "bn": "Closure = backpack: function যেখানে জন্মেছে সেখানকার variable সাথে নিয়ে যায়। this = name tag, কে ডাকছে তার ওপর বদলায়।"
+  },
+  "lesson": {
+    "problem": "A Vue component's `setTimeout(function () { this.loading = false }, 500)` never turns loading off — `this` inside is undefined. A colleague's loop attaches three click handlers that all alert '3'. A React hook returns a stale count because the callback captured the old value. Three different bugs, one mechanism: functions capture *variables*, not values, and `this` is decided at call time.",
+    "picture": "A function is a worker who leaves the office with a backpack. Inside the backpack are not copies of the files, but **keys to the filing cabinets** of the room they were created in. Months later, when the worker is called from anywhere, they can still open those cabinets — and see whatever is in them *now*, not what was there when they left. That's a closure.\n\n`this` is different: it isn't in the backpack. It's a name tag pinned on at the moment someone calls the worker: 'you're working for the Button now', 'now for the Component'. Call the same worker from nowhere in particular and the tag says 'nobody' (undefined in strict mode). Arrow functions refuse the tag — they keep whatever tag their creator was wearing.",
+    "hook": "Closures capture variables, not values. `this` is decided by the call, not the definition — except arrows, which inherit it.",
+    "concept": "**Scope.** `let`/`const` are block-scoped (each `{}`), `var` is function-scoped and hoisted. Inner scopes can read outer scopes; the lookup walks outward until it finds the name — that chain is the *scope chain*.\n\n**Closure.** A function plus the scope it was defined in. When a function is created inside another, it keeps a live reference to the outer variables. Two consequences:\n\n1. **State without classes.** A counter factory: `const make = () => { let n = 0; return () => ++n; }` — `n` survives between calls because the inner function holds it.\n2. **Loop capture.** With `var i`, all callbacks created in a loop share one `i` and see its final value. With `let i`, each iteration gets a fresh binding. This is the famous 'prints 3, 3, 3' question.\n\nStale closures are the same thing in React: a callback created in render N captures render N's variables; if it runs later it still sees them. The dependency array in useEffect exists to recreate the closure when those variables change.\n\n**`this` — four rules, checked in this order:**\n\n1. `new f()` → `this` is the new object.\n2. `f.call(obj)`, `f.apply(obj)`, `f.bind(obj)` → `this` is obj (bind returns a permanently bound copy).\n3. `obj.f()` → `this` is obj. **The object to the left of the dot at the call site.** Extract it (`const g = obj.f; g()`) and the dot is gone → rule 4.\n4. Plain call `f()` → `undefined` in strict mode / modules / classes; `window` in sloppy scripts.\n\n**Arrow functions** have no `this` of their own; they use the `this` of the surrounding scope at definition time (lexical this). That's why arrows fix the setTimeout bug and why arrows *cannot* be methods that rely on `this` or be used as constructors.\n\n**Classes** are strict-mode; methods lose `this` when passed as callbacks (`button.addEventListener('click', this.handle)` → `this` is the button). Fix with an arrow property `handle = () => {...}` or `.bind(this)` in the constructor.\n\n**Modules** (ESM) are strict by default; top-level `this` is undefined.",
+    "simple": "Imagine you write a note inside a room: 'the box in this room'. You leave, but you keep the key. Anyone who later asks you to read the note gets whatever is in that box right now. That's a closure — the note remembers the room, not the box's contents on the day you wrote it.\n\nNow the loop: three friends each write 'the number on the whiteboard' while you count 0, 1, 2 on the same whiteboard. When they read their notes later, the whiteboard says 3. All three say 3. With `let`, each friend gets their own whiteboard — that's why `let` fixes it.\n\n`this` is simpler than it sounds: look at what's to the left of the dot when the function is *called*. `user.sayHi()` — this is user. Copy the function out and call it alone — nothing to the left of the dot, so `this` is nothing. Arrow functions don't play this game: they just use whatever `this` was around when they were written.",
+    "wrong": {
+      "lang": "javascript",
+      "code": "// 1. Loop capture with var\nfor (var i = 0; i < 3; i++) {\n  buttons[i].onclick = function () { alert(i); };   // all alert 3\n}\n\n// 2. Lost this in a callback\nclass Counter {\n  count = 0;\n  start() {\n    setTimeout(function () { this.count++; }, 1000); // TypeError: this is undefined\n  }\n}\n\n// 3. Method extracted from its object\nconst timer = { secs: 0, tick() { this.secs++; } };\nconst tick = timer.tick;\ntick();                        // this is undefined → TypeError",
+      "why": "Case 1: one shared `i`, read after the loop finished. Case 2: a plain function inside setTimeout is a plain call, so `this` is undefined. Case 3: no dot at the call site, so no `this`."
+    },
+    "right": {
+      "lang": "javascript",
+      "code": "// 1. let gives each iteration its own binding\nfor (let i = 0; i < 3; i++) {\n  buttons[i].onclick = () => alert(i);            // 0, 1, 2\n}\n\n// 2. Arrow inherits this from start()\nclass Counter {\n  count = 0;\n  start() {\n    setTimeout(() => { this.count++; }, 1000);    // this is the Counter\n  }\n  // or make the method an arrow property so it can be passed around safely\n  handleClick = () => { this.count++; };\n}\n\n// 3. Keep the dot, or bind\ntimer.tick();\nconst tick = timer.tick.bind(timer); tick();\n\n// Closures as private state (the pattern behind hooks and composables)\nfunction makeCounter() {\n  let n = 0;                                      // private, survives between calls\n  return { inc: () => ++n, get: () => n };\n}\nconst c = makeCounter(); c.inc(); c.inc(); c.get(); // 2\n\n// once() — a closure that remembers it already ran\nfunction once(fn) {\n  let done = false, result;\n  return function (...args) {\n    if (!done) { done = true; result = fn.apply(this, args); }\n    return result;\n  };\n}",
+      "why": "`let` creates a new `i` per iteration. Arrows have lexical `this`. bind fixes `this` permanently. makeCounter shows closures as private state — exactly what a Vue composable or a React custom hook does under the hood."
+    },
+    "bn": "Scope: let/const block-scoped, var function-scoped আর hoisted। Closure = function + যেখানে তৈরি হয়েছে সেই scope-এর variable-এর live reference — মান না, variable। তাই var দিয়ে loop-এ সব callback একই i দেখে (3,3,3); let-এ প্রতিটা iteration আলাদা i পায়। React-এর stale closure একই জিনিস। this চারটা নিয়ম: new → নতুন object; call/apply/bind → দেওয়া object; obj.f() → dot-এর বাম পাশ; সাধারণ f() → strict mode-এ undefined। Arrow function-এর নিজের this নেই — আশেপাশের this নেয়, তাই setTimeout-এ arrow দিলে সমস্যা মেটে। Class method callback হিসেবে দিলে this হারায় — arrow property বা bind।",
+    "crossStack": [
+      {
+        "concept": "Closure as private state",
+        "laravel": "PHP closures: function () use ($n) captures by VALUE unless use (&$n); arrow fn($x) => $x + $n captures by value automatically",
+        "symfony": "same PHP",
+        "dotnet": "C# lambdas capture variables by reference (like JS); foreach loop variable is per-iteration since C# 5",
+        "node": "identical to browser JS; module scope is a closure over the file"
+      },
+      {
+        "concept": "this binding",
+        "laravel": "PHP closures bind $this automatically inside class methods; Closure::bind to change it",
+        "symfony": "same",
+        "dotnet": "C# `this` is always the instance; no call-site rebinding — lambdas capture it",
+        "node": "same rules; callbacks in Express handlers are plain calls → this undefined"
+      }
+    ],
+    "docs": [
+      {
+        "label": "MDN: Closures",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Closures"
+      },
+      {
+        "label": "MDN: this",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/this"
+      }
+    ]
+  },
+  "practice": [
+    {
+      "task": "Predict, then run in ~/prep/js/closures.js:\n\nfor (var i = 0; i < 3; i++) setTimeout(() => console.log('var', i), 0);\nfor (let j = 0; j < 3; j++) setTimeout(() => console.log('let', j), 0);\n\nconst obj = { name: 'A', regular() { return this?.name; }, arrow: () => this?.name };\nconsole.log(obj.regular(), obj.arrow());\nconst r = obj.regular; console.log(r());\n\nfunction outer() { const secret = 42; return () => secret; }\nconst f = outer(); console.log(f());",
+      "hint": "var shares one i; arrow at object level has module/undefined this; extracted method has no dot.",
+      "solution": "```javascript\nvar 3, var 3, var 3\nlet 0, let 1, let 2\nA undefined      // arrow's this is the module scope (undefined in ESM / {} in CJS → no .name)\nundefined        // r() is a plain call\n42               // closure keeps `secret` alive after outer returned\n```",
+      "why": "Line 3 is the one people miss: an arrow function as an object property does NOT get the object as this. Arrows are for callbacks inside methods, not for methods."
+    },
+    {
+      "task": "Implement memoize(fn) for single-argument functions using a closure over a Map. Then explain in one sentence why the cache doesn't leak between two memoized functions.",
+      "hint": "Each call to memoize creates a fresh Map inside a fresh closure.",
+      "solution": "```javascript\nfunction memoize(fn) {\n  const cache = new Map();\n  return function (arg) {\n    if (cache.has(arg)) return cache.get(arg);\n    const result = fn.call(this, arg);\n    cache.set(arg, result);\n    return result;\n  };\n}\nconst slowSquare = n => { for (let i = 0; i < 1e7; i++); return n * n; };\nconst fast = memoize(slowSquare);\nfast(9); fast(9);   // second call instant\n\n// Each memoize() call runs its own body, so `cache` is a new Map captured only by that returned function.\n```",
+      "why": "This is the same shape as debounce, once, and every React hook: a factory that returns a function holding private state. Interviewers use memoize because it forces you to explain closure isolation."
+    },
+    {
+      "task": "Fix this class so the button click works, two different ways, and say which you'd use in React and why:\n\nclass Panel {\n  constructor(el) { this.el = el; this.open = false; el.addEventListener('click', this.toggle); }\n  toggle() { this.open = !this.open; this.el.classList.toggle('open', this.open); }\n}",
+      "hint": "The listener is a plain call with this = the element.",
+      "solution": "```javascript\n// Way 1: bind in constructor\nconstructor(el) { this.el = el; this.open = false; this.toggle = this.toggle.bind(this); el.addEventListener('click', this.toggle); }\n\n// Way 2: arrow class property (lexical this)\ntoggle = () => { this.open = !this.open; this.el.classList.toggle('open', this.open); };\n\n// React class components: arrow property is the convention (and lets you removeEventListener with the same reference).\n// In function components this whole problem disappears — no `this`; closures over state instead.\n```",
+      "why": "Both give a stable reference, which matters for removeEventListener and for React's shouldComponentUpdate. The senior remark is the last line: hooks replaced `this` problems with closure problems (stale closures) — the same mechanism seen from the other side."
+    }
+  ],
+  "interview": [
+    {
+      "q": "What is a closure, and give a real use in code you've written.",
+      "model": "A closure is a function together with the variables from the scope it was created in — it keeps live references to them, not copies. I use them constantly without naming them: a Vue composable that keeps `const count = ref(0)` private and returns functions that update it is a closure; so is a debounce helper holding its timer; so is every React hook. The practical rule is that closures capture variables, not values, which is why a loop with var prints the final value and why React needs dependency arrays.",
+      "missing": "Say 'variables, not values' explicitly — it's the sentence that shows understanding rather than definition.",
+      "followUp": "How does that relate to a stale closure in useEffect?",
+      "bn": "Closure = function + যে scope-এ তৈরি সেখানকার variable-এর live reference; composable, debounce, hook — সবই closure।"
+    },
+    {
+      "q": "How is `this` determined in JavaScript?",
+      "model": "At call time, by how the function is called, in priority order: `new` makes this the new object; call/apply/bind set it explicitly; a method call sets it to the object left of the dot; a plain call gives undefined in strict mode. Arrow functions are the exception — they have no this and use the enclosing scope's. So the bugs are always the same two: a method passed as a callback loses its dot, or a plain function inside a method expects the outer this. Arrows or bind fix both.",
+      "missing": "Mention that ES modules and classes are strict by default, so 'undefined, not window' is the modern answer.",
+      "followUp": "Why can't an arrow function be a constructor?",
+      "bn": "Call-এর সময় ঠিক হয়: new → নতুন object, call/apply/bind → দেওয়া object, obj.f() → dot-এর বাম, f() → undefined; arrow-র নিজের this নেই।"
+    },
+    {
+      "q": "for (var i...) with setTimeout prints 3,3,3. Fix it three ways.",
+      "model": "Use let so each iteration has its own binding — that's the modern answer. Older ways: wrap the body in an IIFE that takes i as a parameter, creating a fresh scope per iteration; or pass i as the extra argument to setTimeout, which forwards it to the callback. All three work by giving each callback its own copy instead of a shared variable.",
+      "missing": "State the cause before the fixes: var is function-scoped, so there's one i and the callbacks run after the loop ends.",
+      "followUp": "Does forEach have the same problem?",
+      "bn": "কারণ: var function-scoped, একটাই i, callback loop শেষে চলে। ঠিক করা: let, IIFE, বা setTimeout-এর তৃতীয় argument।"
+    },
+    {
+      "q": "What's the difference between call, apply and bind?",
+      "model": "All three set this explicitly. call and apply invoke immediately — call takes arguments one by one, apply takes an array. bind doesn't invoke; it returns a new function with this permanently fixed, optionally with some arguments pre-filled. I use bind for callbacks and event handlers, apply when I have an array of arguments — though spread has mostly replaced apply.",
+      "missing": "Note that a bound function's this can't be overridden by call or even by new (partly) — 'permanently'.",
+      "followUp": "Implement bind in five lines.",
+      "bn": "call/apply সাথে সাথে চালায় (apply array নেয়), bind চালায় না — this স্থায়ীভাবে বাঁধা নতুন function দেয়।"
+    }
+  ],
+  "cards": [
+    {
+      "q": "Closure in one sentence",
+      "a": "A function plus live references to the variables of the scope it was created in — it captures variables, not values."
+    },
+    {
+      "q": "Why does for (var i...) + setTimeout print 3,3,3?",
+      "a": "var is function-scoped: one shared i, and the callbacks run after the loop ends. let gives a fresh i per iteration."
+    },
+    {
+      "q": "The four rules of this, in order",
+      "a": "new → new object; call/apply/bind → given object; obj.f() → object left of the dot; plain f() → undefined (strict)."
+    },
+    {
+      "q": "What is special about this in arrow functions?",
+      "a": "They have none of their own — they use the enclosing scope's this at definition time (lexical this)."
+    },
+    {
+      "q": "const g = obj.method; g() — what is this?",
+      "a": "undefined — no object left of the dot at the call site. Use obj.method(), bind, or an arrow property."
+    },
+    {
+      "q": "bind vs call vs apply",
+      "a": "call/apply invoke now (apply takes an array); bind returns a new permanently-bound function."
+    },
+    {
+      "q": "What is a stale closure in React?",
+      "a": "A callback created in an earlier render still sees that render's variables; dependency arrays recreate it when they change."
+    },
+    {
+      "q": "Pattern: function returning functions that share a private variable — name two real examples",
+      "a": "makeCounter/once/memoize/debounce helpers; Vue composables and React custom hooks."
+    }
+  ],
+  "glossary": [
+    {
+      "term": "scope chain",
+      "plain": "The list of enclosing scopes a name lookup walks through, innermost first.",
+      "bn": "নাম খুঁজতে ভেতর থেকে বাইরে যে scope গুলো দেখা হয়।"
+    },
+    {
+      "term": "lexical this",
+      "plain": "An arrow function's this: whatever this was where the arrow was written.",
+      "bn": "Arrow যেখানে লেখা সেখানকার this।"
+    },
+    {
+      "term": "hoisting",
+      "plain": "var and function declarations are moved to the top of their scope before code runs (var starts as undefined).",
+      "bn": "var আর function declaration scope-এর ওপরে উঠে যায়।"
+    },
+    {
+      "term": "IIFE",
+      "plain": "Immediately Invoked Function Expression — a function called right where it's defined, to create a private scope.",
+      "bn": "লেখার সাথে সাথে চালানো function, আলাদা scope তৈরির জন্য।"
+    }
+  ]
+}

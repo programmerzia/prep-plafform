@@ -1,6 +1,9 @@
 // One-off migration: legacy/senior-prep.html (TOPICS array) -> content/modules/*.json
 // Text, code and Bangla are copied verbatim. Only structure changes.
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+
+// Existing files are left alone so hand edits survive. Pass --force to regenerate everything.
+const FORCE = process.argv.includes('--force');
 
 const html = readFileSync('legacy/senior-prep.html', 'utf8');
 const start = html.indexOf('const PHASES = [');
@@ -88,7 +91,7 @@ const SIM = { loop: 'event-loop', sql2: 'join-fanout' };
 
 mkdirSync('content/modules', { recursive: true });
 const orderByTrack = {};
-let written = 0;
+let written = 0, skipped = 0;
 for (const t of TOPICS) {
   const m = MAP[t.id];
   if (!m) throw new Error(`No mapping for legacy id ${t.id}`);
@@ -119,7 +122,9 @@ for (const t of TOPICS) {
     const [what, picture, why] = t.pre;
     mod = { ...base, status: 'preview', star: false, preview: { what, picture, why, bn: t.bn } };
   }
-  writeFileSync(`content/modules/${id}.json`, JSON.stringify(mod, null, 2) + '\n');
+  const out = `content/modules/${id}.json`;
+  if (existsSync(out) && !FORCE) { skipped++; continue; }
+  writeFileSync(out, JSON.stringify(mod, null, 2) + '\n');
   written++;
 }
-console.log(`wrote ${written} modules (${TOPICS.filter((t) => t.ready).length} unlocked)`);
+console.log(`wrote ${written} modules, skipped ${skipped} existing (${TOPICS.filter((t) => t.ready).length} unlocked in legacy)`);
