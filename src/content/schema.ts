@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const TRACK_IDS = [
   'php', 'oop', 'sql', 'orm', 'laravel', 'symfony', 'http-api', 'js-ts', 'react', 'next',
   'vue-nuxt', 'node', 'dotnet', 'python-llm', 'supabase', 'architecture', 'cloud-devops',
-  'redis', 'payments', 'security-auth', 'pwa-offline', 'problems', 'interview', 'stories',
+  'git', 'redis', 'payments', 'security-auth', 'pwa-offline', 'problems', 'interview', 'stories',
 ] as const;
 
 export type TrackId = (typeof TRACK_IDS)[number];

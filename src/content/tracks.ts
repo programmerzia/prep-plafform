@@ -18,7 +18,8 @@ export const TRACKS: Record<TrackId, string> = {
   'python-llm': 'Python & LLMs',
   supabase: 'Supabase',
   architecture: 'Architecture & system design',
-  'cloud-devops': 'Cloud, DevOps & Git',
+  'cloud-devops': 'Cloud & DevOps',
+  git: 'Git',
   redis: 'Redis & caching',
   payments: 'Payments',
   'security-auth': 'Security & auth',
@@ -50,15 +51,15 @@ export function phaseShort(phase: number): string {
   return phaseName(phase).split(' — ')[1] ?? phaseName(phase);
 }
 
-/** Interview funnels: which tracks belong to each mock-interview funnel. */
-export const FUNNELS: Record<'laravel' | 'react-next' | 'dotnet', { name: string; tracks: TrackId[] }> = {
+/** Track focus: which tracks a mock interview draws from. */
+export const TRACK_FOCUS: Record<'laravel' | 'react-next' | 'dotnet', { name: string; tracks: TrackId[] }> = {
   laravel: {
     name: 'Laravel (primary)',
-    tracks: ['php', 'oop', 'sql', 'orm', 'laravel', 'symfony', 'http-api', 'redis', 'payments', 'security-auth', 'architecture', 'cloud-devops', 'problems'],
+    tracks: ['php', 'oop', 'sql', 'orm', 'laravel', 'symfony', 'http-api', 'redis', 'payments', 'security-auth', 'architecture', 'cloud-devops', 'git', 'problems'],
   },
   'react-next': {
     name: 'React / Next (secondary)',
-    tracks: ['js-ts', 'react', 'next', 'vue-nuxt', 'node', 'http-api', 'pwa-offline', 'problems'],
+    tracks: ['js-ts', 'react', 'next', 'vue-nuxt', 'node', 'http-api', 'pwa-offline', 'git', 'problems'],
   },
   dotnet: {
     name: '.NET (opportunistic)',
@@ -66,4 +67,4 @@ export const FUNNELS: Record<'laravel' | 'react-next' | 'dotnet', { name: string
   },
 };
 
-export type FunnelId = keyof typeof FUNNELS;
+export type TrackFocusId = keyof typeof TRACK_FOCUS;

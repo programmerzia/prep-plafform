@@ -31,7 +31,7 @@ his phone. Nothing here is a demo — it is his only study environment.
 3. **Practice** — tasks per module; run locally on his machine; hidden solutions with explanation.
 4. **Drill** — spaced repetition. Leitner boxes with intervals [0,1,3,7,21,60] days. "Got it" moves up a box; "Missed" resets to box 0 and increments miss count. Weak spots = most-missed cards.
 5. **Interview** — pick module + style (technical / AI-screen / behavioural). AI provider chosen in settings; offline mode shows a question from the module's `interview` list, then model answer + "the sentence you're missing", user self-scores 1–10. AI-screen mode adds a 90-second timer and grades structure (context → decision → trade-off → outcome).
-6. **Mock** — 45-minute timed mock per funnel: 6 questions mixed across unlocked modules, scores recorded, written weak-spot report.
+6. **Mock** — 45-minute timed mock per track focus (Laravel / React-Next / .NET): 6 questions mixed across unlocked modules, scores recorded, written weak-spot report.
 7. **More** — Design canvas (draggable labelled boxes + arrows, save/load PNG/JSON), Stories (STAR stories, 2-min and 30-sec versions, rehearsal mode that hides text after 3 seconds), Cheat sheets (one page per track, printable), Glossary (term / plain meaning / Bangla / module link), Progress (mastery per track, mock history), Settings (AI provider + key, language, export/import progress JSON, reset).
 
 Mastery per module = average box level of its cards / 5. A module is "passed" when the mentor marks `status: "unlocked"` in the JSON AND mastery ≥ 60%.
@@ -69,7 +69,7 @@ Mastery per module = average box level of its cards / 5. A module is "passed" wh
 All markdown fields render with a markdown component (code fences, bold, lists). Validate every module at build time with a Zod schema in `src/content/schema.ts`; fail the build on invalid content.
 
 ## Tracks (ids and display names)
-php, oop, sql, orm, laravel, symfony, http-api, js-ts, react, next, vue-nuxt, node, dotnet, python-llm, supabase, architecture, cloud-devops, redis, payments, security-auth, pwa-offline, problems, interview, stories
+php, oop, sql, orm, laravel, symfony, http-api, js-ts, react, next, vue-nuxt, node, dotnet, python-llm, supabase, architecture, cloud-devops, git, redis, payments, security-auth, pwa-offline, problems, interview, stories
 
 ## Simulators to implement (in this order; each is one component, touch-friendly, ≤ 380px)
 event-loop (call stack / microtask / macrotask stepper), join-fanout (JOIN vs EXISTS row builder), btree-walk (index lookup vs table scan step counter), lock-race (two users buying the last seat, with/without SELECT FOR UPDATE), idempotent-retry (same request twice, with/without key), cache-stampede (requests hitting an expired key, with/without lock), react-race (two fetches resolving out of order, with/without cleanup), vue-reactivity (destructure loses reactivity), lru-cache (capacity 3, step through gets/sets), queue-backoff (retries with exponential backoff and a dead-letter), tenant-isolation (rows filtered by tenant_id / RLS policy), design-canvas.
@@ -83,7 +83,7 @@ Done (2026-09-09) by `scripts/migrate-legacy.mjs`; `src/content/content.test.ts`
 - Schema leniency: only `id/track/phase/order/title/status` are required. Unlocked modules must have `lesson.concept`, `lesson.bn` and ≥1 card; preview modules must have `preview`. `problem/hook/simple/wrong/right/crossStack/docs/interview/glossary` are optional with empty defaults, because the migrated modules lack them. The lesson page hides empty sections; `right` alone renders under the heading "Code".
 - Offline interview falls back to the module's drill cards when its `interview` list is empty (legacy behaviour). Mock does the same.
 - Legacy `phase` was 0-based; JSON uses 1..8. Phase names live in `src/content/tracks.ts`. Path order = phase → track order → `order`.
-- Legacy `git` topic lives in the `cloud-devops` track; `auth`/`sec` in `security-auth`; `idem`/`sd4` in `payments`; `cache` in `redis`.
+- Legacy `auth`/`sec` live in `security-auth`; `idem`/`sd4` in `payments`; `cache` in `redis`; `deploy`/`obs` in `cloud-devops`; the git topic in its own `git` track.
 - Routing: BrowserRouter with `basename` from `BASE_URL`; the Pages workflow copies `index.html` to `404.html` for deep links.
 - Simulators are registered in `src/simulators/index.ts` (id → lazy component); a module referencing an unknown id renders nothing rather than failing the build.
 - The AI key is stored in IndexedDB settings and is excluded from progress export.
@@ -95,3 +95,11 @@ Done (2026-09-09) by `scripts/migrate-legacy.mjs`; `src/content/content.test.ts`
 - Never expand solutions by default. Never remove Bangla. Never add a dropdown.
 - When new module JSON files arrive in `content/modules/`, no code changes should be needed; if they are, fix the loader, not the content.
 - Keep a `CHANGELOG.md`.
+
+## Decisions (2026-09-09, second pass)
+- Markdown fields (rendered with the markdown component): `lesson.concept`, `lesson.simple`, `lesson.problem`, `lesson.picture`, `lesson.wrong.why`, `lesson.right.why`, `practice.task`, `practice.hint`, `practice.solution`, `practice.why`, `interview.model`, `interview.missing`. Code inside them goes in fenced blocks.
+- Plain-text fields (never parsed as markdown): `lesson.hook`, every `bn`, all `preview.*`, `cards[].q/a`, `glossary[].*`. Drill cards and offline questions drawn from cards render as plain text.
+- Migrated practice solutions are wrapped in a code fence by the migration script so they render as code; the text inside the fence is the legacy text unchanged, and the fidelity test compares the inside of the fence.
+- Cheat sheets are the one place answers may be shown expanded, because they are printed reference pages.
+- The mock's grouping of tracks is called "Track focus" in the UI and code (`TRACK_FOCUS` in `src/content/tracks.ts`). The word "funnel" is not used in the UI.
+- `git` is its own track.

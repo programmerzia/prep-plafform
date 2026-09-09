@@ -18,15 +18,15 @@
   "practice": [
     {
       "task": "orders(id, user_id, status, created_at, total). Slow query: SELECT * FROM orders WHERE user_id = ? AND status = 'paid' ORDER BY created_at DESC LIMIT 10. Write the CREATE INDEX and say why the column order.",
-      "solution": "CREATE INDEX idx_orders_user_status_created ON orders (user_id, status, created_at);\n\nBoth WHERE columns are equalities, so they go first (either order works; put the more selective one first if unsure). created_at last so the DB walks it already sorted and stops after 10 rows — no filesort."
+      "solution": "```sql\nCREATE INDEX idx_orders_user_status_created ON orders (user_id, status, created_at);\n\nBoth WHERE columns are equalities, so they go first (either order works; put the more selective one first if unsure). created_at last so the DB walks it already sorted and stops after 10 rows — no filesort.\n```"
     },
     {
       "task": "EXPLAIN shows type: ALL on WHERE email = ? even though email has an index. List three things you check, in order.",
-      "solution": "1) possible_keys — is the index listed? If not: type mismatch (email = 12345), a function on the column, or a collation mismatch.\n2) Selectivity — does this value match a huge share of rows? Then a scan is correct.\n3) ANALYZE TABLE for stale statistics, then FORCE INDEX to compare timings (diagnosis only, never ship it)."
+      "solution": "```sql\n1) possible_keys — is the index listed? If not: type mismatch (email = 12345), a function on the column, or a collation mismatch.\n2) Selectivity — does this value match a huge share of rows? Then a scan is correct.\n3) ANALYZE TABLE for stale statistics, then FORCE INDEX to compare timings (diagnosis only, never ship it).\n```"
     },
     {
       "task": "Laravel migration: add an index for 'find posts by slug within a tenant' on posts(tenant_id, slug), and make the pair unique.",
-      "solution": "$table->unique(['tenant_id', 'slug']);\n\nA unique constraint IS an index, so no separate index() is needed. tenant_id first because every query in a multi-tenant app filters by tenant first."
+      "solution": "```sql\n$table->unique(['tenant_id', 'slug']);\n\nA unique constraint IS an index, so no separate index() is needed. tenant_id first because every query in a multi-tenant app filters by tenant first.\n```"
     }
   ],
   "interview": [],

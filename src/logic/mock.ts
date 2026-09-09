@@ -8,13 +8,14 @@ export interface MockQuestion {
   model: string;
   missing: string;
   bn: string;
+  fromCards: boolean;
 }
 
 export const MOCK_MINUTES = 45;
 export const MOCK_SIZE = 6;
 
 /**
- * Six questions mixed across the unlocked modules of a funnel: round-robin over
+ * Six questions mixed across the unlocked modules of a track focus: round-robin over
  * shuffled modules so no module dominates. Interview questions first, drill cards as fallback.
  */
 export function buildMock(modules: Module[], random: () => number = Math.random, size = MOCK_SIZE): MockQuestion[] {
@@ -25,8 +26,8 @@ export function buildMock(modules: Module[], random: () => number = Math.random,
         m,
         qs: shuffle(
           m.interview.length
-            ? m.interview.map((x) => ({ q: x.q, model: x.model, missing: x.missing, bn: x.bn }))
-            : m.cards.map((c) => ({ q: c.q, model: c.a, missing: '', bn: '' })),
+            ? m.interview.map((x) => ({ q: x.q, model: x.model, missing: x.missing, bn: x.bn, fromCards: false }))
+            : m.cards.map((c) => ({ q: c.q, model: c.a, missing: '', bn: '', fromCards: true })),
           random,
         ),
       }))

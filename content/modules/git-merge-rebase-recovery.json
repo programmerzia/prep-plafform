@@ -1,6 +1,6 @@
 {
   "id": "git-merge-rebase-recovery",
-  "track": "cloud-devops",
+  "track": "git",
   "phase": 1,
   "order": 1,
   "title": "Git: merge vs rebase, bisect, recovery, PR hygiene",

@@ -18,15 +18,15 @@
   "practice": [
     {
       "task": "Fix this and explain the query count before/after:\n$orders = Order::where('status','paid')->get();\nforeach ($orders as $o) { echo $o->customer->name; echo $o->items->count(); }",
-      "solution": "$orders = Order::where('status','paid')->with('customer')->withCount('items')->get();\nforeach ($orders as $o) { echo $o->customer->name; echo $o->items_count; }\n\nBefore: 1 + N (customers) + N (items) = 2N+1 queries. After: 3 queries total, any N. withCount avoids loading every item row just to count."
+      "solution": "```php\n$orders = Order::where('status','paid')->with('customer')->withCount('items')->get();\nforeach ($orders as $o) { echo $o->customer->name; echo $o->items_count; }\n\nBefore: 1 + N (customers) + N (items) = 2N+1 queries. After: 3 queries total, any N. withCount avoids loading every item row just to count.\n```"
     },
     {
       "task": "Write the one line that makes any lazy load throw an exception in local/dev but not production, and say where it goes.",
-      "solution": "Model::preventLazyLoading(!app()->isProduction());\n\nIn App\\Providers\\AppServiceProvider::boot()."
+      "solution": "```php\nModel::preventLazyLoading(!app()->isProduction());\n\nIn App\\Providers\\AppServiceProvider::boot().\n```"
     },
     {
       "task": "Posts page: 20 posts, each with thousands of comments. Write the eager load that shows only the 3 newest approved comments per post.",
-      "solution": "Post::with(['comments' => fn($q) => $q->where('approved', true)->latest()->limit(3)])->paginate(20);\n\nNote: limit inside an eager load is per-post only in Laravel 11+ (via a window function). Older versions need a package or a separate query; be ready to say that in an interview."
+      "solution": "```php\nPost::with(['comments' => fn($q) => $q->where('approved', true)->latest()->limit(3)])->paginate(20);\n\nNote: limit inside an eager load is per-post only in Laravel 11+ (via a window function). Older versions need a package or a separate query; be ready to say that in an interview.\n```"
     }
   ],
   "interview": [],

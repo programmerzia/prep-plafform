@@ -18,11 +18,11 @@
   "practice": [
     {
       "task": "Variation: return ALL pairs of indices whose values sum to target (values may repeat). Keep it O(n).",
-      "solution": "function allPairs(array $nums, int $target): array {\n    $seen = []; $out = [];          // value => [indexes]\n    foreach ($nums as $i => $n) {\n        foreach ($seen[$target - $n] ?? [] as $j) $out[] = [$j, $i];\n        $seen[$n][] = $i;\n    }\n    return $out;\n}\n// O(n) average; output size can be large but each pair is found once."
+      "solution": "```php\nfunction allPairs(array $nums, int $target): array {\n    $seen = []; $out = [];          // value => [indexes]\n    foreach ($nums as $i => $n) {\n        foreach ($seen[$target - $n] ?? [] as $j) $out[] = [$j, $i];\n        $seen[$n][] = $i;\n    }\n    return $out;\n}\n// O(n) average; output size can be large but each pair is found once.\n```"
     },
     {
       "task": "Explain in two sentences to a junior why the hash-map version is faster than two nested loops, using the 'dance partner' picture.",
-      "solution": "Nested loops ask every pair 'do you two add up?' — that's n×n questions. The map writes each height on a board as people arrive, so each new person asks one question: 'is my partner already on the board?' — n questions total."
+      "solution": "```php\nNested loops ask every pair 'do you two add up?' — that's n×n questions. The map writes each height on a board as people arrive, so each new person asks one question: 'is my partner already on the board?' — n questions total.\n```"
     }
   ],
   "interview": [],

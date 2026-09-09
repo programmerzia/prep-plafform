@@ -18,11 +18,11 @@
   "practice": [
     {
       "task": "Add a cancel() and flush() method to debounce. flush runs the pending call immediately.",
-      "solution": "function debounce(fn, ms) {\n  let timer = null, lastArgs = null, lastThis = null;\n  function run() { timer = null; fn.apply(lastThis, lastArgs); }\n  function debounced(...args) { lastArgs = args; lastThis = this; clearTimeout(timer); timer = setTimeout(run, ms); }\n  debounced.cancel = () => { clearTimeout(timer); timer = null; };\n  debounced.flush  = () => { if (timer) { clearTimeout(timer); run(); } };\n  return debounced;\n}"
+      "solution": "```js\nfunction debounce(fn, ms) {\n  let timer = null, lastArgs = null, lastThis = null;\n  function run() { timer = null; fn.apply(lastThis, lastArgs); }\n  function debounced(...args) { lastArgs = args; lastThis = this; clearTimeout(timer); timer = setTimeout(run, ms); }\n  debounced.cancel = () => { clearTimeout(timer); timer = null; };\n  debounced.flush  = () => { if (timer) { clearTimeout(timer); run(); } };\n  return debounced;\n}\n```"
     },
     {
       "task": "In React, why does const search = debounce(fn, 300) inside a component body not work, and what's the fix?",
-      "solution": "Each render creates a new debounced function with a fresh timer, so previous timers are never cleared — no debouncing. Fix: useMemo(() => debounce(fn, 300), []) or useRef to keep one instance, and cancel it in a cleanup effect."
+      "solution": "```js\nEach render creates a new debounced function with a fresh timer, so previous timers are never cleared — no debouncing. Fix: useMemo(() => debounce(fn, 300), []) or useRef to keep one instance, and cancel it in a cleanup effect.\n```"
     }
   ],
   "interview": [],

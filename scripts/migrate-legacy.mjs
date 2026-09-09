@@ -24,7 +24,7 @@ const MAP = {
   jsasync: ['js-promises-async', 'js-ts'],
   ts: ['ts-essentials', 'js-ts'],
   http: ['http-rest-caching-cors', 'http-api'],
-  git: ['git-merge-rebase-recovery', 'cloud-devops'],
+  git: ['git-merge-rebase-recovery', 'git'],
   n1: ['eloquent-n-plus-one', 'orm'],
   life: ['laravel-request-lifecycle', 'laravel'],
   cont: ['laravel-service-container', 'laravel'],
@@ -109,7 +109,8 @@ for (const t of TOPICS) {
       status: 'unlocked',
       star: true,
       lesson,
-      practice: (t.practice ?? []).map(([task, solution]) => ({ task, solution })),
+      // Solutions are markdown in the new schema; the legacy strings are raw code (+ prose), so fence them.
+      practice: (t.practice ?? []).map(([task, solution]) => ({ task, solution: '```' + (LANG[t.id] ?? '') + '\n' + solution + '\n```' })),
       interview: [],
       cards: (t.cards ?? []).map(([q, a]) => ({ q, a })),
       glossary: [],

@@ -2,6 +2,7 @@ import { useParams } from 'react-router-dom';
 import { MODULES, modulesInTrack } from '../../content/loader';
 import { TRACKS, TRACK_ORDER, type TrackId } from '../../content/tracks';
 import { useStore } from '../../store/Store';
+import { Markdown } from '../../ui/Markdown';
 import { Button, Card, CodeBlock, Empty, H3, ListRow, Muted, Page } from '../../ui/primitives';
 
 export function CheatSheets() {
@@ -35,7 +36,7 @@ export function CheatSheet() {
         <Card key={m.id} className="print:break-inside-avoid">
           <h2 className="text-lg font-semibold">{m.title}</h2>
           {m.lesson?.hook && <p className="font-medium">{m.lesson.hook}</p>}
-          {m.lesson?.picture && <p className="text-[14.5px] text-neutral-600 dark:text-neutral-300">{m.lesson.picture}</p>}
+          {m.lesson?.picture && <Markdown text={m.lesson.picture} className="text-[14.5px] text-neutral-600 dark:text-neutral-300" />}
           {m.lesson?.right && (
             <>
               <H3>Code</H3>

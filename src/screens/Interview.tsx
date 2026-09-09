@@ -9,6 +9,7 @@ import type { InterviewMode } from '../store/types';
 import { ModulePicker } from '../ui/ModulePicker';
 import { Bn, Button, Card, Chip, Chips, Empty, H2, Muted, Page, Reveal } from '../ui/primitives';
 import { Timer } from '../ui/Timer';
+import { Markdown } from '../ui/Markdown';
 
 type Stage = 'setup' | 'answer' | 'graded';
 
@@ -173,11 +174,13 @@ export function Interview() {
           <Muted className="mb-2">Your answer</Muted>
           <div className="mb-3 whitespace-pre-wrap rounded-xl bg-neutral-50 p-3 text-[14.5px] dark:bg-[#1f232b]">{answer}</div>
           <Reveal label="Show model answer" hideLabel="Hide model answer">
-            <div className="rounded-xl bg-accent-soft/60 p-3 text-[15px] dark:bg-[#12291b]">{offline.model}</div>
+            <div className="rounded-xl bg-accent-soft/60 p-3 text-[15px] dark:bg-[#12291b]">
+              {offline.fromCards ? offline.model : <Markdown text={offline.model} />}
+            </div>
             {offline.missing && (
               <div className="mt-2">
                 <Muted>The sentence you're missing</Muted>
-                <div className="font-medium">{offline.missing}</div>
+                <Markdown text={offline.missing} className="font-medium" />
               </div>
             )}
             {offline.followUp && (

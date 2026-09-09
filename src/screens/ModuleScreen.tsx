@@ -68,7 +68,9 @@ function LessonView({ id }: { id: string }) {
         {L.picture && (
           <>
             <H3>Picture it</H3>
-            <div className="rounded-xl bg-warn-soft px-3 py-2 dark:bg-[#2c2410]">{L.picture}</div>
+            <div className="rounded-xl bg-warn-soft px-3 py-2 dark:bg-[#2c2410]">
+              <Markdown text={L.picture} />
+            </div>
           </>
         )}
         {L.hook && (
@@ -193,8 +195,9 @@ function LessonView({ id }: { id: string }) {
 export function PracticeItem({ index, task, hint, solution, why }: { index: number; task: string; hint: string; solution: string; why: string }) {
   return (
     <div className="rounded-xl border border-line p-3 dark:border-[#2a2e38]">
-      <div className="mb-2 whitespace-pre-wrap text-[15.5px]">
-        <span className="font-semibold">{index + 1}.</span> {task}
+      <div className="mb-2 flex gap-2 text-[15.5px]">
+        <span className="font-semibold">{index + 1}.</span>
+        <Markdown text={task} className="min-w-0 flex-1" />
       </div>
       {hint && (
         <div className="mb-2">
@@ -204,7 +207,7 @@ export function PracticeItem({ index, task, hint, solution, why }: { index: numb
         </div>
       )}
       <Reveal label="Show solution" hideLabel="Hide solution">
-        <CodeBlock code={solution} />
+        <Markdown text={solution} className="text-[14.5px]" />
         {why && <Markdown text={why} className="mt-2 text-[14.5px]" />}
       </Reveal>
     </div>

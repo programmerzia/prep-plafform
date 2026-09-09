@@ -1,5 +1,5 @@
 import { ALL_CARDS, MODULE_BY_ID, UNLOCKED } from '../../content/loader';
-import { FUNNELS, TRACKS, TRACK_ORDER, type FunnelId } from '../../content/tracks';
+import { TRACK_FOCUS, TRACKS, TRACK_ORDER, type TrackFocusId } from '../../content/tracks';
 import { useStore } from '../../store/Store';
 import { trackMastery, useMastery } from '../../store/derive';
 import { Bar, Big, Card, Empty, H2, Muted, Page, Pill, masteryTone } from '../../ui/primitives';
@@ -62,7 +62,7 @@ export function Progress() {
         {mocks.map((h, i) =>
           h.type === 'mock' ? (
             <div key={i} className="flex justify-between py-1 text-[15px]">
-              <span>{FUNNELS[h.funnel as FunnelId]?.name ?? h.funnel}</span>
+              <span>{TRACK_FOCUS[h.focus as TrackFocusId]?.name ?? h.focus}</span>
               <Pill tone={h.score >= 7 ? 'done' : h.score >= 5 ? 'mid' : 'weak'}>{h.score}/10</Pill>
             </div>
           ) : null,

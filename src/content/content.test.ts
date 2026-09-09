@@ -64,7 +64,10 @@ describe('legacy migration fidelity', () => {
       expect(m.lesson?.concept).toBe(t.concept);
       expect(m.lesson?.right?.code).toBe(t.code);
       expect(m.lesson?.bn).toBe(t.bn);
-      expect(m.practice.map((p) => [p.task, p.solution])).toEqual(t.practice ?? []);
+      // solutions are fenced by the migration; the text inside the fence must be untouched
+      const unfence = (s: string) => s.replace(/^```[a-z]*\n/, '').replace(/\n```$/, '');
+      expect(m.practice.map((p) => [p.task, unfence(p.solution)])).toEqual(t.practice ?? []);
+      for (const p of m.practice) expect(p.solution).toMatch(/^```[a-z]*\n[\s\S]*\n```$/);
       expect(m.cards.map((c) => [c.q, c.a])).toEqual(t.cards ?? []);
     }
   });

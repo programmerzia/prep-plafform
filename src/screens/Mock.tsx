@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { UNLOCKED } from '../content/loader';
-import { FUNNELS, type FunnelId } from '../content/tracks';
+import { TRACK_FOCUS, type TrackFocusId } from '../content/tracks';
+import { Markdown } from '../ui/Markdown';
 import { todayNumber } from '../logic/leitner';
 import { buildMock, mockReport, MOCK_MINUTES, type MockQuestion, type ScoredItem } from '../logic/mock';
 import { useStore } from '../store/Store';
@@ -11,7 +12,7 @@ type Stage = 'setup' | 'run' | 'report';
 
 export function Mock() {
   const { record, history } = useStore();
-  const [funnel, setFunnel] = useState<FunnelId>('laravel');
+  const [focus, setFocus] = useState<TrackFocusId>('laravel');
   const [stage, setStage] = useState<Stage>('setup');
   const [qs, setQs] = useState<MockQuestion[]>([]);
   const [i, setI] = useState(0);
@@ -21,7 +22,7 @@ export function Mock() {
   const [timeUp, setTimeUp] = useState(false);
   const [report, setReport] = useState<{ avg: number; text: string } | null>(null);
 
-  const available = UNLOCKED.filter((m) => FUNNELS[funnel].tracks.includes(m.track));
+  const available = UNLOCKED.filter((m) => TRACK_FOCUS[focus].tracks.includes(m.track));
 
   const start = () => {
     const list = buildMock(available);
@@ -41,7 +42,7 @@ export function Mock() {
     await record({
       d: todayNumber(),
       type: 'mock',
-      funnel,
+      focus,
       score: r.avg,
       items: items.map((x) => ({ moduleId: x.moduleId, q: x.q, score: x.score, missing: x.missing })),
       report: r.text,
@@ -67,16 +68,16 @@ export function Mock() {
     return (
       <Page title="Mock">
         <Card>
-          <Muted>{MOCK_MINUTES} minutes, 6 questions mixed across the unlocked modules of one funnel. Answer each out loud, type the gist, self-score. You get a written weak-spot report at the end.</Muted>
-          <Muted className="mt-2 mb-1">Funnel</Muted>
+          <Muted>{MOCK_MINUTES} minutes, 6 questions mixed across the unlocked modules of one track focus. Answer each out loud, type the gist, self-score. You get a written weak-spot report at the end.</Muted>
+          <Muted className="mt-2 mb-1">Track focus</Muted>
           <Chips>
-            {(Object.keys(FUNNELS) as FunnelId[]).map((f) => (
-              <Chip key={f} on={funnel === f} onClick={() => setFunnel(f)}>
-                {FUNNELS[f].name}
+            {(Object.keys(TRACK_FOCUS) as TrackFocusId[]).map((f) => (
+              <Chip key={f} on={focus === f} onClick={() => setFocus(f)}>
+                {TRACK_FOCUS[f].name}
               </Chip>
             ))}
           </Chips>
-          <Muted className="mt-2">{available.length} unlocked modules in this funnel.</Muted>
+          <Muted className="mt-2">{available.length} unlocked modules in this track focus.</Muted>
           <Button variant="primary" full className="mt-3" disabled={!available.length} onClick={start}>
             Start {MOCK_MINUTES}-minute mock
           </Button>
@@ -88,7 +89,7 @@ export function Mock() {
             h.type === 'mock' ? (
               <div key={k} className="border-t border-line py-2 first:border-0 dark:border-[#2a2e38]">
                 <div className="flex justify-between text-[15px]">
-                  <span>{FUNNELS[h.funnel as FunnelId]?.name ?? h.funnel}</span>
+                  <span>{TRACK_FOCUS[h.focus as TrackFocusId]?.name ?? h.focus}</span>
                   <span className="font-semibold">{h.score}/10</span>
                 </div>
                 <Reveal label="Show report" hideLabel="Hide report">
@@ -143,11 +144,11 @@ export function Mock() {
           </Button>
         ) : (
           <>
-            <div className="mt-3 rounded-xl bg-accent-soft/60 p-3 text-[15px] dark:bg-[#12291b]">{q.model}</div>
+            <div className="mt-3 rounded-xl bg-accent-soft/60 p-3 text-[15px] dark:bg-[#12291b]">{q.fromCards ? q.model : <Markdown text={q.model} />}</div>
             {q.missing && (
               <div className="mt-2">
                 <Muted>The sentence you're missing</Muted>
-                <div className="font-medium">{q.missing}</div>
+                <Markdown text={q.missing} className="font-medium" />
               </div>
             )}
             {q.bn && <Bn className="mt-2">{q.bn}</Bn>}

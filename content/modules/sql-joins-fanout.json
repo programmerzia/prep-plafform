@@ -19,15 +19,15 @@
   "practice": [
     {
       "task": "Write: each order with its total and the amount paid so far (payments has many rows per order, some orders have none). One row per order.",
-      "solution": "SELECT o.id, o.total, COALESCE(p.paid, 0) AS paid\nFROM orders o\nLEFT JOIN (\n    SELECT order_id, SUM(amount) AS paid FROM payments GROUP BY order_id\n) p ON p.order_id = o.id;\n\nAggregate the many side first so the join is one-to-one; LEFT JOIN keeps unpaid orders; COALESCE turns NULL into 0."
+      "solution": "```sql\nSELECT o.id, o.total, COALESCE(p.paid, 0) AS paid\nFROM orders o\nLEFT JOIN (\n    SELECT order_id, SUM(amount) AS paid FROM payments GROUP BY order_id\n) p ON p.order_id = o.id;\n\nAggregate the many side first so the join is one-to-one; LEFT JOIN keeps unpaid orders; COALESCE turns NULL into 0.\n```"
     },
     {
       "task": "Write: customers with at least 3 paid orders in 2026, with the count.",
-      "solution": "SELECT c.id, c.name, COUNT(*) AS paid_orders\nFROM customers c\nJOIN orders o ON o.customer_id = c.id\nWHERE o.status = 'paid' AND o.created_at >= '2026-01-01' AND o.created_at < '2027-01-01'\nGROUP BY c.id, c.name\nHAVING COUNT(*) >= 3;\n\nWHERE filters rows first (cheap), HAVING filters the groups. Use a half-open date range so the index on created_at can be used."
+      "solution": "```sql\nSELECT c.id, c.name, COUNT(*) AS paid_orders\nFROM customers c\nJOIN orders o ON o.customer_id = c.id\nWHERE o.status = 'paid' AND o.created_at >= '2026-01-01' AND o.created_at < '2027-01-01'\nGROUP BY c.id, c.name\nHAVING COUNT(*) >= 3;\n\nWHERE filters rows first (cheap), HAVING filters the groups. Use a half-open date range so the index on created_at can be used.\n```"
     },
     {
       "task": "Bug hunt: SELECT u.name, s.plan FROM users u LEFT JOIN subscriptions s ON s.user_id = u.id WHERE s.status = 'active'. Product says 'users without a subscription disappeared'. Fix it two ways.",
-      "solution": "1) Move the condition into ON: LEFT JOIN subscriptions s ON s.user_id = u.id AND s.status = 'active'\n2) Allow the NULL explicitly: WHERE s.status = 'active' OR s.id IS NULL\n\nThe WHERE on the right table turned LEFT into INNER because NULL = 'active' is never true."
+      "solution": "```sql\n1) Move the condition into ON: LEFT JOIN subscriptions s ON s.user_id = u.id AND s.status = 'active'\n2) Allow the NULL explicitly: WHERE s.status = 'active' OR s.id IS NULL\n\nThe WHERE on the right table turned LEFT into INNER because NULL = 'active' is never true.\n```"
     }
   ],
   "interview": [],

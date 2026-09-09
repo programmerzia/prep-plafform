@@ -29,7 +29,7 @@ export interface Streak {
 export type HistoryEntry =
   | { id?: number; d: number; type: 'drill'; key: string; ok: boolean }
   | { id?: number; d: number; type: 'interview'; moduleId: string; mode: InterviewMode; score: number | null; q: string }
-  | { id?: number; d: number; type: 'mock'; funnel: string; score: number; items: MockItem[]; report: string };
+  | { id?: number; d: number; type: 'mock'; focus: string; score: number; items: MockItem[]; report: string };
 
 export type InterviewMode = 'tech' | 'ai' | 'behav';
 

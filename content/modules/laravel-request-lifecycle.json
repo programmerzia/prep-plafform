@@ -18,15 +18,15 @@
   "practice": [
     {
       "task": "A colleague puts Route::model bindings and an event listener registration inside register() of a provider and it breaks intermittently. Why, and where should it go?",
-      "solution": "register() runs before all providers are registered, so the router/event dispatcher it depends on may not be bound yet. Anything that USES other services belongs in boot(), which runs after every provider's register()."
+      "solution": "```php\nregister() runs before all providers are registered, so the router/event dispatcher it depends on may not be bound yet. Anything that USES other services belongs in boot(), which runs after every provider's register().\n```"
     },
     {
       "task": "Order these for a request to GET /orders/5 with auth middleware: controller method, global middleware, route middleware, kernel bootstrap, providers boot, response back through middleware.",
-      "solution": "kernel bootstrap → providers boot → global middleware → (router matches) → route middleware (auth) → controller method → response back through middleware in reverse → terminable middleware after send."
+      "solution": "```php\nkernel bootstrap → providers boot → global middleware → (router matches) → route middleware (auth) → controller method → response back through middleware in reverse → terminable middleware after send.\n```"
     },
     {
       "task": "Write a middleware that rejects requests without header X-Tenant and stores the tenant on the request. Where do you register it for API routes only?",
-      "solution": "public function handle(Request $r, Closure $next) {\n    $tenant = Tenant::where('key', $r->header('X-Tenant'))->first();\n    abort_unless($tenant, 400, 'Missing tenant');\n    $r->attributes->set('tenant', $tenant);\n    return $next($r);\n}\n\nRegister in bootstrap/app.php (Laravel 11): ->withMiddleware(fn($m) => $m->api(append: [EnsureTenant::class])) — or append to the 'api' group in Kernel.php on older versions."
+      "solution": "```php\npublic function handle(Request $r, Closure $next) {\n    $tenant = Tenant::where('key', $r->header('X-Tenant'))->first();\n    abort_unless($tenant, 400, 'Missing tenant');\n    $r->attributes->set('tenant', $tenant);\n    return $next($r);\n}\n\nRegister in bootstrap/app.php (Laravel 11): ->withMiddleware(fn($m) => $m->api(append: [EnsureTenant::class])) — or append to the 'api' group in Kernel.php on older versions.\n```"
     }
   ],
   "interview": [],

@@ -18,11 +18,11 @@
   "practice": [
     {
       "task": "Design the types: a NotificationChannel that can be Email, SMS or Push. Some share a formatMessage() implementation. What is an interface and what is abstract here? Write the skeleton.",
-      "solution": "interface NotificationChannel { public function send(User $u, Message $m): void; }\n\nabstract class TemplatedChannel implements NotificationChannel {\n    protected function formatMessage(Message $m): string { /* shared */ }\n}\n\nclass EmailChannel extends TemplatedChannel { public function send(User $u, Message $m): void { /* uses formatMessage */ } }\nclass PushChannel implements NotificationChannel { /* no template needed */ }\n\nThe interface is the contract every channel must meet (so a Notifier can accept any); the abstract class removes duplication for those that share formatting. Push skips the abstract class — proof you shouldn't force everything into one hierarchy."
+      "solution": "```php\ninterface NotificationChannel { public function send(User $u, Message $m): void; }\n\nabstract class TemplatedChannel implements NotificationChannel {\n    protected function formatMessage(Message $m): string { /* shared */ }\n}\n\nclass EmailChannel extends TemplatedChannel { public function send(User $u, Message $m): void { /* uses formatMessage */ } }\nclass PushChannel implements NotificationChannel { /* no template needed */ }\n\nThe interface is the contract every channel must meet (so a Notifier can accept any); the abstract class removes duplication for those that share formatting. Push skips the abstract class — proof you shouldn't force everything into one hierarchy.\n```"
     },
     {
       "task": "Your Laravel controller type-hints PaymentGateway (an interface). Write the binding and say what happens if you forget it.",
-      "solution": "// AppServiceProvider::register()\n$this->app->bind(PaymentGateway::class, BkashGateway::class);\n\nWithout it: BindingResolutionException — 'Target [PaymentGateway] is not instantiable' — because the container can't construct an interface."
+      "solution": "```php\n// AppServiceProvider::register()\n$this->app->bind(PaymentGateway::class, BkashGateway::class);\n\nWithout it: BindingResolutionException — 'Target [PaymentGateway] is not instantiable' — because the container can't construct an interface.\n```"
     }
   ],
   "interview": [],

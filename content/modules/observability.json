@@ -2,7 +2,7 @@
   "id": "observability",
   "track": "cloud-devops",
   "phase": 6,
-  "order": 3,
+  "order": 2,
   "title": "Observability: logs, metrics, tracing, alerts",
   "status": "preview",
   "star": false,

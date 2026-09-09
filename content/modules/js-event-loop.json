@@ -19,15 +19,15 @@
   "practice": [
     {
       "task": "Predict the output, then explain each line's queue:\nsetTimeout(()=>console.log('A'),0);\nPromise.resolve().then(()=>{console.log('B');setTimeout(()=>console.log('C'),0);});\n(async()=>{console.log('D');await null;console.log('E');})();\nconsole.log('F');",
-      "solution": "D F B E A C\n\nSync: D, F. Microtasks in order queued: B (then it queues macrotask C), E (await continuation). Macrotasks: A (queued first), then C."
+      "solution": "```js\nD F B E A C\n\nSync: D, F. Microtasks in order queued: B (then it queues macrotask C), E (await continuation). Macrotasks: A (queued first), then C.\n```"
     },
     {
       "task": "Rewrite so the three fetches run in parallel, and explain why the original is slow:\nconst a = await getUser(); const b = await getOrders(); const c = await getInvoices();",
-      "solution": "const [a, b, c] = await Promise.all([getUser(), getOrders(), getInvoices()]);\n\nThe original awaits each promise before starting the next — three round trips in series. Promise.all starts all three immediately and waits once. Use Promise.allSettled if one failing shouldn't fail the others."
+      "solution": "```js\nconst [a, b, c] = await Promise.all([getUser(), getOrders(), getInvoices()]);\n\nThe original awaits each promise before starting the next — three round trips in series. Promise.all starts all three immediately and waits once. Use Promise.allSettled if one failing shouldn't fail the others.\n```"
     },
     {
       "task": "A button click handler runs a 3-second loop. The UI freezes. Give two fixes and say which you'd choose for CPU-heavy work.",
-      "solution": "1) Chunk the work and yield between chunks (setTimeout/requestIdleCallback/await) so rendering gets a turn.\n2) Move it to a Web Worker — a separate thread. Choose the worker for genuinely CPU-heavy work; chunking for moderate work that must touch the DOM."
+      "solution": "```js\n1) Chunk the work and yield between chunks (setTimeout/requestIdleCallback/await) so rendering gets a turn.\n2) Move it to a Web Worker — a separate thread. Choose the worker for genuinely CPU-heavy work; chunking for moderate work that must touch the DOM.\n```"
     }
   ],
   "interview": [],
