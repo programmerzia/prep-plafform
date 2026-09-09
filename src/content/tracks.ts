@@ -1,4 +1,5 @@
 import type { TrackId } from './schema';
+export type { TrackId };
 
 export const TRACKS: Record<TrackId, string> = {
   php: 'PHP',

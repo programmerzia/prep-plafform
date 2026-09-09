@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -36,6 +36,17 @@ export default defineConfig({
   ],
   build: {
     target: 'es2020',
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined;
+          if (/[\\/](react|react-dom|react-router|react-router-dom|scheduler)[\\/]/.test(id)) return 'react';
+          if (/[\\/]zod[\\/]/.test(id)) return 'zod';
+          if (/react-markdown|remark|micromark|mdast|unist|unified|hast|vfile|property-information|comma-separated|space-separated|decode-named|character-entities|trim-lines|bail|trough|zwitch|devlop|ccount|markdown-table|longest-streak|estree|html-url|style-to|inline-style|is-plain-obj|extend/.test(id)) return 'markdown';
+          return undefined;
+        },
+      },
+    },
   },
   test: {
     environment: 'node',
