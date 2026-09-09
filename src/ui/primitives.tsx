@@ -52,7 +52,7 @@ export function Chip({
   return (
     <button
       {...rest}
-      className={`min-h-[40px] rounded-full border px-3.5 text-[14px] leading-tight ${
+      className={`min-h-[44px] rounded-full border px-3.5 text-[14px] leading-tight ${
         on
           ? 'border-accent bg-accent text-white'
           : 'border-line bg-white text-ink dark:border-[#2a2e38] dark:bg-[#1f232b] dark:text-neutral-100'

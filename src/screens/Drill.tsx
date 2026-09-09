@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ALL_CARDS, getModule, type CardRef } from '../content/loader';
-import { isDue, shuffle, todayNumber } from '../logic/leitner';
+import { isDue, shuffle, todayNumber, weakSpots } from '../logic/leitner';
 import { useStore } from '../store/Store';
 import { ModulePicker } from '../ui/ModulePicker';
 import { Button, Card, Empty, Muted, Page, Pill } from '../ui/primitives';
@@ -12,6 +12,7 @@ export function Drill() {
   const [params, setParams] = useSearchParams();
   const moduleId = params.get('module') ?? undefined;
   const tenMin = params.get('mode') === '10min';
+  const weakMode = params.get('mode') === 'weak';
   const { cards, gradeCard } = useStore();
   const nav = useNavigate();
 
@@ -42,6 +43,17 @@ export function Drill() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenMin]);
+
+  // Weak spots: the 10 most-missed cards, regardless of due date.
+  const weak = useMemo(() => weakSpots(ALL_CARDS, cards, 10).map((w) => w.card), [cards]);
+
+  useEffect(() => {
+    if (weakMode && phase === 'pick' && weak.length) {
+      setForced(true);
+      start(weak);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weakMode]);
 
   const cur = queue[0];
 
@@ -88,6 +100,12 @@ export function Drill() {
               </Button>
             </>
           )}
+          {weak.length > 0 && (
+            <Button full className="mt-2" onClick={() => { setForced(true); start(weak); }}>
+              Drill weak spots · {weak.length} most-missed
+            </Button>
+          )}
+          {weakMode && weak.length === 0 && <Muted className="mt-2">No missed cards yet. Do a normal drill first.</Muted>}
           <Muted className="mt-3">Say the answer out loud before you reveal it. "Got it" moves a card up a box (1, 3, 7, 21, 60 days). "Missed" sends it back to tomorrow.</Muted>
         </Card>
       </Page>
@@ -102,7 +120,7 @@ export function Drill() {
             <div className="text-3xl font-semibold">
               {stats.ok} <span className="text-neutral-400">/</span> {stats.ok + stats.miss}
             </div>
-            <Muted>got it{forced ? ' (extra drill)' : ''}</Muted>
+            <Muted>got it{weakMode ? ' (weak spots)' : forced ? ' (extra drill)' : ''}</Muted>
           </div>
           <div className="mt-4 flex flex-col gap-2">
             {tenMin ? (
@@ -114,7 +132,7 @@ export function Drill() {
                 Back to Today
               </Button>
             )}
-            <Button full onClick={() => { setPhase('pick'); setParams(moduleId ? { module: moduleId } : {}); }}>
+            <Button full onClick={() => { setPhase('pick'); setParams(moduleId ? { module: moduleId } : weakMode ? { mode: 'weak' } : {}); }}>
               Drill again
             </Button>
           </div>
