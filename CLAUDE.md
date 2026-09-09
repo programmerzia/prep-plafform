@@ -66,7 +66,7 @@ Mastery per module = average box level of its cards / 5. A module is "passed" wh
   "glossary": [ { "term": "", "plain": "", "bn": "" } ]
 }
 ```
-All markdown fields render with a markdown component (code fences, bold, lists). Validate every module at build time with a Zod schema in `src/content/schema.ts`; fail the build on invalid content.
+All markdown fields render with a markdown component (code fences, bold, lists). Validate every module at build time with a Zod schema in `src/content/schema.ts`; fail the build on invalid content. This is enforced by `npm run validate:content` (`scripts/validate-content.ts`), wired as `prebuild`, plus the content tests.
 
 ## Tracks (ids and display names)
 php, oop, sql, orm, laravel, symfony, http-api, js-ts, react, next, vue-nuxt, node, dotnet, python-llm, supabase, architecture, cloud-devops, git, redis, payments, security-auth, pwa-offline, problems, interview, stories

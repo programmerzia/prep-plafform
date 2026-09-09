@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- `prebuild` content gate: `scripts/validate-content.ts` runs the Zod schema over every module and fails `npm run build` on the first invalid file, duplicate id, or id/filename mismatch.
+- `git` track; mock grouping renamed to "Track focus"; markdown/plain-text field policy (see CLAUDE.md).
+- Three mentor-delivered modules: core PHP, closures and `this`, subqueries and CTEs.
+
+### Changed
+- Migration script skips existing files (use `--force` to regenerate).
+- CI builds on Node 24.
+
 ## 0.1.0 — 2026-09-09
 
 First scaffold of the platform.

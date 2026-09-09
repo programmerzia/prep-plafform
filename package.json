@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "validate:content": "node --experimental-strip-types scripts/validate-content.ts",
+    "prebuild": "npm run validate:content",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
