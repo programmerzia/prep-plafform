@@ -1,0 +1,694 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rebuild — senior prep for Ziaur</title>
+<style>
+  :root{
+    --paper:#EDF1F4; --card:#FFFFFF; --ink:#16212B; --muted:#5B6B78; --line:#D3DBE2;
+    --green:#1F6F5A; --green-soft:#DDEFE8; --ochre:#B8780F; --ochre-soft:#F8EBCF;
+    --red:#B03A2E; --red-soft:#F6DEDA; --blue-soft:#DCE7F2;
+    --r:14px; --fs:16px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--paper);color:var(--ink);font:var(--fs)/1.5 "Avenir Next","Segoe UI",system-ui,-apple-system,sans-serif}
+  body{padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+  header{padding:18px 18px 8px}
+  header h1{font-size:22px;margin:0;font-weight:600;letter-spacing:-.01em}
+  header p{margin:2px 0 0;color:var(--muted);font-size:14px}
+  main{padding:8px 14px 20px;max-width:720px;margin:0 auto}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:12px}
+  .card.today{border-left:6px solid var(--green)}
+  .big{font-size:40px;font-weight:600;line-height:1;letter-spacing:-.02em}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .sp{justify-content:space-between}
+  .muted{color:var(--muted);font-size:14px}
+  button{font:inherit;border:1px solid var(--line);background:#fff;color:var(--ink);padding:10px 14px;border-radius:10px;cursor:pointer}
+  button.primary{background:var(--green);border-color:var(--green);color:#fff}
+  button.danger{background:var(--red-soft);border-color:var(--red-soft);color:var(--red)}
+  button.ok{background:var(--green-soft);border-color:var(--green-soft);color:var(--green)}
+  button:focus-visible{outline:3px solid #8FC7B4;outline-offset:2px}
+  button[disabled]{opacity:.5;cursor:default}
+  nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+  nav button{flex:1;border:0;border-radius:0;padding:12px 4px 10px;background:none;color:var(--muted);font-size:13px}
+  nav button.on{color:var(--green);font-weight:600;box-shadow:inset 0 3px 0 var(--green)}
+  .view{display:none}.view.on{display:block}
+  .phase{margin:18px 0 6px;font-size:13px;color:var(--muted)}
+  .topic{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;cursor:pointer}
+  .topic.locked{opacity:.7}
+  .pill{font-size:12px;padding:3px 9px;border-radius:99px;background:var(--blue-soft);color:#2B4C6B}
+  .pill.done{background:var(--green-soft);color:var(--green)}
+  .pill.weak{background:var(--red-soft);color:var(--red)}
+  .pill.mid{background:var(--ochre-soft);color:var(--ochre)}
+  pre{background:#16212B;color:#E6EEF5;padding:14px;border-radius:12px;overflow:auto;font-size:13.5px;line-height:1.5}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .bn{background:var(--green-soft);border-radius:12px;padding:12px 14px;font-size:15.5px;line-height:1.7}
+  .analogy{background:var(--ochre-soft);border-radius:12px;padding:12px 14px}
+  h2{font-size:20px;margin:6px 0 10px;font-weight:600}
+  h3{font-size:15px;margin:16px 0 6px;font-weight:600}
+  textarea{width:100%;min-height:120px;font:inherit;padding:12px;border:1px solid var(--line);border-radius:12px;resize:vertical}
+  select{font:inherit;padding:10px;border:1px solid var(--line);border-radius:10px;background:#fff;width:100%}
+  .q{font-size:18px;font-weight:600;line-height:1.4}
+  .ans{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);white-space:pre-wrap}
+  .bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--green)}
+  .score{font-size:34px;font-weight:600}
+  .fb{white-space:pre-wrap;line-height:1.6}
+  .kbd{font-size:12px;color:var(--muted)}
+  .empty{color:var(--muted);padding:20px;text-align:center}
+  .chips{display:flex;gap:8px;overflow-x:auto;padding:4px 0 6px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto;font-size:13.5px;padding:7px 12px;border-radius:99px;border:1px solid var(--line);background:#fff;color:var(--ink);white-space:nowrap}
+  .chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  .chip.dim{opacity:.45}
+  .wrapchips{display:flex;flex-wrap:wrap;gap:8px}
+  .prac{border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0;background:#FAFBFC}
+  @media (prefers-reduced-motion:no-preference){.card{transition:transform .15s}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Rebuild</h1>
+  <p>Senior full-stack prep — retrieval over reading</p>
+</header>
+<main>
+
+<!-- HOME -->
+<section id="v-home" class="view on">
+  <div class="card today">
+    <div class="row sp"><div><div class="big" id="dueCount">0</div><div class="muted">cards due now</div></div>
+      <div style="text-align:right"><div class="big" id="streak">0</div><div class="muted">day streak</div></div></div>
+    <div class="row" style="margin-top:14px"><button class="primary" onclick="go('drill')">Start drill</button><button onclick="go('interview')">Mock interview</button></div>
+  </div>
+  <div class="card" id="pathCard"></div>
+  <div class="card">
+    <h2>How this works</h2>
+    <p>One topic at a time. Read the lesson once, then never re-read it — answer the drill cards instead. Cards you miss come back tomorrow; cards you know come back in 3, 7, then 21 days. The interviewer grades you like a recruiter and tells you the exact sentence you were missing.</p>
+    <p class="muted">Everything you do here is saved on this device.</p><p id="saveWarn" style="display:none;color:var(--red)">Saving failed in this browser — progress will be lost when you close the page.</p>
+  </div>
+  <div class="card">
+    <h2>Weak spots</h2>
+    <div id="weakList" class="muted">Do a drill first.</div>
+  </div>
+</section>
+
+<!-- LEARN -->
+<section id="v-learn" class="view">
+  <div id="topicList"></div>
+</section>
+<section id="v-lesson" class="view">
+  <button onclick="go('learn')">← All topics</button>
+  <div id="lessonBody" style="margin-top:12px"></div>
+</section>
+
+<!-- DRILL -->
+<section id="v-drill" class="view">
+  <div class="card">
+    <div class="row sp"><span class="muted" id="drillMeta">Cards due</span><span class="muted" id="drillPickLabel"></span></div>
+    <div id="drillPick" style="margin-top:8px"></div>
+  </div>
+  <div id="drillCard" class="card"></div>
+</section>
+
+<!-- INTERVIEW -->
+<section id="v-interview" class="view">
+  <div class="card">
+    <h2>Mock interview</h2>
+    <p class="muted">An AI interviewer asks a senior-level question on the topic you choose. Answer out loud first, then type what you said. You get a score, what a strong answer includes, and the one line you missed.</p>
+    <div id="ivPick" style="margin-top:8px"></div>
+    <div class="muted" style="margin-top:10px">Style</div>
+    <div class="wrapchips" id="ivModeChips"></div>
+    <div class="row" style="margin-top:12px"><button class="primary" id="ivStart" onclick="ivAsk()">Ask me a question</button><span class="kbd" id="ivProvLabel"></span></div>
+  </div>
+  <div class="card">
+    <div class="row sp"><strong>AI interviewer</strong><button onclick="toggleAiSettings()" id="aiToggle">Set up</button></div>
+    <div id="aiSettings" style="display:none;margin-top:10px">
+      <div class="muted" style="margin-bottom:6px">Provider</div>
+      <div class="wrapchips" id="provChips"></div>
+      <div id="provHelp" class="muted" style="margin:10px 0 6px"></div>
+      <div id="keyRow" style="display:none">
+        <input id="aiKey" type="password" placeholder="Paste your API key" style="width:100%;font:inherit;padding:10px;border:1px solid var(--line);border-radius:10px">
+        <input id="aiModel" placeholder="Model (leave blank for default)" style="width:100%;font:inherit;padding:10px;border:1px solid var(--line);border-radius:10px;margin-top:8px">
+        <div class="row" style="margin-top:10px"><button class="primary" onclick="saveAi()">Save</button><button onclick="testAi()" id="aiTest">Test</button><span class="kbd" id="aiTestOut"></span></div>
+        <p class="kbd" style="margin-top:8px">Your key stays in this browser only. Free tiers: Gemini (no card) or Groq (30 req/min). Create the key yourself on the provider's site.</p>
+      </div>
+    </div>
+  </div>
+  <div id="ivQ" class="card" style="display:none"></div>
+  <div id="ivA" class="card" style="display:none">
+    <textarea id="ivAnswer" placeholder="Type the answer you'd say on the call…"></textarea>
+    <div class="row" style="margin-top:10px"><button class="primary" id="ivSubmit" onclick="ivGrade()">Grade my answer</button><span class="kbd">Answer first. Never look up.</span></div>
+  </div>
+  <div id="ivR" class="card" style="display:none"></div>
+</section>
+
+<!-- PROGRESS -->
+<section id="v-progress" class="view">
+  <div id="progBody"></div>
+  <div class="card"><button class="danger" onclick="resetAll()">Reset all progress</button></div>
+</section>
+</main>
+
+<nav>
+  <button data-v="home" class="on" onclick="go('home')">Today</button>
+  <button data-v="learn" onclick="go('learn')">Learn</button>
+  <button data-v="drill" onclick="go('drill')">Drill</button>
+  <button data-v="interview" onclick="go('interview')">Interview</button>
+  <button data-v="progress" onclick="go('progress')">Progress</button>
+</nav>
+
+<script>
+/* ---------------- CONTENT ---------------- */
+const PHASES = ["Phase 1 — Foundations (OOP, SQL, JS core, Git)","Phase 2 — Laravel inside out","Phase 3 — Senior backend & data","Phase 4 — React, Next.js, Vue","Phase 5 — Node & Python services","Phase 6 — System design & architecture","Phase 7 — Coding problems (explained, not memorised)","Phase 8 — Interviews: AI screens, behavioural, negotiation"];
+
+const TOPICS = [
+ {id:"idx", phase:0, title:"Database indexes", ready:true, practice:[["orders(id, user_id, status, created_at, total). Slow query: SELECT * FROM orders WHERE user_id = ? AND status = 'paid' ORDER BY created_at DESC LIMIT 10. Write the CREATE INDEX and say why the column order.", "CREATE INDEX idx_orders_user_status_created ON orders (user_id, status, created_at);\n\nBoth WHERE columns are equalities, so they go first (either order works; put the more selective one first if unsure). created_at last so the DB walks it already sorted and stops after 10 rows — no filesort."], ["EXPLAIN shows type: ALL on WHERE email = ? even though email has an index. List three things you check, in order.", "1) possible_keys — is the index listed? If not: type mismatch (email = 12345), a function on the column, or a collation mismatch.\n2) Selectivity — does this value match a huge share of rows? Then a scan is correct.\n3) ANALYZE TABLE for stale statistics, then FORCE INDEX to compare timings (diagnosis only, never ship it)."], ["Laravel migration: add an index for 'find posts by slug within a tenant' on posts(tenant_id, slug), and make the pair unique.", "$table->unique(['tenant_id', 'slug']);\n\nA unique constraint IS an index, so no separate index() is needed. tenant_id first because every query in a multi-tenant app filters by tenant first."]],
+  analogy:"A 1,000-page textbook. No index → read every page to find 'photosynthesis' (full table scan). With the index at the back → flip to P, jump to the page. But every new paragraph means updating the index too. Fast reads, slower writes, extra space.",
+  concept:"An index is a separate sorted structure (a B-tree) that maps a column value to a row location. Sorted means binary search: ~20 steps to find one row in a million. It has nothing to do with foreign keys — you index any column you filter, join, or sort on.\n\nWhy not index everything: every INSERT/UPDATE/DELETE must update every index (write tax); each index costs disk and RAM; low-selectivity columns (is_active, status) barely help and the optimizer may ignore them.\n\nComposite index rule: the DB can only use it from the left-most column. Put equality columns first, then the ORDER BY column. A range condition (price < 100) in the middle breaks the sort for anything after it.\n\nB-tree = sorted list, so LIKE 'zia%' uses the index; LIKE '%gmail.com' never can. A function on the column (LOWER(email)) or a type mismatch (email = 12345) also disables it.",
+  code:`CREATE INDEX idx_orders_user_created ON orders (user_id, created_at);
+
+-- uses the index (left-most column present, sorted walk, stops at 20)
+SELECT * FROM orders WHERE user_id = 42 ORDER BY created_at DESC LIMIT 20;
+
+-- CANNOT use it: skips the left-most column
+SELECT * FROM orders WHERE created_at > '2026-01-01';
+
+-- index killers
+WHERE LOWER(email) = 'a@b.com'   -- function on column
+WHERE email LIKE '%gmail.com'    -- leading wildcard
+WHERE email = 12345              -- type mismatch → implicit cast
+
+EXPLAIN SELECT ...;  -- type ALL = full scan (bad); ref / range = index used`,
+  bn:"Index হলো বইয়ের শেষের সূচিপত্রের মতো — sorted আলাদা structure। Foreign key-র সাথে সম্পর্ক নেই; WHERE, JOIN, ORDER BY-এর column-এ index লাগে। সব column-এ দিলে write ধীর হয়, RAM খায়। Composite index বাম দিক থেকে কাজ করে; range column মাঝে রাখলে পরের sort নষ্ট। 'zia%' index পায়, '%gmail' পায় না।",
+  cards:[
+   ["What does a database index actually do?","A separate sorted structure (B-tree) mapping column value → row location, so the DB can binary-search instead of scanning every row."],
+   ["Three costs of adding an index","Write tax on every INSERT/UPDATE/DELETE; disk + RAM; low-selectivity columns give little back and can mislead the optimizer."],
+   ["Query: WHERE category_id=7 AND price<100 ORDER BY created_at DESC LIMIT 20. Best index and why?","(category_id, created_at). Equality first, then the ORDER BY column so the DB walks the index pre-sorted and stops at 20. price is a range — putting it in the middle would break the sort; leave it as a row filter."],
+   ["LIKE 'zia%' vs LIKE '%gmail.com' with an index on email","'zia%' → index range scan (sorted list, known prefix). '%gmail.com' → always full scan; a B-tree can't search by suffix. Store a reversed/domain column if you need it."],
+   ["Index on email, but WHERE email = 12345 is a full scan. Why?","Type mismatch. MySQL casts every row's email to a number to compare, which disables the index. Always compare with the column's type."],
+   ["Why can't a composite index (a, b) serve WHERE b = ?","B-tree is sorted by a first, then b within each a. Without a, the b values are scattered — no ordered range to walk."],
+   ["Senior code-review answer to 'just index everything'","Cost → memory → selectivity → evidence: write tax compounds on hot tables; indexes that don't fit in RAM slow reads; low-cardinality columns give nothing; index from slow-query log + EXPLAIN + real WHERE/JOIN/ORDER BY patterns, then measure."]
+  ]},
+ {id:"n1", phase:1, title:"Eloquent & the N+1 problem", ready:true, practice:[["Fix this and explain the query count before/after:\n$orders = Order::where('status','paid')->get();\nforeach ($orders as $o) { echo $o->customer->name; echo $o->items->count(); }", "$orders = Order::where('status','paid')->with('customer')->withCount('items')->get();\nforeach ($orders as $o) { echo $o->customer->name; echo $o->items_count; }\n\nBefore: 1 + N (customers) + N (items) = 2N+1 queries. After: 3 queries total, any N. withCount avoids loading every item row just to count."], ["Write the one line that makes any lazy load throw an exception in local/dev but not production, and say where it goes.", "Model::preventLazyLoading(!app()->isProduction());\n\nIn App\\Providers\\AppServiceProvider::boot()."], ["Posts page: 20 posts, each with thousands of comments. Write the eager load that shows only the 3 newest approved comments per post.", "Post::with(['comments' => fn($q) => $q->where('approved', true)->latest()->limit(3)])->paginate(20);\n\nNote: limit inside an eager load is per-post only in Laravel 11+ (via a window function). Older versions need a package or a separate query; be ready to say that in an interview."]],
+  analogy:"You need 50 books. N+1 is asking the librarian for the list, then walking to the counter 50 separate times for one book each. Eager loading is handing over the list and getting one cart back. The walk (DB round trip) is the cost, not the books.",
+  concept:"N+1: one query for the parent rows, then one more query per row for a relation accessed in a loop. 100 posts → 101 queries.\n\nFix: Post::with('author') runs SELECT * FROM users WHERE id IN (...) — one query — then matches in PHP memory. Stays 2 queries for any N.\n\nSenior tools: Model::preventLazyLoading(!app()->isProduction()) makes the mistake throw in dev; withCount() instead of loading a whole relation just to count; $collection->load() to eager-load after the fact; constrained eager loads to avoid pulling every child row.\n\nEager loading is not always right: 20 posts × 5,000 comments each is 100k rows into memory. Paginate the relation, load per-post on demand, or withCount + a separate paginated endpoint.",
+  code:`// bug: 1 + N queries
+$posts = Post::all();
+foreach ($posts as $post) echo $post->author->name;
+
+// fix: 2 queries, any N
+$posts = Post::with('author')->get();
+
+// nested + constrained
+$posts = Post::with(['author', 'comments' => fn($q) => $q->where('approved', true)->limit(5)])->get();
+
+// fail loudly in dev (AppServiceProvider::boot)
+Model::preventLazyLoading(!app()->isProduction());
+
+// count without loading
+Post::withCount('comments')->get();   // $post->comments_count
+
+// already have the collection
+$posts->load('author');`,
+  bn:"N+1 = একটা মূল query + প্রতিটা row-র জন্য আলাদা query। with() দিয়ে eager load করলে Laravel একবারে WHERE id IN (...) চালায়, ২টা query-তেই শেষ। Dev-এ preventLazyLoading চালু রাখো। শুধু গুনতে হলে withCount(), হাজার হাজার child row থাকলে eager load না করে paginate।",
+  cards:[
+   ["Define N+1 in one sentence","One query for parents, then one extra query per parent for a relation touched inside a loop."],
+   ["What SQL does with('author') actually run?","SELECT * FROM users WHERE id IN (1,2,3,…) — one query — then Laravel matches rows to posts in PHP memory."],
+   ["with() applied but the single query takes 4s. First two suspects?","1) Missing index on the foreign key / filter column — check EXPLAIN. 2) The eager load pulls a huge relation (thousands of child rows) — check row counts; use withCount, constrain, or paginate."],
+   ["How do you catch N+1 automatically in development?","Model::preventLazyLoading(!app()->isProduction()) in AppServiceProvider::boot — any lazy load throws. Also Laravel Debugbar / Telescope query counts."],
+   ["20 posts, each with 5,000 comments. Eager load comments?","No — 100k rows into memory. withCount('comments') for the list, load comments per post via a paginated endpoint, or constrain the eager load with limit."],
+   ["Difference between with() and load()","with() is on the query builder before execution; load() eager-loads onto a collection you already have."]
+  ]},
+ {id:"loop", phase:0, title:"JavaScript event loop", ready:true, practice:[["Predict the output, then explain each line's queue:\nsetTimeout(()=>console.log('A'),0);\nPromise.resolve().then(()=>{console.log('B');setTimeout(()=>console.log('C'),0);});\n(async()=>{console.log('D');await null;console.log('E');})();\nconsole.log('F');", "D F B E A C\n\nSync: D, F. Microtasks in order queued: B (then it queues macrotask C), E (await continuation). Macrotasks: A (queued first), then C."], ["Rewrite so the three fetches run in parallel, and explain why the original is slow:\nconst a = await getUser(); const b = await getOrders(); const c = await getInvoices();", "const [a, b, c] = await Promise.all([getUser(), getOrders(), getInvoices()]);\n\nThe original awaits each promise before starting the next — three round trips in series. Promise.all starts all three immediately and waits once. Use Promise.allSettled if one failing shouldn't fail the others."], ["A button click handler runs a 3-second loop. The UI freezes. Give two fixes and say which you'd choose for CPU-heavy work.", "1) Chunk the work and yield between chunks (setTimeout/requestIdleCallback/await) so rendering gets a turn.\n2) Move it to a Web Worker — a separate thread. Choose the worker for genuinely CPU-heavy work; chunking for moderate work that must touch the DOM."]],
+  analogy:"A restaurant with one chef (the single thread). The chef finishes the current dish (synchronous code) no matter what. Then checks the VIP tray (microtasks: promises) and clears it completely. Only then takes the next ticket from the regular queue (macrotasks: setTimeout, I/O).",
+  concept:"JavaScript has one call stack. All synchronous code runs to completion first. When the stack is empty, the loop drains the microtask queue entirely (Promise .then, queueMicrotask, await continuations), then takes ONE macrotask (setTimeout, setInterval, I/O callback), then drains microtasks again, and repeats.\n\nConsequences: setTimeout(fn, 0) never runs before the current synchronous code or pending promises. A long synchronous loop blocks everything, including UI. await splits a function: the part after await is a microtask.",
+  code:`console.log(1);
+setTimeout(() => console.log(2), 0);      // macrotask
+Promise.resolve().then(() => console.log(3)); // microtask
+console.log(4);
+// → 1 4 3 2
+
+async function f() {
+  console.log('a');
+  await null;            // everything below becomes a microtask
+  console.log('b');
+}
+f(); console.log('c');
+// → a c b`,
+  bn:"JS-এ একটাই thread। আগে সব synchronous code শেষ হয়। তারপর microtask queue (Promise.then, await-এর পরের অংশ) পুরোটা খালি হয়, তারপর একটা macrotask (setTimeout)। তাই setTimeout 0 দিলেও Promise-এর পরে চলে। Output: 1 4 3 2।",
+  demo:"loop",
+  cards:[
+   ["console.log(1); setTimeout(()=>log(2),0); Promise.resolve().then(()=>log(3)); console.log(4). Output?","1 4 3 2. Sync first, then microtasks (promise), then macrotasks (timeout)."],
+   ["Microtask vs macrotask — name two of each","Micro: Promise.then/catch/finally, queueMicrotask, await continuation, MutationObserver. Macro: setTimeout, setInterval, I/O callbacks, setImmediate (Node)."],
+   ["Why does a for-loop of 5 seconds freeze the browser UI?","Single thread: rendering and event handling wait for the call stack to empty. Nothing async can run until sync code finishes."],
+   ["What happens to the code after await?","It is scheduled as a microtask when the awaited promise settles; the function returns to the caller immediately."],
+   ["Can a microtask starve macrotasks?","Yes — the microtask queue is drained fully, so a microtask that keeps queueing microtasks blocks timers and rendering forever."]
+  ]},
+ {id:"oop", phase:0, title:"Interface vs abstract class", ready:true, practice:[["Design the types: a NotificationChannel that can be Email, SMS or Push. Some share a formatMessage() implementation. What is an interface and what is abstract here? Write the skeleton.", "interface NotificationChannel { public function send(User $u, Message $m): void; }\n\nabstract class TemplatedChannel implements NotificationChannel {\n    protected function formatMessage(Message $m): string { /* shared */ }\n}\n\nclass EmailChannel extends TemplatedChannel { public function send(User $u, Message $m): void { /* uses formatMessage */ } }\nclass PushChannel implements NotificationChannel { /* no template needed */ }\n\nThe interface is the contract every channel must meet (so a Notifier can accept any); the abstract class removes duplication for those that share formatting. Push skips the abstract class — proof you shouldn't force everything into one hierarchy."], ["Your Laravel controller type-hints PaymentGateway (an interface). Write the binding and say what happens if you forget it.", "// AppServiceProvider::register()\n$this->app->bind(PaymentGateway::class, BkashGateway::class);\n\nWithout it: BindingResolutionException — 'Target [PaymentGateway] is not instantiable' — because the container can't construct an interface."]],
+  analogy:"An interface is a job contract: 'must be able to Drive'. An abstract class is a half-built car chassis: engine already mounted, you add the body. You can sign many contracts, but you build on one chassis.",
+  concept:"Interface = contract only: method signatures (and constants). A class may implement many. Use it when different, unrelated classes must be interchangeable — PaymentGateway implemented by Stripe, bKash, Nagad — and to decouple via dependency injection.\n\nAbstract class = partial implementation: can hold properties, a constructor, concrete methods, plus abstract ones. A class extends only one. Use it when subclasses share real code and state — a BaseReport with formatting helpers, subclasses fill in fetchRows().\n\nSenior rule: depend on interfaces at boundaries; use abstract classes to remove duplication inside a hierarchy. Prefer composition over deep inheritance.",
+  code:`interface PaymentGateway {
+    public function charge(int $amountInPaisa, string $token): PaymentResult;
+}
+
+abstract class BaseReport {
+    public function __construct(protected Formatter $fmt) {}
+    abstract protected function rows(): array;          // subclass must supply
+    public function render(): string {                  // shared code
+        return $this->fmt->table($this->rows());
+    }
+}
+
+class SalesReport extends BaseReport {
+    protected function rows(): array { return Order::query()->toBase()->get()->all(); }
+}
+
+// Laravel: bind interface → implementation, inject the interface
+$this->app->bind(PaymentGateway::class, BkashGateway::class);`,
+  bn:"Interface = শুধু চুক্তি, কোনো code নেই, অনেকগুলো implement করা যায় — অচেনা class-গুলোকে অদলবদল করার জন্য (Stripe/bKash)। Abstract class = আধা-তৈরি class, property, constructor, শেয়ার করা method থাকে, একটাই extend করা যায় — subclass-গুলোর common code সরাতে। Boundary-তে interface, hierarchy-র ভেতরে abstract।",
+  cards:[
+   ["Interface vs abstract class — three differences","Interface: signatures only, no state, implement many. Abstract: properties/constructor/concrete methods, extend one, can mix abstract + concrete."],
+   ["When do you choose an interface?","When unrelated classes must be swappable behind one contract, and for DI/testing (bind interface to a fake)."],
+   ["When do you choose an abstract class?","When subclasses share real code and state — a template method pattern: base does the flow, subclasses fill one step."],
+   ["What is 'composition over inheritance' in one line?","Build behaviour by injecting collaborators rather than deep extends chains; changes stay local and classes stay testable."],
+   ["How does Laravel resolve an interface type-hinted in a constructor?","Through the service container: a bind()/singleton() in a service provider maps the interface to a concrete class; the container reflects the constructor and injects it."]
+  ]},
+ {id:"life", phase:1, title:"Laravel request lifecycle", ready:true, practice:[["A colleague puts Route::model bindings and an event listener registration inside register() of a provider and it breaks intermittently. Why, and where should it go?", "register() runs before all providers are registered, so the router/event dispatcher it depends on may not be bound yet. Anything that USES other services belongs in boot(), which runs after every provider's register()."], ["Order these for a request to GET /orders/5 with auth middleware: controller method, global middleware, route middleware, kernel bootstrap, providers boot, response back through middleware.", "kernel bootstrap → providers boot → global middleware → (router matches) → route middleware (auth) → controller method → response back through middleware in reverse → terminable middleware after send."], ["Write a middleware that rejects requests without header X-Tenant and stores the tenant on the request. Where do you register it for API routes only?", "public function handle(Request $r, Closure $next) {\n    $tenant = Tenant::where('key', $r->header('X-Tenant'))->first();\n    abort_unless($tenant, 400, 'Missing tenant');\n    $r->attributes->set('tenant', $tenant);\n    return $next($r);\n}\n\nRegister in bootstrap/app.php (Laravel 11): ->withMiddleware(fn($m) => $m->api(append: [EnsureTenant::class])) — or append to the 'api' group in Kernel.php on older versions."]],
+  analogy:"An airport. public/index.php is the front door. The kernel is security + check-in (global middleware). Service providers are the ground crew who set everything up before the first flight. The router is the departure board sending you to the right gate (controller).",
+  concept:"1) public/index.php loads Composer autoload and bootstraps the app (container). 2) The HTTP kernel runs bootstrappers: env, config, exceptions, facades, then registers and boots all service providers — this is where bindings, event listeners, routes are set up. 3) The request passes through global middleware, then the router matches a route, runs route/group middleware (auth, throttle). 4) The controller is resolved from the container (constructor + method injection). 5) The response bubbles back through middleware in reverse and is sent. 6) Terminable middleware runs after the response.\n\nService providers: register() = only bind things into the container; boot() = safe to use other services (routes, policies, listeners, preventLazyLoading).",
+  code:`// route → controller resolved by the container
+Route::get('/users', [UserController::class, 'index'])->middleware('auth');
+
+class UserController {
+    public function __construct(private UserRepository $repo) {}   // injected
+    public function index(Request $request) {                       // injected
+        return UserResource::collection($this->repo->paginate());
+    }
+}
+
+// AppServiceProvider
+public function register(): void { $this->app->bind(UserRepository::class, EloquentUserRepository::class); }
+public function boot(): void { Model::preventLazyLoading(!app()->isProduction()); }`,
+  bn:"index.php → app bootstrap → HTTP kernel → service provider register/boot → global middleware → router → route middleware → controller (container থেকে DI) → response উল্টো পথে middleware দিয়ে ফেরত। register()-এ শুধু bind, boot()-এ অন্য service ব্যবহার করা যায়।",
+  cards:[
+   ["Order: middleware, router, service providers, kernel, index.php","index.php → kernel bootstrap → service providers (register then boot) → global middleware → router → route middleware → controller → response back through middleware."],
+   ["register() vs boot() in a service provider","register(): only bind into the container, don't use other services (they may not exist yet). boot(): all providers are registered, safe to use anything."],
+   ["How does the controller get its constructor dependencies?","The container reflects the constructor's type-hints, resolves each (via bindings or auto-wiring), and builds the controller."],
+   ["Global vs route middleware — give an example of each","Global: TrimStrings, HandleCors — runs on every request. Route: auth, throttle, verified — attached to routes/groups."],
+   ["What is terminable middleware?","Middleware with terminate() that runs after the response is sent — e.g. session save, logging — so the user isn't kept waiting."]
+  ]},
+ // ---- coding problems (seeded) ----
+ {id:"p-debounce", phase:6, title:"Problem: implement debounce (JS)", ready:true, practice:[["Add a cancel() and flush() method to debounce. flush runs the pending call immediately.", "function debounce(fn, ms) {\n  let timer = null, lastArgs = null, lastThis = null;\n  function run() { timer = null; fn.apply(lastThis, lastArgs); }\n  function debounced(...args) { lastArgs = args; lastThis = this; clearTimeout(timer); timer = setTimeout(run, ms); }\n  debounced.cancel = () => { clearTimeout(timer); timer = null; };\n  debounced.flush  = () => { if (timer) { clearTimeout(timer); run(); } };\n  return debounced;\n}"], ["In React, why does const search = debounce(fn, 300) inside a component body not work, and what's the fix?", "Each render creates a new debounced function with a fresh timer, so previous timers are never cleared — no debouncing. Fix: useMemo(() => debounce(fn, 300), []) or useRef to keep one instance, and cancel it in a cleanup effect."]],
+  analogy:"A lift door. Every time someone presses the button, the countdown restarts. The door only closes after nobody has pressed for 2 seconds. Debounce = 'do it once things go quiet'.",
+  concept:"Debounce delays a function until calls stop for N ms. Each new call cancels the pending one. Used for search-as-you-type, resize handlers, autosave.\n\nWhat interviewers check: you keep the timer in a closure (not global), you forward arguments and `this`, you clear the previous timer, and you can explain throttle as the opposite (run at most once per N ms, don't cancel).",
+  code:`function debounce(fn, ms) {
+  let timer = null;                 // lives in the closure
+  return function (...args) {
+    clearTimeout(timer);            // cancel the pending call
+    timer = setTimeout(() => fn.apply(this, args), ms);
+  };
+}
+
+// usage
+input.addEventListener('input', debounce(e => search(e.target.value), 300));
+
+// throttle for contrast: leading call, then ignore for ms
+function throttle(fn, ms) {
+  let last = 0;
+  return function (...args) {
+    const now = Date.now();
+    if (now - last >= ms) { last = now; fn.apply(this, args); }
+  };
+}`,
+  bn:"Debounce = কল আসা থেমে যাওয়ার N ms পরে একবার চালাও; প্রতিটা নতুন কল আগেরটা বাতিল করে। Timer closure-এ রাখো, args আর this forward করো। Throttle উল্টো — প্রতি N ms-এ সর্বোচ্চ একবার চালায়, বাতিল করে না।",
+  cards:[
+   ["Debounce vs throttle in one line each","Debounce: run once after calls stop for N ms (cancels pending). Throttle: run at most once per N ms (ignores extras)."],
+   ["Where does the timer variable live in a debounce and why?","In the closure of the returned function — each debounced function gets its own timer; a global would be shared and buggy."],
+   ["Why fn.apply(this, args) instead of fn()?","To forward the original arguments and this (e.g. the event and the element) to the wrapped function."],
+   ["Give two real uses of debounce and one of throttle","Debounce: search-as-you-type, autosave. Throttle: scroll position tracking / infinite-scroll checks."]
+  ]},
+ {id:"p-twosum", phase:6, title:"Problem: two sum (PHP) — hash map thinking", ready:true, practice:[["Variation: return ALL pairs of indices whose values sum to target (values may repeat). Keep it O(n).", "function allPairs(array $nums, int $target): array {\n    $seen = []; $out = [];          // value => [indexes]\n    foreach ($nums as $i => $n) {\n        foreach ($seen[$target - $n] ?? [] as $j) $out[] = [$j, $i];\n        $seen[$n][] = $i;\n    }\n    return $out;\n}\n// O(n) average; output size can be large but each pair is found once."], ["Explain in two sentences to a junior why the hash-map version is faster than two nested loops, using the 'dance partner' picture.", "Nested loops ask every pair 'do you two add up?' — that's n×n questions. The map writes each height on a board as people arrive, so each new person asks one question: 'is my partner already on the board?' — n questions total."]],
+  analogy:"You're looking for a dance partner whose height plus yours equals 340 cm. Instead of asking every pair (O(n²)), you write everyone's height on a board as they arrive and just check 'is 340 − mine on the board?' (O(n)).",
+  concept:"Given an array and a target, return indices of two numbers that sum to target. Brute force is O(n²). The senior answer trades memory for time: one pass, keep a map value → index, and for each number check whether target − number is already in the map.\n\nThis pattern (lookup table for the complement) shows up everywhere: duplicate detection, pairing transactions, matching webhook events.",
+  code:`function twoSum(array $nums, int $target): ?array {
+    $seen = [];                         // value => index
+    foreach ($nums as $i => $n) {
+        $need = $target - $n;
+        if (array_key_exists($need, $seen)) {
+            return [$seen[$need], $i];
+        }
+        $seen[$n] = $i;
+    }
+    return null;
+}
+// twoSum([2, 7, 11, 15], 9) → [0, 1]   O(n) time, O(n) space`,
+  bn:"প্রতিটা সংখ্যার জন্য দেখো target − সংখ্যা আগে দেখা হয়েছে কিনা (hash map-এ value → index)। এক pass, O(n) সময়, O(n) memory। Brute force O(n²)। 'complement খোঁজা' pattern-টা অনেক জায়গায় লাগে।",
+  cards:[
+   ["Two sum: brute force complexity vs optimal, and the trade-off","O(n²) vs O(n) time; optimal uses O(n) extra memory for a value→index map."],
+   ["Why check the map before inserting the current number?","So a number isn't paired with itself when target = 2 × number."],
+   ["Name another problem solved by the same 'lookup the complement' idea","Detecting duplicate transactions / finding pairs with a given difference / matching webhook events to orders."]
+  ]},
+ // ---- full syllabus — no topic skipped; each unlocks once we've drilled it together ----
+ {id:"sql2", phase:0, title:"SQL joins, GROUP BY & the fan-out bug", ready:true, practice:[["Write: each order with its total and the amount paid so far (payments has many rows per order, some orders have none). One row per order.", "SELECT o.id, o.total, COALESCE(p.paid, 0) AS paid\nFROM orders o\nLEFT JOIN (\n    SELECT order_id, SUM(amount) AS paid FROM payments GROUP BY order_id\n) p ON p.order_id = o.id;\n\nAggregate the many side first so the join is one-to-one; LEFT JOIN keeps unpaid orders; COALESCE turns NULL into 0."], ["Write: customers with at least 3 paid orders in 2026, with the count.", "SELECT c.id, c.name, COUNT(*) AS paid_orders\nFROM customers c\nJOIN orders o ON o.customer_id = c.id\nWHERE o.status = 'paid' AND o.created_at >= '2026-01-01' AND o.created_at < '2027-01-01'\nGROUP BY c.id, c.name\nHAVING COUNT(*) >= 3;\n\nWHERE filters rows first (cheap), HAVING filters the groups. Use a half-open date range so the index on created_at can be used."], ["Bug hunt: SELECT u.name, s.plan FROM users u LEFT JOIN subscriptions s ON s.user_id = u.id WHERE s.status = 'active'. Product says 'users without a subscription disappeared'. Fix it two ways.", "1) Move the condition into ON: LEFT JOIN subscriptions s ON s.user_id = u.id AND s.status = 'active'\n2) Allow the NULL explicitly: WHERE s.status = 'active' OR s.id IS NULL\n\nThe WHERE on the right table turned LEFT into INNER because NULL = 'active' is never true."]],
+  analogy:"Two wedding guest lists — the bride's and the groom's. INNER JOIN = people on both lists. LEFT JOIN = everyone on the bride's list, groom's details filled in where they exist, blank (NULL) where not. GROUP BY = 'how many guests per table?' — collapse rows into buckets and count each bucket.",
+  concept:"THE TABLES WE USE (one customer, one order of 500, three items):\n\ncustomers: (1, Ziaur)\norders:    (10, customer_id 1, total 500)\norder_items: (1, order 10, product 42) (2, order 10, product 7) (3, order 10, product 42)\n\nJOIN TYPES\n• INNER JOIN — only rows that match on both sides.\n• LEFT JOIN — every row from the left table; right side NULL when no match.\n• 'Rows with NO match' = LEFT JOIN + WHERE right.id IS NULL, or NOT EXISTS.\n\nTHE LEFT JOIN TRAP\nA condition on the RIGHT table in WHERE (WHERE o.status = 'paid') silently turns LEFT into INNER, because NULL <> 'paid' is never true — unmatched rows vanish. Put right-table conditions in ON instead.\n\nTHE FAN-OUT BUG (the #1 reporting bug)\nJoin orders → order_items and the single order row is copied once per item. SUM(o.total) becomes 500+500+500 = 1500. GROUP BY does NOT fix it — the copies just sit inside one group.\nFix: never bring a one-to-many table into the row set just to filter. Ask it a yes/no question with EXISTS, or aggregate the many side first in a subquery/CTE.\n\nEXISTS and SELECT 1\nEXISTS asks 'does at least one row match?' and stops at the first hit. It never reads the columns, so people write SELECT 1 to say 'I don't care what, only whether'. The outer row stays exactly one row. JOIN = 'bring me those rows'; EXISTS = 'just tell me if they're there'.\n\nWHY DISTINCT IS THE WRONG FIX\nDISTINCT dedupes whole rows AFTER the join, so aggregates are already wrong; it forces a sort over the inflated set; and it deletes rows that are legitimately identical (two 500 orders by the same customer). It hides the cause instead of removing it.\n\nWHERE vs HAVING\nWHERE filters rows before grouping. HAVING filters groups after. You cannot WHERE COUNT(*) > 5 — the count doesn't exist yet.\n\n'HAS NONE OF X'\nLook FOR X, keep the rows where the match came back empty. Never search for not-X: a customer with one paid and one cancelled order would match the cancelled row and be wrongly listed as 'never paid'.",
+  code:`-- users with NO orders
+SELECT u.name FROM users u
+LEFT JOIN orders o ON o.user_id = u.id
+WHERE o.id IS NULL;
+
+-- customers who have NEVER placed a PAID order (look for paid, keep the misses)
+SELECT c.name FROM customers c
+WHERE NOT EXISTS (SELECT 1 FROM orders o
+                  WHERE o.customer_id = c.id AND o.status = 'paid');
+
+-- LEFT JOIN trap: this drops users without a pro plan
+SELECT u.name, s.plan FROM users u
+LEFT JOIN subscriptions s ON s.user_id = u.id
+WHERE s.plan = 'pro';                 -- WRONG: became an INNER JOIN
+-- fix: condition in ON
+LEFT JOIN subscriptions s ON s.user_id = u.id AND s.plan = 'pro'
+
+-- FAN-OUT: wrong (1500)
+SELECT c.name, SUM(o.total)
+FROM customers c
+JOIN orders o      ON o.customer_id = c.id
+JOIN order_items i ON i.order_id = o.id       -- multiplies rows
+WHERE i.product_id = 42
+GROUP BY c.name;
+
+-- right (500): filter with EXISTS, never join the many side
+SELECT c.name, SUM(o.total)
+FROM customers c
+JOIN orders o ON o.customer_id = c.id
+WHERE EXISTS (SELECT 1 FROM order_items i
+              WHERE i.order_id = o.id AND i.product_id = 42)
+GROUP BY c.name;
+
+-- GROUP BY + HAVING: users with 5+ orders
+SELECT u.id, u.name, COUNT(o.id) AS orders_count
+FROM users u LEFT JOIN orders o ON o.user_id = u.id
+GROUP BY u.id, u.name
+HAVING COUNT(o.id) >= 5;
+
+-- Laravel equivalents
+User::doesntHave('orders')->get();
+User::whereDoesntHave('orders', fn($q) => $q->where('status','paid'))->get();
+User::withCount('orders')->having('orders_count', '>=', 5)->get();
+Customer::whereHas('orders.items', fn($q) => $q->where('product_id', 42))->get();`,
+  bn:"INNER JOIN = দুই পাশে মিল আছে যারা। LEFT JOIN = বাম টেবিলের সবাই, ডানে মিল না থাকলে NULL। 'যাদের নেই' = LEFT JOIN + WHERE right.id IS NULL, বা NOT EXISTS। ডান টেবিলের শর্ত WHERE-এ দিলে LEFT JOIN গোপনে INNER হয়ে যায় — শর্ত ON-এ দাও। Fan-out: order-এর ৩টা item থাকলে join-এ order row ৩ বার আসে, SUM ৩ গুণ; GROUP BY ঠিক করে না। EXISTS join করে না, শুধু জিজ্ঞেস করে 'আছে কি?' — row একটাই থাকে। SELECT 1 মানে 'column লাগবে না, শুধু আছে কিনা'। DISTINCT duplicate লুকায়, কারণ সরায় না। WHERE grouping-এর আগে, HAVING পরে।",
+  demo:"join",
+  cards:[
+   ["INNER JOIN vs LEFT JOIN in one line each","INNER: only rows matching on both sides. LEFT: every left row, right side NULL when no match."],
+   ["How do you find users with no orders? Two ways","LEFT JOIN orders ... WHERE o.id IS NULL, or WHERE NOT EXISTS (SELECT 1 FROM orders WHERE user_id = u.id)."],
+   ["LEFT JOIN subscriptions s ... WHERE s.plan = 'pro'. What silently happened and how do you fix it?","The WHERE on the right table turned LEFT into INNER (NULL <> 'pro'), dropping users with no pro plan. Move the condition into ON: ... ON s.user_id = u.id AND s.plan = 'pro'."],
+   ["Revenue per customer is 3× after joining order_items. Why?","Fan-out: each order row is copied once per item, so SUM(o.total) adds the same total three times. GROUP BY does not fix it — the copies are inside the group."],
+   ["The correct fix for fan-out when you only need to filter by the child table","WHERE EXISTS (SELECT 1 FROM order_items i WHERE i.order_id = o.id AND ...). EXISTS returns yes/no per order without adding rows. Or aggregate the child table first and join one row per parent."],
+   ["What does SELECT 1 inside EXISTS mean?","'I don't care about columns, only whether at least one row matches.' EXISTS stops at the first hit and returns true/false."],
+   ["Why is SELECT DISTINCT the wrong fix for duplicated join rows?","It dedupes whole rows after the join, so aggregates are already wrong; it sorts the inflated set; and it deletes rows that are legitimately identical. It hides the cause instead of removing the multiplying join."],
+   ["Customers who have never placed a PAID order — what's the trap?","Don't search for status != 'paid': a customer with one paid and one cancelled order matches the cancelled row. Look FOR paid orders and keep customers where none is found (NOT EXISTS / LEFT JOIN ... AND status='paid' WHERE o.id IS NULL)."],
+   ["WHERE vs HAVING","WHERE filters rows before grouping; HAVING filters groups after aggregation. You can't WHERE COUNT(*) > 5."]
+  ]},
+ {id:"sqlw",phase:0,title:"Window functions: ROW_NUMBER, running totals, top-N per group", pre:["Ranking and running totals inside SQL without collapsing rows.", "A race leaderboard: every runner keeps their own row, but each row also shows their rank and the time gap to the leader. GROUP BY would throw the runners away and keep only totals; window functions keep everyone.", "'Top 3 orders per customer' and 'running revenue by month' are standard senior SQL screens."], bn:"Row না মুছে rank, running total বের করা — GROUP BY রেখা মুছে দেয়, window function সবাইকে রাখে।"},
+ {id:"sqln",phase:0,title:"Normalisation, keys, constraints, schema design", pre:["Designing tables so data is stored once and stays consistent.", "One address book, not five: if a customer's phone lives in one place, changing it changes it everywhere. Normalisation is deciding what goes in which table and how they link.", "Interviewers give you a messy spreadsheet and ask you to design the tables."], bn:"Data একবার রাখো, table-এ ভাগ করো, key দিয়ে জোড়ো — বদলালে এক জায়গায়ই বদলাবে।"},
+ {id:"php8",phase:0,title:"Modern PHP 8: enums, readonly, match, attributes, fibers", pre:["The modern PHP features that separate 2026 code from 2018 code.", "Enums are a fixed menu (Status::Paid, not the string 'paid'); readonly is a sealed envelope; match is a smarter switch; attributes are sticky notes on code that frameworks read.", "Recruiters check whether your PHP stopped in the Laravel 5 era."], bn:"Enum (নির্দিষ্ট মেনু), readonly (সিল করা খাম), match, attribute — আধুনিক PHP-এর ভাষা।"},
+ {id:"oop2",phase:0,title:"OOP deep: traits, static, late binding, immutability", pre:["How PHP objects really behave: traits, static, late static binding, immutability.", "A trait is a plug-in skill you copy into several classes; static is the noticeboard shared by all instances; an immutable object is a printed receipt — you issue a new one instead of editing it.", "Senior screens probe why static state breaks tests and when traits become a smell."], bn:"Trait = copy করা দক্ষতা, static = সবার শেয়ার করা বোর্ড, immutable = ছাপানো রিসিট, edit না, নতুন দাও।"},
+ {id:"solid",phase:0,title:"SOLID with real Laravel examples", pre:["Five habits that keep code changeable, shown with Laravel code you'd actually write.", "A kitchen where each station does one job, new dishes don't require rewiring the stove, and any chef can swap in because the tools follow the same contract.", "'Give me an example of SOLID from your own code' is a top-5 senior question."], bn:"পাঁচটা অভ্যাস যাতে code বদলানো সহজ থাকে — Laravel-এর নিজের code দিয়ে।"},
+ {id:"patt",phase:0,title:"Design patterns you actually use: strategy, factory, observer, repository", pre:["The handful of design patterns that show up in real Laravel work.", "Strategy = choosing bKash/Stripe/Nagad behind one interface; Factory = a kitchen that assembles the right object; Observer = 'text me when the order ships'; Repository = the librarian between you and the shelves.", "Interviewers ask for a pattern you used and a time one was overkill."], bn:"Strategy (bKash/Stripe এক interface-এর পিছনে), Factory, Observer, Repository — যেগুলো সত্যি লাগে।"},
+ {id:"jscore",phase:0,title:"JS closures, scope, this, prototypes", pre:["Closures, scope, this, and prototypes — how JavaScript actually resolves names.", "A closure is a backpack: a function carries the variables from where it was born. 'this' is a name tag that changes depending on who is calling you. Prototypes are a chain of 'ask my parent if I don't know'.", "Every JS screen has one closure-in-a-loop or lost-this question."], bn:"Closure = ব্যাকপ্যাক, this = কে ডাকছে তার নাম, prototype = 'না জানলে বাবাকে জিজ্ঞেস করো'।"},
+ {id:"jsasync",phase:0,title:"Promises, async/await, error handling, cancellation", pre:["Promises and async/await, error handling, and cancelling requests.", "A restaurant buzzer: you get the buzzer now (promise), food later (resolution). await is waiting at the counter without blocking other customers. AbortController is walking away and telling the kitchen to stop.", "Unhandled rejections and sequential-vs-parallel awaits are common live-coding traps."], bn:"Promise = বাজার, await = কাউন্টারে দাঁড়ানো কিন্তু অন্যদের আটকানো না, AbortController = 'থামো'।"},
+ {id:"ts",phase:0,title:"TypeScript essentials: generics, unions, narrowing", pre:["Enough TypeScript to read and write typed React/Next code confidently.", "Types are the label on a jar. Generics are a jar whose label says 'contents: whatever you put in'. Narrowing is opening the lid to check before you use it.", "Next.js roles assume TypeScript; being unsure looks junior."], bn:"Type = জারের লেবেল, generic = 'যা রাখবে তাই', narrowing = খোলার আগে ঢাকনা দেখে নেওয়া।"},
+ {id:"http",phase:0,title:"HTTP, REST, status codes, caching headers, CORS", pre:["How HTTP really works: methods, status codes, caching headers, CORS, REST conventions.", "Postal system: the method is the type of letter, status codes are the reply stamps, cache headers say 'valid until', CORS is the receptionist asking which buildings may talk to this one.", "Explaining a 401 vs 403, or why a CORS error happens, is a routine screen."], bn:"Method = চিঠির ধরন, status code = উত্তরের সিল, cache header = কতদিন valid, CORS = কে কথা বলতে পারবে।"},
+ {id:"git",phase:0,title:"Git: merge vs rebase, bisect, recovery, PR hygiene", pre:["Git beyond commit: merge vs rebase, bisect, undoing mistakes, clean PRs.", "Rebase is retyping your notes onto a fresh page so history reads straight; merge staples both pages together. Bisect is finding the bad page by halving the notebook.", "Teams test whether you can recover from a bad force-push calmly."], bn:"Rebase = নোট নতুন পাতায় সোজা করে লেখা, merge = দুই পাতা স্ট্যাপল, bisect = অর্ধেক করে খারাপ পাতা খোঁজা।"},
+ {id:"cont",phase:1,title:"Service container, providers, contextual binding", pre:["The service container: bindings, singletons, contextual binding, auto-wiring.", "A hotel concierge: you ask for 'a payment gateway' and it hands you the right one, already set up, without you knowing which company it called.", "'How does Laravel know what to inject?' is the classic Laravel senior opener."], bn:"Hotel-এর concierge: 'একটা payment gateway দাও' বললে ঠিকটা সাজিয়ে দেয়, তুমি জানো না কাকে ডাকল।"},
+ {id:"elo2",phase:1,title:"Eloquent relations: hasManyThrough, polymorphic, pivots", pre:["Advanced relations: hasManyThrough, polymorphic, pivot data, morph maps.", "Friend-of-a-friend links: hasManyThrough is 'countries → users → posts' in one step; polymorphic is one comments table that can point at posts, videos, or products.", "Modeling a real domain with relations is a common take-home."], bn:"hasManyThrough = বন্ধুর বন্ধু এক ধাপে, polymorphic = এক comments table যা post/video/product-এ যেতে পারে।"},
+ {id:"elo3",phase:1,title:"Scopes, casts, accessors, query builder vs raw", pre:["Scopes, casts, accessors/mutators, and when to drop to the query builder or raw SQL.", "Scopes are saved filters on a spreadsheet; casts translate the DB's language (JSON, dates) to PHP's; accessors are a display formatter on read.", "Knowing when Eloquent hurts performance is a senior signal."], bn:"Scope = সেভ করা filter, cast = DB-র ভাষা PHP-তে অনুবাদ, accessor = পড়ার সময় সাজানো; কখন raw SQL।"},
+ {id:"valid",phase:1,title:"Validation, Form Requests, API Resources", pre:["Validation, Form Requests, API Resources — clean boundaries in and out.", "Airport security on the way in (Form Request), a tailored outfit on the way out (Resource) — the controller in between stays thin.", "Interviewers ask where validation belongs and how to version an API response."], bn:"ঢোকার সময় security (Form Request), বেরোনোর সময় সাজানো পোশাক (Resource), মাঝে controller পাতলা।"},
+ {id:"auth",phase:1,title:"Auth, Sanctum/Passport, policies & gates", pre:["Authentication and authorization: Sanctum/Passport, guards, policies, gates.", "Authentication is showing your ID at the door; authorization is which rooms your keycard opens. Policies are the rules per room.", "Token strategy for SPA vs mobile is asked in nearly every Laravel API interview."], bn:"Authentication = দরজায় ID দেখানো, authorization = কোন ঘর কার্ডে খোলে, policy = ঘরের নিয়ম।"},
+ {id:"mw",phase:1,title:"Middleware, rate limiting, request lifecycle hooks", pre:["Middleware and rate limiting: the pipeline every request walks through.", "Security checkpoints in a row; each can inspect, modify, or turn you back. Rate limiting is the doorman counting how many times you came in this minute.", "'Where would you put X?' questions test whether you understand the pipeline."], bn:"সারি সারি checkpoint — দেখতে, বদলাতে, ফেরাতে পারে; rate limit = দারোয়ান গুনছে কতবার এলে।"},
+ {id:"queue",phase:1,title:"Queues, jobs, retries, backoff, failed jobs, Horizon", pre:["Queues: jobs, retries, backoff, failed jobs, Horizon, and what can go wrong.", "A restaurant ticket rail: the waiter (web request) posts the ticket and moves on; cooks (workers) pick tickets up. Some dishes fail and need re-cooking — but not forever.", "Queues are where most 'tell me about a production incident' stories live."], bn:"Restaurant-এর টিকিট রেল: waiter টিকিট দিয়ে চলে যায়, cook তোলে; ব্যর্থ হলে আবার, কিন্তু চিরকাল না।"},
+ {id:"events",phase:1,title:"Events, listeners, observers, broadcasting", pre:["Events, listeners, observers, broadcasting — decoupling side effects.", "A bell rings when an order is placed; the kitchen, the SMS system, and the accounting sheet each react without the cashier knowing they exist.", "Asked as: 'how would you add an email on signup without touching the controller?'"], bn:"Order হলে ঘণ্টা বাজে — kitchen, SMS, হিসাব সবাই সাড়া দেয়, cashier জানেই না তারা আছে।"},
+ {id:"cachel",phase:1,title:"Cache, sessions, config, env, Octane basics", pre:["Cache, sessions, config, env, and Octane basics in Laravel specifically.", "A sticky note on the fridge (cache) vs the recipe book (database). Sessions are the coat-check ticket. Octane keeps the kitchen open between customers instead of relighting the stove.", "Config caching mistakes in production are a classic screen story."], bn:"Fridge-এর sticky note (cache) বনাম রান্নার বই (DB); session = কোট রাখার টোকেন; Octane চুলা জ্বালিয়ে রাখে।"},
+ {id:"test",phase:1,title:"Testing: feature vs unit, factories, mocking, Pest", pre:["Testing that pays for itself: feature vs unit, factories, mocking, Pest.", "A feature test is a customer walking through the restaurant; a unit test is checking one knife is sharp. Factories are the prop department; mocks are stand-in actors for the payment API.", "Being able to say what you would NOT test is the senior part."], bn:"Feature test = customer পুরো restaurant হেঁটে দেখে, unit test = একটা ছুরি ধার কিনা; mock = বদলি অভিনেতা।"},
+ {id:"deploy",phase:1,title:"Deploy: Forge/Docker, zero-downtime, migrations in prod", pre:["Deploying Laravel: Docker/Forge, zero-downtime, running migrations in production safely.", "Changing the tires while the car is moving: build the new version beside the old one, switch the symlink, never lock a big table at noon.", "'How do you deploy a schema change without downtime?' is a favourite."], bn:"চলন্ত গাড়ির চাকা বদলানো: নতুন version পাশে বানাও, symlink ঘোরাও, দুপুরে বড় table lock করো না।"},
+ {id:"tx",phase:2,title:"Transactions, isolation levels & locking", pre:["Transactions, isolation levels, and locking — correctness when two things happen at once.", "Two people booking the last seat at the same second. A transaction is 'all or nothing'; a lock is putting your hand on the seat while you pay.", "Double-spend and overselling scenarios appear in almost every senior backend loop."], bn:"শেষ সিট দুজন একই সেকেন্ডে বুক করছে: transaction = হয় সব না হয় কিছুই না, lock = দাম দেওয়ার সময় হাত রাখা।"},
+ {id:"idem",phase:2,title:"Idempotency keys & retries", pre:["Idempotency: making retries safe so a repeated request doesn't double-charge.", "Pressing the lift button twice doesn't call two lifts. The idempotency key is the button remembering it was already pressed.", "Payments and webhooks questions always land here."], bn:"Lift-এর বোতাম দুবার চাপলে দুটো lift আসে না — idempotency key = বোতামের মনে থাকা যে চাপা হয়েছে।"},
+ {id:"cache",phase:2,title:"Caching strategies, invalidation, stampedes", pre:["Caching strategies: what to cache, invalidation, and stampedes.", "A newspaper stand: print the front page once and hand out copies, but know when to reprint. A stampede is 1,000 people asking for the paper the second it sells out.", "'How do you cache this endpoint and keep it correct?' is asked constantly."], bn:"খবরের কাগজ একবার ছাপো, কপি দাও, কিন্তু জানো কখন আবার ছাপতে হবে; stampede = এক সেকেন্ডে হাজার জন চাওয়া।"},
+ {id:"tenant",phase:2,title:"Multi-tenancy: shared vs DB-per-tenant, tenancy packages", pre:["Multi-tenancy: shared schema vs database-per-tenant, and the packages that help.", "An apartment building (shared DB, tenant_id on every row) vs a row of houses (one database each). Cheaper vs safer, and the trade-offs of each.", "You run a multi-tenant SaaS; expect to defend your choice."], bn:"Apartment building (এক DB, প্রতি row-এ tenant_id) বনাম আলাদা বাড়ি (প্রতি tenant এক DB) — সস্তা বনাম নিরাপদ।"},
+ {id:"api",phase:2,title:"API design, versioning, pagination, webhooks", pre:["API design: resources, versioning, pagination, filtering, webhooks.", "A well-labelled shop: predictable aisles, prices on everything, and a delivery service (webhooks) that tells the customer when things change.", "Cursor vs offset pagination and versioning strategy are standard senior questions."], bn:"গোছানো দোকান: চেনা তাক, সবকিছুর দাম, আর delivery (webhook) যা বদল হলে জানায়।"},
+ {id:"perf",phase:2,title:"Profiling & performance: Telescope, Blackfire, slow logs", pre:["Profiling PHP: Telescope, Blackfire, slow query logs, finding the real bottleneck.", "A stopwatch on each kitchen station instead of guessing which cook is slow.", "'The endpoint is slow — walk me through what you do' is nearly universal."], bn:"অনুমান না করে প্রতিটা station-এ stopwatch — Telescope, Blackfire, slow log।"},
+ {id:"sec",phase:2,title:"Security: OWASP top 10 in Laravel", pre:["Security: the OWASP top 10 as they appear in Laravel apps.", "Locks, cameras, and not leaving the keys under the mat: mass assignment, SQL injection, XSS, CSRF, broken access control, secrets in git.", "Every senior role has at least one security scenario question."], bn:"তালা, ক্যামেরা, চাবি পাপোশের নিচে না রাখা: mass assignment, SQL injection, XSS, CSRF, secrets in git।"},
+ {id:"search",phase:2,title:"Search & reporting: full-text, Scout, read replicas", pre:["Search and reporting at scale: full-text indexes, Scout, read replicas, reporting DBs.", "Don't do your accounting on the checkout counter — move heavy reads to a replica or a search engine.", "Reporting pages that time out are a common take-home scenario."], bn:"Checkout counter-এ হিসাব কষো না — ভারী পড়া replica বা search engine-এ সরাও।"},
+ {id:"dotnet",phase:2,title:".NET parallels: DI, EF Core, middleware, LINQ N+1", pre:["Your .NET year mapped to Laravel: DI, EF Core, middleware, LINQ's own N+1.", "The same restaurant with different signage — once you see the mapping, both stacks stay alive in interviews.", "Lets you answer 'how is Laravel different from ASP.NET Core?' with substance."], bn:"একই restaurant, আলাদা সাইনবোর্ড — mapping দেখলে দুই stack-ই interview-এ জীবন্ত থাকে।"},
+ {id:"react",phase:3,title:"React effects, deps & race conditions", pre:["useEffect done right: dependencies, cleanup, and race conditions with async data.", "Ordering two coffees, the second arriving first, and you drinking the wrong one — that is an effect race. Cleanup is cancelling the first order.", "The single most common React senior screen question."], bn:"দুটো কফি order, দ্বিতীয়টা আগে এল, ভুলটা খেলে — এটাই effect race; cleanup = প্রথম order বাতিল।"},
+ {id:"state",phase:3,title:"React state, context, memo, re-render rules", pre:["State, context, memoization, and why components re-render.", "A noticeboard everyone reads (context) vs a note passed hand to hand (props). Memo is 'don't repaint the wall if nothing changed'.", "'Why is this re-rendering?' live-debugging is standard."], bn:"Noticeboard (context) বনাম হাতে হাতে চিঠি (props); memo = কিছু না বদলালে দেয়াল আবার রং করো না।"},
+ {id:"hooks",phase:3,title:"Custom hooks, data fetching, React Query", pre:["Custom hooks and data fetching, including React Query-style caching.", "A custom hook is a reusable recipe card; React Query is a pantry that remembers what you fetched and when it goes stale.", "Shows you can structure a real React app, not just components."], bn:"Custom hook = reusable রেসিপি কার্ড; React Query = pantry যা মনে রাখে কী আনা হয়েছে, কখন পুরনো হবে।"},
+ {id:"next",phase:3,title:"Next.js: App Router, SSR/ISR, server components", pre:["Next.js App Router: server components, SSR, ISR, data fetching.", "Pre-cooked meals (static), cooked-to-order (SSR), and cooked-then-kept-warm-for-a-while (ISR). Server components are dishes prepared in the kitchen, not at the table.", "Next roles ask you to choose a rendering strategy and defend it."], bn:"আগে রান্না (static), order-এ রান্না (SSR), রান্না করে কিছুক্ষণ গরম রাখা (ISR); server component = kitchen-এ তৈরি।"},
+ {id:"nextapi",phase:3,title:"Next.js API routes, auth, caching", pre:["Next.js API routes, authentication, and caching in a full-stack Next app.", "One building with both the kitchen and the dining room — when to cook on the server and when to call an external Laravel API.", "Common in Laravel-backend + Next-frontend teams."], bn:"Kitchen আর dining এক বাড়িতে — কখন server-এ রান্না, কখন বাইরের Laravel API ডাকা।"},
+ {id:"vue",phase:3,title:"Vue reactivity: ref/reactive/computed/watch", pre:["Vue reactivity: ref, reactive, computed, watch — and their traps.", "A spreadsheet: change a cell (ref) and dependent cells (computed) update themselves. Watchers are someone standing by to react when a cell changes.", "Losing reactivity by destructuring is the classic Vue screen question."], bn:"Spreadsheet: একটা cell (ref) বদলালে নির্ভরশীল cell (computed) নিজে বদলায়; watcher = পাশে দাঁড়ানো লোক।"},
+ {id:"vue2",phase:3,title:"Vue composables, Pinia, component patterns", pre:["Composables, Pinia, and component patterns for larger Vue apps.", "Composables are recipe cards again, Vue-flavoured; Pinia is the shared pantry.", "Eight years of Vue means you'll be asked how you organised a big app."], bn:"Composable = Vue-এর রেসিপি কার্ড, Pinia = শেয়ার করা pantry।"},
+ {id:"fe",phase:3,title:"Frontend perf: bundles, lazy load, web vitals", pre:["Frontend performance: bundles, lazy loading, web vitals.", "Don't ship the whole warehouse to a customer who bought one shirt.", "'The page is slow — what do you check?' for frontend."], bn:"একটা শার্ট কেনা customer-কে পুরো গুদাম পাঠিও না — bundle, lazy load, web vitals।"},
+ {id:"node1",phase:4,title:"Node: event loop, streams, worker threads", pre:["Node internals: event loop phases, streams, worker threads.", "The same single-chef kitchen as browser JS, but now handling files and sockets — streams are a conveyor belt instead of a full plate.", "Full-stack roles often add one Node internals question."], bn:"Browser-এর মতোই এক chef-এর kitchen, এখন file আর socket-ও সামলায়; stream = পুরো প্লেট না, conveyor belt।"},
+ {id:"node2",phase:4,title:"Express/Nest: middleware, validation, errors", pre:["Express/Nest patterns: middleware, validation, error handling.", "Laravel's pipeline, in JavaScript clothes.", "Lets you say yes to Node work without bluffing."], bn:"Laravel-এর pipeline, JavaScript-এর পোশাকে।"},
+ {id:"py1",phase:4,title:"Python essentials: types, async, packaging", pre:["Python essentials for services: typing, async, packaging, virtualenvs.", "Enough to own a small service confidently, not to compete with Python specialists.", "Your CV lists a Python service; expect a question."], bn:"ছোট একটা service নিজে চালানোর মতো Python — Python specialist-দের সাথে লড়ার জন্য না।"},
+ {id:"py2",phase:4,title:"FastAPI service: your CV-scoring design, explained", pre:["Your CV-scoring FastAPI service, explained end to end.", "Turning the thing you built into a clear five-minute story with trade-offs.", "This is a story you'll tell in every interview."], bn:"তোমার বানানো CV-scoring service-কে পাঁচ মিনিটের স্পষ্ট গল্পে বদলানো, trade-off সহ।"},
+ {id:"llm",phase:4,title:"LLM integration: prompts, structured output, evals, cost", pre:["Integrating LLMs: prompts, structured output, evaluation, cost, failure modes.", "Hiring a brilliant intern who sometimes lies confidently: you give clear instructions, check the work, and never let them touch money unsupervised.", "2026 senior roles expect a grounded view of AI features."], bn:"দুর্দান্ত কিন্তু মাঝে মাঝে আত্মবিশ্বাসে মিথ্যা বলা intern: স্পষ্ট নির্দেশ, কাজ চেক, টাকায় হাত না।"},
+ {id:"sd0",phase:5,title:"System design method: requirements → estimate → sketch → trade-offs", pre:["The system design method: clarify → estimate → sketch → deep-dive → trade-offs.", "Architect's site visit: ask what the building is for before drawing anything.", "The framework you use for every design question."], bn:"Architect-এর site visit: আঁকার আগে জিজ্ঞেস করো বাড়িটা কিসের জন্য — clarify → estimate → sketch → trade-off।"},
+ {id:"sd1",phase:5,title:"URL shortener & rate limiter", pre:["URL shortener and rate limiter: the two warm-up designs.", "A coat check with numbered tickets; a doorman with a counter per guest.", "Common first-round design questions."], bn:"কোট রাখার নম্বর টোকেন (shortener); প্রতি অতিথির counter হাতে দারোয়ান (rate limiter)।"},
+ {id:"sd2",phase:5,title:"Notification system & job scheduler", pre:["Notification system and job scheduler.", "The post office: queues, retries, priorities, and 'do not send twice'.", "Tests queues, idempotency, and fan-out together."], bn:"Post office: queue, retry, priority, আর 'দুবার পাঠিও না'।"},
+ {id:"sd3",phase:5,title:"Multi-tenant SaaS (CoreBari dissected)", pre:["Multi-tenant SaaS design — your CoreBari, dissected.", "Explaining your own product's architecture like a case study, including what you'd change.", "Your strongest interview story if you can defend the trade-offs."], bn:"নিজের product-এর architecture case study-র মতো বলা, কী বদলাতে চাও সেটাও।"},
+ {id:"sd4",phase:5,title:"Payments & ledgers: consistency, reconciliation", pre:["Payments and ledgers: consistency, reconciliation, never losing money.", "An accountant's double-entry book: every movement recorded twice and balanced.", "Fintech-adjacent roles love this."], bn:"হিসাবরক্ষকের double-entry খাতা: প্রতিটা টাকার নড়াচড়া দুবার লেখা, ব্যালান্স মেলানো।"},
+ {id:"sd5",phase:5,title:"Scaling: load balancers, replicas, sharding, CDN", pre:["Scaling: load balancers, replicas, sharding, CDNs, when NOT to.", "Adding more cashiers, then more shops, then a warehouse per region — and knowing that one shop was enough.", "'How would this handle 100× traffic?'"], bn:"আরও cashier, তারপর আরও দোকান, তারপর অঞ্চলে গুদাম — আর জানা যে একটা দোকানই যথেষ্ট ছিল।"},
+ {id:"arch",phase:5,title:"Architecture: modular monolith vs microservices, DDD lite", pre:["Modular monolith vs microservices, DDD-lite boundaries.", "One well-organised house with clear rooms vs a village of huts with roads between them.", "'Would you split this into services?' — the right answer is usually no, with reasons."], bn:"গোছানো এক বাড়ি (modular monolith) বনাম রাস্তা দিয়ে জোড়া অনেক কুঁড়েঘর (microservices) — সাধারণত না-ই উত্তর।"},
+ {id:"obs",phase:5,title:"Observability: logs, metrics, tracing, alerts", pre:["Observability: logs, metrics, tracing, alerts that don't wake you for nothing.", "Dashboard lights in a car: you want the right ones, not all of them.", "'How do you know your system is healthy?'"], bn:"গাড়ির dashboard-এর বাতি: ঠিক বাতিগুলো চাও, সবগুলো না।"},
+ {id:"p-arr",phase:6,title:"Arrays & strings: sliding window, two pointers", pre:["Arrays and strings: sliding window and two pointers.", "Two people walking toward each other along a line; a window sliding across a sentence.", "Warm-up live-coding questions."], bn:"দুজন লাইনের দুই মাথা থেকে হাঁটছে (two pointers); বাক্যের ওপর জানালা সরছে (sliding window)।"},
+ {id:"p-map",phase:6,title:"Hash maps & sets: frequency, grouping, dedupe", pre:["Hash maps and sets: counting, grouping, de-duplicating.", "Tally marks on a board — the trick behind most O(n) solutions.", "Most common interview pattern."], bn:"বোর্ডে দাগ কেটে গোনা — বেশিরভাগ O(n) সমাধানের কৌশল।"},
+ {id:"p-stack",phase:6,title:"Stacks & queues: brackets, LRU cache", pre:["Stacks and queues: matching brackets, LRU cache.", "A stack of plates; a queue at a counter; an LRU cache is a small shelf where the least-used item falls off.", "LRU cache is a classic senior live-coding task."], bn:"প্লেটের স্তূপ (stack), counter-এর লাইন (queue), LRU = ছোট তাক যেখান থেকে কম ব্যবহৃত জিনিস পড়ে যায়।"},
+ {id:"p-rec",phase:6,title:"Recursion & trees: flatten, traverse, depth", pre:["Recursion and trees: flattening, traversal, depth.", "Russian dolls: solve the small one inside, the big one follows.", "Nested menus and category trees are everyday backend work."], bn:"রাশিয়ান পুতুল: ভেতরের ছোটটা সমাধান করো, বড়টা আপনিই হয়।"},
+ {id:"p-sql",phase:6,title:"SQL problems: top-N per group, gaps, running totals", pre:["SQL problems: top-N per group, finding gaps, running totals.", "The same puzzles reporting teams actually hit.", "Written SQL screens for backend roles."], bn:"Reporting team যেসব ধাঁধায় সত্যি পড়ে: top-N per group, gap, running total।"},
+ {id:"p-refac",phase:6,title:"Refactoring problems: spot the smell, fix the code", pre:["Refactoring problems: spot the smell, fix the code, explain why.", "Editing someone else's essay — the most realistic senior test there is.", "Many companies replaced algorithm puzzles with these."], bn:"অন্যের লেখা সম্পাদনা — senior test-এর সবচেয়ে বাস্তব রূপ।"},
+ {id:"aiscr",phase:7,title:"AI screening interviews: structure, pacing, keywords", pre:["AI screening interviews: how they score, how to structure spoken answers.", "Talking to a strict, literal listener: context, decision, trade-off, outcome, in that order.", "Most 2026 applications start with one of these."], bn:"কড়া, আক্ষরিক শ্রোতার সাথে কথা: context, decision, trade-off, outcome — এই ক্রমে।"},
+ {id:"behav",phase:7,title:"Behavioural (STAR): ownership, conflict, failure", pre:["Behavioural questions with STAR: ownership, conflict, failure, learning.", "Telling a true story with a beginning, a decision, and a result — not a rant.", "Every final round."], bn:"সত্যি গল্প: শুরু, একটা সিদ্ধান্ত, একটা ফল — অভিযোগ না।"},
+ {id:"story",phase:7,title:"Your stories: Norwegian contract, CoreBari, PHP→.NET", pre:["Your own stories, polished: the Norwegian contract, CoreBari, PHP→.NET, back to Laravel.", "Five stories you can tell in two minutes each, from memory.", "You'll reuse these in every interview."], bn:"পাঁচটা গল্প, প্রতিটা দুই মিনিটে, মুখস্থ না, মন থেকে।"},
+ {id:"live",phase:7,title:"Live coding & pair-programming etiquette", pre:["Live coding and pair-programming etiquette.", "Thinking out loud, asking before assuming, testing as you go.", "How you code matters more than the answer."], bn:"জোরে ভেবে বলা, ধরে নেওয়ার আগে জিজ্ঞেস করা, লিখতে লিখতে test করা।"},
+ {id:"nego",phase:7,title:"Remote-role negotiation & red flags", pre:["Remote-role negotiation and red flags.", "Knowing your number, asking about time zones and contracts, and spotting a bad client early.", "Protects the outcome of all the rest."], bn:"নিজের number জানা, time zone আর contract জিজ্ঞেস করা, খারাপ client আগেই চেনা।"}
+];
+const LEITNER_DAYS=[0,1,3,7,21,60];
+const PATH=PHASES.flatMap((_,i)=>TOPICS.filter(t=>t.phase===i).map(t=>t.id));
+
+/* ---------------- STATE ---------------- */
+let S={cards:{},lastDay:null,streak:0,history:[]};
+const DAY=86400000, today=()=>Math.floor(Date.now()/DAY);
+const KEY='rebuild-state';
+async function load(){
+ let raw=null;
+ try{if(window.storage){const r=await window.storage.get(KEY);raw=r&&r.value;}}catch(e){}
+ if(!raw){try{raw=localStorage.getItem(KEY);}catch(e){}}
+ if(raw){try{S=Object.assign(S,JSON.parse(raw));}catch(e){}}
+ if(!S.ai)S.ai={provider:'',key:'',model:''};
+}
+async function save(){
+ const raw=JSON.stringify(S);let ok=false;
+ try{if(window.storage){await window.storage.set(KEY,raw);ok=true;}}catch(e){}
+ try{localStorage.setItem(KEY,raw);ok=true;}catch(e){}
+ if(!ok)document.getElementById('saveWarn').style.display='block';
+}
+function allCards(){const out=[];for(const t of TOPICS){if(!t.cards)continue;t.cards.forEach((c,i)=>out.push({key:t.id+':'+i,topic:t,q:c[0],a:c[1]}));}return out;}
+function cardState(k){return S.cards[k]||(S.cards[k]={box:0,due:0,seen:0,miss:0});}
+function dueCards(topic){return allCards().filter(c=>(!topic||c.topic.id===topic)&&cardState(c.key).due<=today());}
+function touchStreak(){const d=today();if(S.lastDay===d)return;S.streak=(S.lastDay===d-1)?S.streak+1:1;S.lastDay=d;}
+
+/* ---------------- PICKER (tap, no dropdowns) ---------------- */
+const pick={drill:'',drillPhase:-1,iv:'idx',ivPhase:0,mode:'tech'};
+function renderPicker(rootId,key,phaseKey,onlyReady,onChange){
+ const root=document.getElementById(rootId);const ph=pick[phaseKey];
+ const phases=`<div class="chips">${onlyReady?`<button class="chip ${ph===-1?'on':''}" onclick="pick.${phaseKey}=-1;pick.${key}='';renderPicker('${rootId}','${key}','${phaseKey}',${onlyReady},${onChange.name})">All due</button>`:''}${PHASES.map((p,i)=>{const any=TOPICS.some(t=>t.phase===i&&(!onlyReady||t.cards));return `<button class="chip ${ph===i?'on':''} ${any?'':'dim'}" onclick="pick.${phaseKey}=${i};renderPicker('${rootId}','${key}','${phaseKey}',${onlyReady},${onChange.name})">${i+1}. ${p.split(' — ')[1]}</button>`;}).join('')}</div>`;
+ const topics=ph===-1?'':`<div class="wrapchips" style="margin-top:6px">${TOPICS.filter(t=>t.phase===ph).map(t=>{const ok=!onlyReady||t.cards;return `<button class="chip ${pick[key]===t.id?'on':''} ${ok?'':'dim'}" ${ok?`onclick="pick.${key}='${t.id}';renderPicker('${rootId}','${key}','${phaseKey}',${onlyReady},${onChange.name});${onChange.name}()"`:'disabled'}>${t.title}</button>`;}).join('')}</div>`;
+ root.innerHTML=phases+topics;
+}
+function renderModeChips(){const M={tech:'Technical deep-dive',ai:'AI screening',behav:'Behavioural'};document.getElementById('ivModeChips').innerHTML=Object.entries(M).map(([k,v])=>`<button class="chip ${pick.mode===k?'on':''}" onclick="pick.mode='${k}';renderModeChips()">${v}</button>`).join('');}
+function noop(){}
+
+/* ---------------- NAV ---------------- */
+function go(v){document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v||(v==='lesson'&&b.dataset.v==='learn')));
+ if(v==='home')renderHome();if(v==='learn')renderLearn();if(v==='drill'){renderPicker('drillPick','drill','drillPhase',true,startDrill);startDrill();}if(v==='interview'){renderPicker('ivPick','iv','ivPhase',false,noop);renderModeChips();renderProvChips();}if(v==='progress')renderProgress();window.scrollTo(0,0);}
+
+/* ---------------- HOME ---------------- */
+function renderPath(){const done=TOPICS.filter(t=>t.cards&&(mastery(t)||0)>=60);const live=TOPICS.filter(t=>t.cards);const next=PATH.map(id=>TOPICS.find(t=>t.id===id)).find(t=>!t.cards);const weak=live.filter(t=>(mastery(t)||0)<60);
+ const pct=Math.round(100*live.length/TOPICS.length);
+ document.getElementById('pathCard').innerHTML=`<h2>Your path</h2><div class="row sp"><span class="muted">${live.length} of ${TOPICS.length} topics unlocked · ${done.length} mastered</span><span class="muted">${pct}%</span></div><div class="bar" style="margin:8px 0 14px"><i style="width:${pct}%"></i></div>
+ ${weak.length?`<div style="margin-bottom:10px"><div class="muted">Finish these first (under 60% in drills)</div>${weak.map(t=>`<div class="topic" style="margin-top:6px" onclick="openLesson('${t.id}')"><span>${t.title}</span><span class="pill mid">${mastery(t)||0}%</span></div>`).join('')}</div>`:''}
+ ${next?`<div class="muted">Next new topic</div><div class="topic" style="margin-top:6px" onclick="openPreview('${next.id}')"><span>${next.title}</span><span class="pill">preview</span></div><p class="kbd" style="margin:8px 0 0">Ask Claude: "teach me ${next.title}" — that unlocks it here.</p>`:'<div class="muted">All topics unlocked.</div>'}
+ <p class="kbd" style="margin:10px 0 0">Daily rhythm: 5 min drill of due cards → one new topic with Claude → one interview question on it → write your LinkedIn draft when a topic passes 60%.</p><p class="kbd" style="margin:6px 0 0">প্রতিদিন: ৫ মিনিট due card drill → Claude-এর সাথে একটা নতুন topic → তার ওপর একটা interview প্রশ্ন → topic ৬০% পার হলে LinkedIn draft।</p>`;}
+function renderHome(){renderPath();document.getElementById('dueCount').textContent=dueCards().length;document.getElementById('streak').textContent=S.streak||0;
+ const weak=allCards().map(c=>({c,s:cardState(c.key)})).filter(x=>x.s.miss>0).sort((a,b)=>b.s.miss-a.s.miss).slice(0,5);
+ document.getElementById('weakList').innerHTML=weak.length?weak.map(x=>`<div style="margin:6px 0"><span class="pill weak">${x.s.miss}×</span> ${esc(x.c.q)}</div>`).join(''):'<span class="muted">Do a drill first.</span>';}
+
+/* ---------------- LEARN ---------------- */
+function mastery(t){if(!t.cards)return null;let seen=0,boxes=0;t.cards.forEach((c,i)=>{const s=cardState(t.id+':'+i);if(s.seen){seen++;boxes+=s.box;}});return seen?Math.round(100*boxes/(t.cards.length*5)):0;}
+function renderLearn(){let h='';PHASES.forEach((p,pi)=>{h+=`<div class="phase">${p}</div>`;TOPICS.filter(t=>t.phase===pi).forEach(t=>{const m=mastery(t);const pill=!t.ready?'<span class="pill">next session</span>':m===null||m===0?'<span class="pill">not drilled</span>':m<40?`<span class="pill weak">${m}%</span>`:m<80?`<span class="pill mid">${m}%</span>`:`<span class="pill done">${m}%</span>`;h+=`<div class="topic ${t.ready?'':'locked'}" onclick="${t.ready?`openLesson('${t.id}')`:`openPreview('${t.id}')`}"><span>${t.title}</span>${pill}</div>`;});});document.getElementById('topicList').innerHTML=h;}
+function openLesson(id){const t=TOPICS.find(x=>x.id===id);document.getElementById('lessonBody').innerHTML=`
+ <div class="card"><h2>${t.title}</h2>
+ <h3>Analogy</h3><div class="analogy">${esc(t.analogy)}</div>
+ <h3>Concept</h3><p style="white-space:pre-wrap">${esc(t.concept)}</p>
+ <h3>Code</h3><pre><code>${esc(t.code)}</code></pre>
+ ${t.demo?'<h3>Try it</h3><div id="demo"></div>':''}
+ <h3>বাংলা সারসংক্ষেপ</h3><div class="bn">${esc(t.bn)}</div>
+ ${t.practice?`<h3>Practice</h3><p class="kbd">Write your answer in a real editor or on paper first. Reveal only to check.</p>${t.practice.map((x,i)=>`<div class="prac"><div class="q" style="font-size:15.5px">${i+1}. ${esc(x[0])}</div><div class="sol" id="sol-${t.id}-${i}" style="display:none"><pre style="margin:8px 0 0"><code>${esc(x[1])}</code></pre></div><div class="row" style="margin-top:8px"><button onclick="toggleSol('sol-${t.id}-${i}',this)">Show solution</button></div></div>`).join('')}`:''}
+ <div class="row" style="margin-top:16px"><button class="primary" onclick="pick.drill='${t.id}';pick.drillPhase=${t.phase};go('drill')">Drill this topic</button><button onclick="pick.iv='${t.id}';pick.ivPhase=${t.phase};go('interview')">Interview me on it</button></div></div>`;
+ if(t.demo==='loop')demoLoop(document.getElementById('demo'));
+ if(t.demo==='join')demoJoin(document.getElementById('demo'));
+ document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id==='v-lesson'));window.scrollTo(0,0);}
+
+function toggleSol(id,btn){const el=document.getElementById(id);const on=el.style.display==='none';el.style.display=on?'block':'none';btn.textContent=on?'Hide solution':'Show solution';}
+function openPreview(id){const t=TOPICS.find(x=>x.id===id);const [what,pic,why]=t.pre||['','',''];const idx=PATH.indexOf(id)+1;
+ document.getElementById('lessonBody').innerHTML=`<div class="card"><div class="muted">Stop ${idx} of ${PATH.length} · ${PHASES[t.phase]}</div><h2>${t.title}</h2>
+ <h3>What it is</h3><p>${esc(what)}</p><h3>Picture it</h3><div class="analogy">${esc(pic)}</div><h3>Why interviewers ask</h3><p>${esc(why)}</p><h3>বাংলায়</h3><div class="bn">${esc(t.bn||'')}</div>
+ <div class="bn" style="margin-top:14px">Not unlocked yet. Learn it with Claude first — the lesson, code, Bangla summary and drill cards land here after you pass the questions.</div></div>`;
+ document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id==='v-lesson'));window.scrollTo(0,0);}
+
+/* ---------------- DEMO: event loop simulator ---------------- */
+function demoLoop(root){
+ const PRESETS={
+  a:{label:"Basic",lines:[["sync","log(1)"],["macro","setTimeout → log(2)"],["micro","promise.then → log(3)"],["sync","log(4)"]]},
+  b:{label:"await",lines:[["sync","log('a')"],["micro","after await → log('b')"],["sync","log('c')"]]},
+  c:{label:"Nested",lines:[["macro","setTimeout → log('T1') + queues micro log('M-in-T1')"],["micro","promise.then → log('M1') + queues macro log('T-in-M1')"],["sync","log('S')"]]}
+ };
+ let st;
+ const build=(k)=>{const p=PRESETS[k];st={stack:[],micro:[],macro:[],out:[],step:0,script:p.lines.map(([t,l])=>({t,l})),done:false};render();};
+ const step=()=>{
+  if(st.done)return;
+  // 1. run script synchronously: sync lines go to output, others enqueue
+  if(st.script.length){const s=st.script.shift();st.stack=[s.l];if(s.t==='sync')st.out.push(s.l.replace(/^.*log\(([^)]*)\).*$/,'$1'));else if(s.t==='micro')st.micro.push(s.l);else st.macro.push(s.l);st.note=s.t==='sync'?'Synchronous: runs now.':s.t==='micro'?'Promise callback → microtask queue (VIP tray).':'Timer callback → macrotask queue (regular tickets).';render();return;}
+  st.stack=[];
+  // 2. drain microtasks
+  if(st.micro.length){const m=st.micro.shift();st.stack=[m];st.out.push(m.replace(/^.*log\(([^)]*)\).*$/,'$1'));if(/queues macro/.test(m))st.macro.push("setTimeout → log('T-in-M1')");st.note='Stack empty → drain ALL microtasks before any timer.';render();return;}
+  // 3. one macrotask
+  if(st.macro.length){const m=st.macro.shift();st.stack=[m];st.out.push(m.replace(/^.*log\(([^)]*)\).*$/,'$1'));if(/queues micro/.test(m))st.micro.push("promise.then → log('M-in-T1')");st.note='Microtasks empty → take ONE macrotask, then check microtasks again.';render();return;}
+  st.done=true;st.note='Done. Compare the output with your prediction.';render();
+ };
+ const box=(title,items,color)=>`<div style="flex:1;min-width:120px"><div class="muted" style="margin-bottom:4px">${title}</div><div style="min-height:64px;border:1px dashed var(--line);border-radius:10px;padding:6px;background:${color}">${items.map(i=>`<div style="font-size:12.5px;padding:3px 6px;background:#fff;border-radius:6px;margin:3px 0"><code>${esc(i)}</code></div>`).join('')||'<span class="muted" style="font-size:12px">empty</span>'}</div></div>`;
+ const render=()=>{root.innerHTML=`
+  <div class="row" style="margin-bottom:8px">${Object.entries(PRESETS).map(([k,p])=>`<button onclick="this.closest('#demo').__build('${k}')">${p.label}</button>`).join('')}</div>
+  <div class="muted" style="margin-bottom:6px">Script left to run:</div>
+  <div style="margin-bottom:10px">${st.script.map(s=>`<div style="font-size:13px"><code>${esc(s.l)}</code></div>`).join('')||'<span class="muted" style="font-size:12px">— all lines executed —</span>'}</div>
+  <div class="row" style="align-items:stretch">${box('Call stack',st.stack,'#F3F5F7')}${box('Microtasks',st.micro,'var(--green-soft)')}${box('Macrotasks',st.macro,'var(--ochre-soft)')}</div>
+  <div style="margin:10px 0 4px" class="muted">Console output</div>
+  <pre style="margin:0 0 10px">${st.out.join('  ')||' '}</pre>
+  <div style="min-height:24px;font-size:14px">${st.note||'Predict the output first. Then press Step.'}</div>
+  <div class="row" style="margin-top:8px"><button class="primary" ${st.done?'disabled':''} onclick="this.closest('#demo').__step()">Step</button><button onclick="this.closest('#demo').__reset()">Reset</button></div>`;
+  root.__step=step;root.__reset=()=>build(curKey);root.__build=(k)=>{curKey=k;build(k)};
+ };
+ let curKey='a';build('a');
+}
+
+
+/* ---------------- DEMO: join fan-out simulator ---------------- */
+function demoJoin(root){
+ const items=[{id:1,order_id:10,product_id:42},{id:2,order_id:10,product_id:7},{id:3,order_id:10,product_id:42}];
+ const orders=[{id:10,customer_id:1,total:500},{id:11,customer_id:1,total:200}];
+ const items2=[...items,{id:4,order_id:11,product_id:7}];
+ const st={mode:'join',product:42};
+ const render=()=>{
+  const p=st.product;
+  let rows=[];
+  if(st.mode==='join'){orders.forEach(o=>items2.filter(i=>i.order_id===o.id&&(p==='all'||i.product_id===p)).forEach(i=>rows.push({o,i})));}
+  else{orders.filter(o=>items2.some(i=>i.order_id===o.id&&(p==='all'||i.product_id===p))).forEach(o=>rows.push({o,i:null}));}
+  const sum=rows.reduce((s,r)=>s+r.o.total,0);
+  const real=orders.filter(o=>items2.some(i=>i.order_id===o.id&&(p==='all'||i.product_id===p))).reduce((s,o)=>s+o.total,0);
+  root.innerHTML=`
+  <div class="muted" style="margin-bottom:6px">Data: Ziaur has order 10 (total 500, items: product 42, 7, 42) and order 11 (total 200, item: product 7).</div>
+  <div class="muted">Query shape</div>
+  <div class="wrapchips" style="margin:4px 0 8px"><button class="chip ${st.mode==='join'?'on':''}" data-m="join">JOIN order_items</button><button class="chip ${st.mode==='exists'?'on':''}" data-m="exists">WHERE EXISTS (…)</button></div>
+  <div class="muted">Filter</div>
+  <div class="wrapchips" style="margin:4px 0 10px">${['all',42,7].map(v=>`<button class="chip ${st.product===v?'on':''}" data-p="${v}">${v==='all'?'no product filter':'product_id = '+v}</button>`).join('')}</div>
+  <div class="muted" style="margin-bottom:4px">Rows the database builds before SUM runs:</div>
+  <div style="border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:13px">
+   <div style="display:grid;grid-template-columns:1fr 1fr 1fr ${st.mode==='join'?'1fr 1fr':''};background:#F3F5F7;padding:6px 8px;font-weight:600"><span>customer</span><span>o.id</span><span>o.total</span>${st.mode==='join'?'<span>i.id</span><span>i.product</span>':''}</div>
+   ${rows.map(r=>`<div style="display:grid;grid-template-columns:1fr 1fr 1fr ${st.mode==='join'?'1fr 1fr':''};padding:6px 8px;border-top:1px solid var(--line)"><span>Ziaur</span><span>${r.o.id}</span><span>${r.o.total}</span>${r.i?`<span>${r.i.id}</span><span>${r.i.product_id}</span>`:''}</div>`).join('')||'<div style="padding:8px" class="muted">no rows</div>'}
+  </div>
+  <div class="row sp" style="margin-top:10px"><div><div class="muted">SUM(o.total) the query returns</div><div class="score" style="color:${sum===real?'var(--green)':'var(--red)'}">${sum}</div></div><div style="text-align:right"><div class="muted">real revenue</div><div class="score">${real}</div></div></div>
+  <div style="font-size:14px;margin-top:6px">${sum===real?'Correct. Each order appears exactly once.':`Wrong by ${sum-real}. The order row was copied once per matching item — that is fan-out. GROUP BY would not change this number.`}</div>`;
+  root.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{st.mode=b.dataset.m;render();});
+  root.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{st.product=b.dataset.p==='all'?'all':+b.dataset.p;render();});
+ };
+ render();
+}
+
+/* ---------------- DRILL ---------------- */
+let queue=[],cur=null,shown=false;
+function startDrill(){const tid=pick.drill;document.getElementById('drillPickLabel').textContent=tid?TOPICS.find(t=>t.id===tid).title:'all topics';queue=dueCards(tid).sort(()=>Math.random()-.5);document.getElementById('drillMeta').textContent=queue.length+' due';next();}
+function next(){cur=queue.shift();shown=false;const el=document.getElementById('drillCard');if(!cur){el.innerHTML=`<div class="empty">Nothing due right now. Come back tomorrow — or open Learn and drill a topic anyway.</div><div class="row" style="justify-content:center"><button onclick="forceDrill()">Drill everything now</button></div>`;return;}
+ el.innerHTML=`<div class="muted" style="margin-bottom:8px">${cur.topic.title}</div><div class="q">${esc(cur.q)}</div><div id="ans" class="ans" style="display:none">${esc(cur.a)}</div><div class="row" style="margin-top:14px" id="drillBtns"><button class="primary" onclick="reveal()">Say it out loud, then reveal</button></div>`;}
+function forceDrill(){const tid=pick.drill;queue=allCards().filter(c=>!tid||c.topic.id===tid).sort(()=>Math.random()-.5);document.getElementById('drillMeta').textContent=queue.length+' cards';next();}
+function reveal(){document.getElementById('ans').style.display='block';document.getElementById('drillBtns').innerHTML=`<button class="danger" onclick="grade(false)">Missed it</button><button class="ok" onclick="grade(true)">Got it</button>`;}
+async function grade(ok){const s=cardState(cur.key);s.seen++;if(ok){s.box=Math.min(5,s.box+1);}else{s.box=0;s.miss++;}s.due=today()+LEITNER_DAYS[s.box];touchStreak();S.history.push({d:today(),k:cur.key,ok});await save();document.getElementById('drillMeta').textContent=queue.length+' left';next();}
+
+/* ---------------- INTERVIEW ---------------- */
+let ivHist=[],ivTopicTitle='';
+function ivSetup(){}
+/* ---- AI providers ---- */
+const PROV={
+ offline:{name:'Offline (built-in questions)',help:'No AI. You get a real interview question, answer it, reveal a model answer, and score yourself honestly. Always works.'},
+ claude: {name:'Claude (inside Claude app only)',help:'Works only when this page is open as an artifact inside Claude. No key needed.'},
+ gemini: {name:'Google Gemini — free',help:'Free tier, no card. Get a key at aistudio.google.com → Get API key. Default model: gemini-2.5-flash',model:'gemini-2.5-flash',url:'https://generativelanguage.googleapis.com/v1beta/models/'},
+ groq:   {name:'Groq — free',help:'Free tier, ~30 requests/min. Get a key at console.groq.com/keys. Default model: llama-3.3-70b-versatile',model:'llama-3.3-70b-versatile',url:'https://api.groq.com/openai/v1/chat/completions'},
+ openrouter:{name:'OpenRouter — free models',help:'Free models with a free key at openrouter.ai/keys. Default model: meta-llama/llama-3.3-70b-instruct:free',model:'meta-llama/llama-3.3-70b-instruct:free',url:'https://openrouter.ai/api/v1/chat/completions'}
+};
+function provider(){if(S.ai.provider)return S.ai.provider;return window.storage?'claude':'offline';}
+function toggleAiSettings(){const el=document.getElementById('aiSettings');el.style.display=el.style.display==='none'?'block':'none';renderProvChips();}
+function renderProvChips(){const cur=provider();document.getElementById('provChips').innerHTML=Object.entries(PROV).map(([k,p])=>`<button class="chip ${cur===k?'on':''}" onclick="S.ai.provider='${k}';renderProvChips()">${p.name}</button>`).join('');
+ document.getElementById('provHelp').textContent=PROV[cur].help;document.getElementById('keyRow').style.display=PROV[cur].url?'block':'none';
+ document.getElementById('aiKey').value=S.ai.key||'';document.getElementById('aiModel').value=S.ai.model||'';document.getElementById('aiModel').placeholder='Model (default: '+(PROV[cur].model||'—')+')';
+ document.getElementById('ivProvLabel').textContent='Using: '+PROV[cur].name.split(' —')[0].split(' (')[0];}
+async function saveAi(){S.ai.key=document.getElementById('aiKey').value.trim();S.ai.model=document.getElementById('aiModel').value.trim();await save();renderProvChips();document.getElementById('aiTestOut').textContent='Saved.';}
+async function testAi(){await saveAi();const o=document.getElementById('aiTestOut');o.textContent='Testing…';try{const r=await callLLM('Reply with exactly: OK',[{role:'user',content:'ping'}]);o.textContent=/OK/i.test(r)?'Connected ✓':'Replied: '+r.slice(0,40);}catch(e){o.textContent='Failed: '+e.message;}}
+async function callLLM(system,messages){
+ const prov=provider(),P=PROV[prov],model=S.ai.model||P.model;
+ if(prov==='offline')throw new Error('offline');
+ if(prov==='claude'){const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,system,messages})});const d=await r.json();if(!d.content)throw new Error(d.error?.message||'Claude is only reachable inside the Claude app. Choose Gemini/Groq or Offline in Set up.');return d.content.map(b=>b.text||'').join('\n');}
+ if(!S.ai.key)throw new Error('No API key saved. Tap Set up.');
+ if(prov==='gemini'){
+  const body={system_instruction:{parts:[{text:system}]},contents:messages.map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]})),generationConfig:{maxOutputTokens:1000}};
+  const r=await fetch(P.url+model+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':S.ai.key},body:JSON.stringify(body)});const d=await r.json();if(!d.candidates)throw new Error(d.error?.message||'No response');return d.candidates[0].content.parts.map(x=>x.text||'').join('\n');}
+ // OpenAI-compatible (groq, openrouter)
+ const r=await fetch(P.url,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.ai.key},body:JSON.stringify({model,max_tokens:1000,messages:[{role:'system',content:system},...messages]})});const d=await r.json();if(!d.choices)throw new Error(d.error?.message||'No response');return d.choices[0].message.content;
+}
+/* ---- offline question bank: uses each topic's cards ---- */
+let offQ=null;
+function offlineAsk(){const t=TOPICS.find(x=>x.id===pick.iv);ivTopicTitle=t.title;const bank=t.cards||TOPICS.filter(x=>x.cards).flatMap(x=>x.cards);offQ=bank[Math.floor(Math.random()*bank.length)];
+ const qe=document.getElementById('ivQ');qe.style.display='block';qe.innerHTML=`<div class="muted" style="margin-bottom:6px">${ivTopicTitle} · offline</div><div class="q">${esc(offQ[0])}</div>`;
+ document.getElementById('ivA').style.display='block';document.getElementById('ivR').style.display='none';document.getElementById('ivAnswer').value='';}
+function offlineGrade(a){const el=document.getElementById('ivR');el.style.display='block';el.innerHTML=`<div class="muted">Model answer</div><div class="fb" style="margin:6px 0 12px">${esc(offQ[1])}</div><div class="muted">Your answer</div><div class="fb" style="margin:6px 0 12px;color:var(--muted)">${esc(a)}</div><div class="muted" style="margin-bottom:6px">Score yourself honestly (7 = hireable senior)</div><div class="wrapchips">${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="chip" onclick="selfScore(${n})">${n}</button>`).join('')}</div>`;el.scrollIntoView({behavior:'smooth'});}
+async function selfScore(n){touchStreak();S.history.push({d:today(),iv:pick.iv,score:n});await save();const el=document.getElementById('ivR');el.innerHTML+=`<div class="row" style="margin-top:12px"><span class="score" style="color:${n>=7?'var(--green)':n>=5?'var(--ochre)':'var(--red)'}">${n}/10</span><button onclick="ivAsk()">Next question</button></div>`;}
+function ivSystem(){const mode=pick.mode;const t=TOPICS.find(x=>x.id===pick.iv);ivTopicTitle=t.title;
+ return `You are interviewing a candidate for a senior full-stack remote role (Laravel/PHP primary, React/Next and .NET secondary). Topic: ${t.title}. ${t.concept?'Reference notes: '+t.concept:''}
+Mode: ${mode==='tech'?'technical deep-dive — ask one concrete, scenario-based question a strong senior would be asked; push on trade-offs.':mode==='ai'?'automated AI screening — ask one question that expects a structured answer (context, decision, trade-off, outcome).':'behavioural — ask one STAR-style leadership/ownership question relevant to the topic.'}
+When ASKING: output only the question, 1–3 sentences, no preamble.
+When GRADING: respond in exactly this format:
+SCORE: <1-10>
+VERDICT: <one blunt sentence>
+WHAT WAS GOOD: <1-2 bullets>
+WHAT WAS MISSING: <2-3 bullets, specific>
+SAY THIS NEXT TIME: <a 3-5 sentence model answer in first person, spoken register>
+FOLLOW-UP: <one harder follow-up question>
+বাংলায় এক লাইনে: <one-line Bangla takeaway>
+Be honest and demanding; a 7 means hireable-senior, 9+ means exceptional.`;}
+async function ivAsk(){if(provider()==='offline'){offlineAsk();return;}const b=document.getElementById('ivStart');b.disabled=true;b.textContent='Thinking…';ivHist=[];try{const q=await callLLM(ivSystem(),[{role:'user',content:'Ask me the question.'}]);ivHist=[{role:'user',content:'Ask me the question.'},{role:'assistant',content:q}];const qe=document.getElementById('ivQ');qe.style.display='block';qe.innerHTML=`<div class="muted" style="margin-bottom:6px">${ivTopicTitle}</div><div class="q">${esc(q)}</div>`;document.getElementById('ivA').style.display='block';document.getElementById('ivR').style.display='none';document.getElementById('ivAnswer').value='';document.getElementById('ivAnswer').focus();}catch(e){alert('Could not reach the interviewer: '+e.message+'\n\nTap "Set up" to choose Gemini/Groq (free) or Offline mode.');}b.disabled=false;b.textContent='Ask me a question';}
+async function ivGrade(){const a=document.getElementById('ivAnswer').value.trim();if(!a)return;if(provider()==='offline'){offlineGrade(a);return;}const b=document.getElementById('ivSubmit');b.disabled=true;b.textContent='Grading…';try{const msgs=[...ivHist,{role:'user',content:'My answer:\n'+a+'\n\nGrade it now in the required format.'}];const r=await callLLM(ivSystem(),msgs);ivHist=[...msgs,{role:'assistant',content:r}];const m=r.match(/SCORE:\s*(\d+)/);const sc=m?+m[1]:null;const el=document.getElementById('ivR');el.style.display='block';el.innerHTML=`<div class="row sp"><div class="score" style="color:${sc>=7?'var(--green)':sc>=5?'var(--ochre)':'var(--red)'}">${sc??'–'}/10</div><button onclick="ivAsk()">Next question</button></div><div class="fb" style="margin-top:10px">${esc(r.replace(/^SCORE:.*\n?/,''))}</div>`;touchStreak();S.history.push({d:today(),iv:pick.iv,score:sc});await save();el.scrollIntoView({behavior:'smooth'});}catch(e){alert('Grading failed: '+e.message);}b.disabled=false;b.textContent='Grade my answer';}
+
+/* ---------------- PROGRESS ---------------- */
+function renderProgress(){const cards=allCards();const seen=cards.filter(c=>cardState(c.key).seen).length;const done=cards.filter(c=>cardState(c.key).box>=3).length;const iv=S.history.filter(h=>h.iv&&h.score);const avg=iv.length?(iv.reduce((s,h)=>s+h.score,0)/iv.length).toFixed(1):'–';
+ let h=`<div class="card"><h2>Overall</h2><div class="row sp"><div><div class="big">${seen}/${cards.length}</div><div class="muted">cards touched</div></div><div><div class="big">${done}</div><div class="muted">in long-term box</div></div><div><div class="big">${avg}</div><div class="muted">avg interview score</div></div></div></div><div class="card"><h2>By topic</h2>`;
+ TOPICS.filter(t=>t.cards).forEach(t=>{const m=mastery(t)||0;h+=`<div style="margin:10px 0"><div class="row sp"><span>${t.title}</span><span class="muted">${m}%</span></div><div class="bar"><i style="width:${m}%"></i></div></div>`;});
+ h+=`</div><div class="card"><h2>Recent interviews</h2>${iv.length?iv.slice(-8).reverse().map(x=>`<div class="row sp" style="margin:6px 0"><span>${TOPICS.find(t=>t.id===x.iv)?.title||x.iv}</span><span class="pill ${x.score>=7?'done':x.score>=5?'mid':'weak'}">${x.score}/10</span></div>`).join(''):'<span class="muted">None yet.</span>'}</div>`;
+ document.getElementById('progBody').innerHTML=h;}
+async function resetAll(){if(!confirm('Reset all progress on this device?'))return;const ai=S.ai;S={cards:{},lastDay:null,streak:0,history:[],ai};await save();go('home');}
+
+/* ---------------- INIT ---------------- */
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+(async()=>{await load();ivSetup();renderHome();})();
+</script>
+</body>
+</html>

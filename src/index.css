@@ -1,0 +1,122 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "Noto Sans Bengali";
+  src: url("/prep-platform/fonts/noto-sans-bengali-bengali-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Noto Sans Bengali";
+  src: url("/prep-platform/fonts/noto-sans-bengali-bengali-600-normal.woff2") format("woff2");
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Noto Sans Bengali";
+  src: url("/prep-platform/fonts/noto-sans-bengali-bengali-700-normal.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Bengali", sans-serif;
+  --font-bn: "Noto Sans Bengali", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --color-ink: #1c1e24;
+  --color-paper: #f7f7f5;
+  --color-line: #e2e3e0;
+  --color-accent: #1f8f4e;
+  --color-accent-soft: #e6f4ea;
+  --color-warn: #b7791f;
+  --color-warn-soft: #fbf1dd;
+  --color-danger: #c0392b;
+  --color-danger-soft: #fbe5e2;
+}
+
+:root {
+  color-scheme: light dark;
+}
+
+html, body {
+  height: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  overscroll-behavior-y: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #0f1115;
+    color: #e8e8e4;
+  }
+}
+
+.bn {
+  font-family: var(--font-bn);
+  line-height: 1.8;
+}
+
+/* Code blocks never wrap and always scroll sideways. */
+pre {
+  overflow-x: auto;
+  white-space: pre;
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  line-height: 1.5;
+  padding: 12px;
+  border-radius: 10px;
+  background: #f0f1ee;
+  border: 1px solid var(--color-line);
+  -webkit-overflow-scrolling: touch;
+}
+code {
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+}
+:not(pre) > code {
+  background: #eceeea;
+  padding: 1px 5px;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+@media (prefers-color-scheme: dark) {
+  pre { background: #171a21; border-color: #2a2e38; }
+  :not(pre) > code { background: #23272f; }
+}
+
+/* Markdown prose */
+.prose p { margin: 0 0 0.75em; }
+.prose p:last-child { margin-bottom: 0; }
+.prose ul, .prose ol { margin: 0 0 0.75em; padding-left: 1.4em; }
+.prose li { margin: 0.2em 0; }
+.prose h1, .prose h2, .prose h3, .prose h4 { margin: 1em 0 0.4em; font-weight: 600; font-size: 1.05em; }
+.prose pre { margin: 0.6em 0; }
+.prose strong { font-weight: 600; }
+.prose hr { border: 0; border-top: 1px solid var(--color-line); margin: 1em 0; }
+.prose table { border-collapse: collapse; font-size: 14px; display: block; overflow-x: auto; }
+.prose th, .prose td { border: 1px solid var(--color-line); padding: 4px 8px; text-align: left; }
+
+/* Buttons are thumb sized everywhere. */
+button, .btn {
+  min-height: 44px;
+  touch-action: manipulation;
+}
+
+textarea, input {
+  font: inherit;
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff; color: #000; }
+  pre { border: 1px solid #ccc; background: #fff; }
+}
