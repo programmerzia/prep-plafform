@@ -1,15 +1,114 @@
 {
   "id": "laravel-auth-policies",
-  "track": "security-auth",
+  "track": "laravel",
   "phase": 2,
-  "order": 1,
-  "title": "Auth, Sanctum/Passport, policies & gates",
-  "status": "preview",
-  "star": false,
+  "order": 4,
+  "title": "Authentication and authorization: Sanctum, guards, policies, gates",
+  "status": "unlocked",
+  "star": true,
   "preview": {
-    "what": "Authentication and authorization: Sanctum/Passport, guards, policies, gates.",
-    "picture": "Authentication is showing your ID at the door; authorization is which rooms your keycard opens. Policies are the rules per room.",
-    "why": "Token strategy for SPA vs mobile is asked in nearly every Laravel API interview.",
-    "bn": "Authentication = দরজায় ID দেখানো, authorization = কোন ঘর কার্ডে খোলে, policy = ঘরের নিয়ম।"
-  }
+    "what": "Who you are (authentication) versus what you may do (authorization) — and the Laravel tools for each: guards, Sanctum tokens, policies and gates.",
+    "picture": "Authentication is showing your ID at the building door. Authorization is which rooms your keycard opens. A policy is the rulebook for one room.",
+    "why": "Token strategy for SPA versus mobile, and 'where do you check that a user owns this order', are asked in nearly every Laravel API interview. Broken access control is OWASP #1.",
+    "bn": "তুমি কে (authentication) বনাম তুমি কী করতে পারো (authorization) — guard, Sanctum token, policy, gate।"
+  },
+  "lesson": {
+    "problem": "GET /api/orders/512 returns any order to any logged-in user — the check `auth()->check()` was there, the check 'is this YOUR order' was not. A pen-tester changes the id in the URL and reads 3,000 orders. Separately, the mobile app stores a session cookie that expires on every deploy, and the SPA sends a bearer token that never expires. All three are the same confusion: who you are versus what you may touch, and which credential fits which client.",
+    "picture": "An office building. At the front door you show ID — that's authentication: the building now knows who you are. But knowing who you are doesn't open the finance room. Your keycard (authorization) is programmed per room. A *policy* is the rulebook for one room type ('the Orders room: owners may enter, managers may enter, others may not'). A *gate* is a single rule pinned on the wall ('only admins may use the lift to floor 9'). Guards are the different front doors: the staff door takes a badge (session cookie), the courier door takes a printed pass (API token).",
+    "hook": "Authentication says who. Authorization says what. Never confuse a logged-in check with an ownership check.",
+    "concept": "**Authentication — guards.** A guard is *how* the current user is identified for this request: `web` (session cookie), `sanctum` (token or SPA cookie), `api`. `auth:sanctum` middleware = 'identify via Sanctum or reject with 401'. `$request->user()` is the identified user.\n\n**Sanctum, the two modes:**\n- *SPA (same domain / subdomain):* cookie-based. The SPA calls `/sanctum/csrf-cookie`, then logs in via `/login` — Laravel's session cookie + CSRF token protect it. No token stored in JS (nothing to steal via XSS). Requires `SANCTUM_STATEFUL_DOMAINS` and `SESSION_DOMAIN` set correctly. Best for your own first-party SPA.\n- *Tokens (mobile, third-party, different domain):* `$user->createToken('mobile', ['orders:read'])->plainTextToken`; the client sends `Authorization: Bearer …`. Tokens are hashed in `personal_access_tokens`; give them abilities (scopes) and an expiry (`expiration` config or `createToken(..., expiresAt: now()->addDays(30))`). Revoke on logout (`$request->user()->currentAccessToken()->delete()`).\n- Passport is full OAuth2 (authorization code, client credentials) — for third-party developer access. Sanctum for everything else.\n- JWT (tymon/jwt-auth etc.) is an option when you need stateless tokens across services; be ready to say why you'd still pick Sanctum for a single Laravel API: revocation and simplicity.\n\n**Authorization — policies.** One class per model: `OrderPolicy` with `view(User $u, Order $o)`, `update`, `delete`, `create(User $u)`. Return bool or `Response::deny('…')`. Register by convention (`App\\Policies\\OrderPolicy` for `App\\Models\\Order`) or `Gate::policy()`. Use them everywhere: `$this->authorize('view', $order)` in controllers, `->middleware('can:view,order')` on routes, `$user->can('update', $order)`, `@can` in Blade, `authorize()` in Form Requests. A `before(User $u)` method returning true for super-admins short-circuits every check.\n\n**Gates** are closures for non-model rules: `Gate::define('view-reports', fn (User $u) => $u->isManager())`. Fine for a handful; policies scale better.\n\n**Roles and permissions.** Simple apps: a `role` column and policies that read it. Real apps: spatie/laravel-permission (roles ↔ permissions ↔ users, cached) with policies checking `$u->hasPermissionTo('orders.update')`. Policies stay the single place that decides.\n\n**The ownership check is the whole game.** `auth:sanctum` proves a user exists. `can:view,order` proves *this* user may see *this* order. Broken access control (IDOR) is missing the second one. Belt and braces for tenants: a global scope on tenant_id (or RLS) so the wrong tenant's order 404s before the policy even runs.\n\n**Passwords and sessions:** bcrypt/argon2 via `Hash::make` (never md5/sha); `password_confirmation` rule; rate-limit login (`throttle:login`); regenerate session on login; `auth()->logoutOtherDevices()`; 2FA via Fortify. Password reset tokens are hashed and expire.\n\n**Middleware vs policy:** middleware answers 'may this request proceed at all' (logged in? verified? admin area?). Policy answers 'may this user do this action on this object'. Don't put ownership logic in middleware.",
+    "simple": "Your school has a gate and rooms. At the gate you show your student card — now the school knows you're Ziaur from class 8. That's authentication. But your card doesn't open the teachers' room or the lab store. Each room has its own rule: 'lab store: only lab assistants'. That rule is a policy. A gate rule like 'only prefects may ring the bell' is a Laravel gate.\n\nTwo ways to prove who you are at the gate: a sticker on your card that the school itself put there (a session cookie, for the school's own app), or a printed pass you carry and show each time (a token, for the mobile app). The printed pass can be lost, so it has an expiry date and the office can cancel it.\n\nThe classic mistake: the guard checks you have a card, then lets you into ANY locker because he never asks 'is this your locker?'. Being logged in is not owning the locker.",
+    "wrong": {
+      "lang": "php",
+      "code": "// routes/api.php\nRoute::middleware('auth:sanctum')->get('/orders/{order}', function (Order $order) {\n    return $order;                                   // any authenticated user can read any order (IDOR)\n});\n\n// login for mobile\n$token = $user->createToken('mobile')->plainTextToken;   // no abilities, no expiry, never revoked\n\n// controller\nif ($request->user()->role !== 'admin' && $order->user_id !== $request->user()->id) {\n    abort(403);                                      // rule duplicated in 6 controllers, drifts\n}\n\n// password check written by hand\nif (md5($request->password) === $user->password) { ... }",
+      "why": "Authentication is checked, ownership never is. Tokens live forever with full power. The ownership rule is copy-pasted and will diverge. md5 is not a password hash."
+    },
+    "right": {
+      "lang": "php",
+      "code": "// app/Policies/OrderPolicy.php\nclass OrderPolicy\n{\n    public function before(User $user, string $ability): ?bool\n    {\n        return $user->isSuperAdmin() ? true : null;       // null = fall through to the specific method\n    }\n    public function view(User $user, Order $order): bool\n    {\n        return $order->user_id === $user->id || $user->hasPermissionTo('orders.view-any');\n    }\n    public function update(User $user, Order $order): Response\n    {\n        return $order->user_id === $user->id && $order->status === 'draft'\n            ? Response::allow()\n            : Response::deny('Only draft orders can be edited by their owner.');\n    }\n}\n\n// routes/api.php\nRoute::middleware('auth:sanctum')->group(function () {\n    Route::get('/orders/{order}', [OrderController::class, 'show'])->middleware('can:view,order');\n    Route::patch('/orders/{order}', [OrderController::class, 'update']);   // authorized in the Form Request\n});\n\n// app/Http/Requests/UpdateOrderRequest.php\npublic function authorize(): bool { return $this->user()->can('update', $this->route('order')); }\n\n// mobile login: scoped, expiring token\n$token = $user->createToken('mobile', ['orders:read', 'orders:create'], now()->addDays(30))->plainTextToken;\n// checking an ability inside a controller\nabort_unless($request->user()->tokenCan('orders:create'), 403);\n// logout\n$request->user()->currentAccessToken()->delete();\n\n// SPA: cookie mode — no token in JS\n// .env: SANCTUM_STATEFUL_DOMAINS=app.corebari.com  SESSION_DOMAIN=.corebari.com\n// client: GET /sanctum/csrf-cookie → POST /login → subsequent requests carry the session cookie + X-XSRF-TOKEN\n\n// passwords\n'password' => Hash::make($request->password);   // bcrypt/argon2id, config('hashing')\nRoute::post('/login', ...)->middleware('throttle:5,1');",
+      "why": "One policy decides ownership for every entry point (route middleware, Form Request, Blade). before() handles super-admins once. Tokens carry abilities and an expiry and are revoked on logout. The SPA keeps no token in JavaScript. Passwords use the framework's hasher and login is rate-limited."
+    },
+    "bn": "Guard = এই request-এ user কীভাবে চেনা হবে: web (session cookie), sanctum (token বা SPA cookie)। auth:sanctum = চিনতে না পারলে 401। Sanctum দুই রূপ: নিজের SPA-তে cookie mode (csrf-cookie → login, JS-এ token নেই, XSS-এ চুরি হয় না); mobile/third-party-তে Bearer token — abilities (scope) আর expiry দাও, logout-এ delete করো। Passport = পুরো OAuth2, শুধু third-party developer access-এ। Policy = প্রতি model-এ এক class (view/update/delete), before() super-admin-এর জন্য, সব জায়গায় একই policy: can: middleware, Form Request authorize(), $user->can(), @can। Gate = model ছাড়া ছোট নিয়ম। Roles/permissions: spatie package, policy তবু সিদ্ধান্তের একমাত্র জায়গা। আসল খেলা ownership check: logged-in মানেই এই order তোমার না (IDOR) — এটাই OWASP #1। Tenant-এ global scope/RLS দিয়ে ভুল tenant-এর row আগেই 404। Password: Hash::make (bcrypt/argon2), login throttle, session regenerate।",
+    "versions": [
+      { "from": "Laravel 8 (Sanctum 2)", "to": "Laravel 10 (Sanctum 3)", "what": "Token expiration config; tokens prefixed for secret scanning; Fortify for headless auth (2FA, password reset); Breeze/Jetstream starter kits.", "why_it_matters": "'How do you expire Sanctum tokens' has a built-in answer since Sanctum 3." },
+      { "from": "Laravel 10", "to": "Laravel 11", "what": "Sanctum installed via php artisan install:api; policies auto-discovered without registering in AuthServiceProvider (which no longer exists in the slim skeleton); Gate::define in AppServiceProvider boot(); password rehashing on login (rehash_on_login).", "why_it_matters": "If you say 'register the policy in AuthServiceProvider' in a Laravel 11+ interview, the file isn't there." },
+      { "from": "Laravel 11", "to": "Laravel 12", "what": "Starter kits rebuilt on Inertia 2 with WorkOS AuthKit option (social login, passkeys, SSO); Sanctum unchanged.", "why_it_matters": "Shows awareness that SSO/passkeys are moving into first-party kits." }
+    ],
+    "crossStack": [
+      { "concept": "Ownership check on a resource", "laravel": "OrderPolicy::view + can:view,order middleware", "symfony": "Voter: voteOnAttribute('VIEW', $order, $token) + #[IsGranted('VIEW', 'order')]", "dotnet": "IAuthorizationHandler<OwnerRequirement, Order> + [Authorize(Policy = \"OrderOwner\")] or manual IAuthorizationService.AuthorizeAsync", "node": "NestJS Guard or CASL ability: can('read', order)" },
+      { "concept": "API tokens for mobile", "laravel": "Sanctum personal access tokens with abilities + expiry", "symfony": "Security access_token authenticator with a custom TokenHandler; or LexikJWT", "dotnet": "JWT bearer via AddJwtBearer; refresh tokens stored server-side; ASP.NET Identity", "node": "JWT with short-lived access + rotating refresh tokens; passport-jwt" }
+    ],
+    "docs": [
+      { "label": "Laravel Sanctum", "url": "https://laravel.com/docs/12.x/sanctum" },
+      { "label": "Laravel: Authorization (policies)", "url": "https://laravel.com/docs/12.x/authorization" }
+    ]
+  },
+  "practice": [
+    {
+      "task": "In prep-app: install Sanctum (php artisan install:api), add user_id to orders (seed: assign random users), write OrderPolicy (view: owner or admin role; update: owner and status = 'pending'), protect GET/PATCH /api/v1/orders/{order}, and write feature tests: owner 200, other user 403, admin 200, unauthenticated 401.",
+      "hint": "Sanctum::actingAs($user) in tests; ->middleware('can:view,order') on the route.",
+      "solution": "// OrderPolicy\npublic function view(User $u, Order $o): bool { return $o->user_id === $u->id || $u->role === 'admin'; }\npublic function update(User $u, Order $o): bool { return $o->user_id === $u->id && $o->status === 'pending'; }\n\n// routes/api.php\nRoute::middleware('auth:sanctum')->prefix('v1')->group(function () {\n    Route::get('/orders/{order}', [OrderController::class, 'show'])->middleware('can:view,order');\n    Route::patch('/orders/{order}', [OrderController::class, 'update'])->middleware('can:update,order');\n});\n\n// tests/Feature/OrderAuthorizationTest.php\npublic function test_owner_can_view(): void {\n    $order = Order::factory()->create();\n    Sanctum::actingAs($order->user);\n    $this->getJson(\"/api/v1/orders/{$order->id}\")->assertOk();\n}\npublic function test_other_user_forbidden(): void {\n    $order = Order::factory()->create();\n    Sanctum::actingAs(User::factory()->create());\n    $this->getJson(\"/api/v1/orders/{$order->id}\")->assertForbidden();\n}\npublic function test_admin_can_view(): void {\n    $order = Order::factory()->create();\n    Sanctum::actingAs(User::factory()->create(['role' => 'admin']));\n    $this->getJson(\"/api/v1/orders/{$order->id}\")->assertOk();\n}\npublic function test_guest_unauthenticated(): void {\n    $order = Order::factory()->create();\n    $this->getJson(\"/api/v1/orders/{$order->id}\")->assertUnauthorized();\n}",
+      "why": "Four tests, four status codes: 200/403/200/401. The 403-vs-401 distinction (known user, not allowed vs unknown user) is itself an interview question. The policy is tested through the route so the middleware wiring is covered too."
+    },
+    {
+      "task": "Issue a mobile token with abilities ['orders:read'] and a 30-day expiry; write an endpoint POST /orders that requires the 'orders:create' ability; test that the read-only token gets 403 on it and 200 on GET. Then revoke the token and show the next request is 401.",
+      "hint": "tokenCan(), or the 'ability:orders:create' middleware; currentAccessToken()->delete().",
+      "solution": "// issue\n$token = $user->createToken('mobile', ['orders:read'], now()->addDays(30))->plainTextToken;\n\n// route\nRoute::post('/orders', [OrderController::class, 'store'])->middleware(['auth:sanctum', 'ability:orders:create']);\n\n// test\n$user = User::factory()->create();\n$plain = $user->createToken('mobile', ['orders:read'])->plainTextToken;\n$this->withToken($plain)->getJson('/api/v1/orders')->assertOk();\n$this->withToken($plain)->postJson('/api/v1/orders', [...])->assertForbidden();\n$user->tokens()->delete();\n$this->withToken($plain)->getJson('/api/v1/orders')->assertUnauthorized();",
+      "why": "Abilities are least-privilege for tokens; expiry limits the damage of a leaked token; revocation is why Sanctum beats stateless JWT for a single API — a deleted row is instantly invalid."
+    },
+    {
+      "task": "Explain the exact request sequence for a Vue SPA on app.corebari.com talking to api.corebari.com with Sanctum cookie mode, including the two .env values that make it work and the two mistakes that produce a 419.",
+      "hint": "csrf-cookie first; SESSION_DOMAIN with a leading dot; withCredentials on the client.",
+      "solution": "1. SPA: GET https://api.corebari.com/sanctum/csrf-cookie (withCredentials: true) → sets XSRF-TOKEN cookie + session cookie.\n2. SPA: POST /login with credentials, header X-XSRF-TOKEN read from the cookie (axios does this automatically) → session authenticated.\n3. Every later request carries the session cookie + X-XSRF-TOKEN; auth:sanctum recognises the stateful domain and authenticates via session.\n\n.env on the API:\n  SANCTUM_STATEFUL_DOMAINS=app.corebari.com\n  SESSION_DOMAIN=.corebari.com          (leading dot so the cookie is shared across subdomains)\n  CORS: supports_credentials => true, allowed_origins => ['https://app.corebari.com']\n\n419 (CSRF mismatch) happens when: (a) the SPA skipped /sanctum/csrf-cookie or didn't send withCredentials, so no XSRF cookie exists; (b) SESSION_DOMAIN lacks the leading dot / stateful domain missing, so the cookie isn't sent to api.*. Also common: mixing http and https.",
+      "why": "This exact flow is the most common 'it works locally, 419 in staging' incident. Being able to narrate it step by step is worth more than any theory of CSRF."
+    }
+  ],
+  "interview": [
+    {
+      "q": "Authentication vs authorization — and where does each live in a Laravel API?",
+      "model": "Authentication identifies the user — guards and Sanctum do that, and the auth:sanctum middleware rejects unknown callers with 401. Authorization decides what that user may do on a specific object — that lives in policies, invoked through can: middleware, Form Request authorize() or $user->can(), and a failure is 403. The bug I watch for is checking only the first: any logged-in user reading any order by changing the id.",
+      "missing": "Name it: IDOR / broken access control, OWASP #1 — and that tenant scoping is a second layer under the policy.",
+      "followUp": "Would you put the ownership check in middleware?",
+      "bn": "Authentication = কে (guard/Sanctum, fail → 401); authorization = কী করতে পারে (policy, fail → 403); শুধু প্রথমটা চেক করলে IDOR।"
+    },
+    {
+      "q": "Sanctum for the SPA and for the mobile app — same or different?",
+      "model": "Same package, two modes. For my own SPA on a subdomain I use cookie mode: the session cookie and CSRF protect it and there's no token in JavaScript to steal. For mobile and third parties I issue personal access tokens with abilities and an expiry, sent as a bearer header, revocable by deleting the row. Passport only if I need real OAuth2 for external developers.",
+      "missing": "Say why cookie mode is safer for the SPA: XSS can't read an HttpOnly cookie, but can read localStorage.",
+      "followUp": "What do you set so the cookie is shared between app.example.com and api.example.com?",
+      "bn": "একই package, দুই mode: নিজের SPA-তে cookie mode (JS-এ token নেই), mobile-এ Bearer token abilities+expiry সহ, revoke করা যায়; Passport শুধু OAuth2-এ।"
+    },
+    {
+      "q": "JWT or Sanctum tokens for a single Laravel API?",
+      "model": "Sanctum. A JWT is stateless, which means I can't revoke one without adding a blocklist — at which point it's stateful anyway. Sanctum tokens are hashed rows: revocation is a delete, abilities and expiry are built in, and the overhead is one indexed lookup. JWT earns its place when several services must verify a token without calling back to the auth server.",
+      "missing": "Mention short-lived access tokens plus refresh tokens as the pattern that makes JWT tolerable when you do need it.",
+      "followUp": "How would you rotate a leaked signing key for JWTs in production?",
+      "bn": "একটা Laravel API-তে Sanctum: token row মুছলেই বাতিল, abilities+expiry আছে; JWT revoke করা যায় না blocklist ছাড়া — অনেক service-এ verify করতে হলে JWT।"
+    },
+    {
+      "q": "How would you design roles and permissions for an app with admins, managers, and staff across tenants?",
+      "model": "Permissions as the unit — orders.view, orders.refund — grouped into roles, scoped per tenant, using spatie/laravel-permission with its cache. Policies remain the only place that decides: OrderPolicy::refund checks hasPermissionTo('orders.refund') plus any object rule like 'same tenant' and 'not already refunded'. A before() method handles super-admins once. Roles never appear in controllers — only policies.",
+      "missing": "Add the tenant angle: the package's team feature or a tenant_id on the pivot, so a manager in tenant A is nobody in tenant B.",
+      "followUp": "How do you keep permission checks from hitting the database on every request?",
+      "bn": "Permission (orders.refund) → role → tenant অনুযায়ী, spatie package + cache; policy-ই একমাত্র সিদ্ধান্তের জায়গা, controller-এ role চেক না।"
+    }
+  ],
+  "cards": [
+    { "q": "401 vs 403", "a": "401: we don't know who you are (authentication failed). 403: we know, and you may not (authorization failed)." },
+    { "q": "What is a guard?", "a": "How the current user is identified for a request — session cookie (web) or token/SPA cookie (sanctum)." },
+    { "q": "Sanctum cookie mode vs token mode — when each?", "a": "Cookie mode for your own SPA (no token in JS). Tokens with abilities + expiry for mobile and third parties." },
+    { "q": "Where does 'is this the user's order' live?", "a": "In OrderPolicy, used via can:view,order middleware, Form Request authorize(), or $user->can()." },
+    { "q": "Policy before() — what does returning null do?", "a": "Falls through to the specific ability method; true short-circuits to allow (super-admin)." },
+    { "q": "IDOR in one line", "a": "Checking the user is logged in but not that they own the object — change the id in the URL, read someone else's data." },
+    { "q": "How do you revoke a Sanctum token?", "a": "Delete its row: $request->user()->currentAccessToken()->delete() (or tokens()->delete() for all)." },
+    { "q": "Two .env values for SPA cookie auth across subdomains", "a": "SANCTUM_STATEFUL_DOMAINS=app.example.com and SESSION_DOMAIN=.example.com (leading dot)." },
+    { "q": "Why not JWT for a single Laravel API?", "a": "Stateless means no revocation without a blocklist; Sanctum tokens are revocable rows with abilities and expiry." }
+  ],
+  "glossary": [
+    { "term": "guard", "plain": "The mechanism that identifies the user for a request (session, token).", "bn": "Request-এ user চেনার পদ্ধতি (session, token)।" },
+    { "term": "policy", "plain": "A class holding the authorization rules for one model.", "bn": "এক model-এর authorization নিয়মের class।" },
+    { "term": "gate", "plain": "A single named authorization rule not tied to a model.", "bn": "Model ছাড়া একটা নামকরা authorization নিয়ম।" },
+    { "term": "IDOR", "plain": "Insecure Direct Object Reference — accessing another user's object by guessing its id.", "bn": "Id বদলে অন্যের object দেখা — ownership চেক না থাকার ফল।" },
+    { "term": "token ability", "plain": "A scope attached to a token limiting what it may do.", "bn": "Token কী করতে পারবে তার সীমা (scope)।" }
+  ]
 }
