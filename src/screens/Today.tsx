@@ -14,8 +14,8 @@ export function Today() {
   const pct = Math.round((100 * path.withLessons) / path.total);
 
   return (
-    <div className="mx-auto flex w-full max-w-[560px] flex-col gap-3 px-3 pt-3 pb-24">
-      <header className="pt-1">
+    <div className="mx-auto flex w-full max-w-[560px] flex-col gap-3 px-3 pt-3 pb-24 min-[900px]:max-w-[1100px] min-[900px]:px-6 min-[900px]:pt-6 min-[900px]:pb-10">
+      <header className="pt-1 min-[900px]:hidden">
         <h1 className="text-2xl font-semibold">Rebuild</h1>
         <Muted>Senior full-stack prep — retrieval over reading</Muted>
       </header>

@@ -163,7 +163,7 @@ export function Empty({ children }: { children: ReactNode }) {
 
 export function Page({ title, back, children, actions }: { title?: string; back?: string; children: ReactNode; actions?: ReactNode }) {
   return (
-    <div className="mx-auto flex w-full max-w-[560px] flex-col gap-3 px-3 pt-3 pb-24">
+    <div className="mx-auto flex w-full max-w-[560px] flex-col gap-3 px-3 pt-3 pb-24 min-[900px]:max-w-[1100px] min-[900px]:px-6 min-[900px]:pt-6 min-[900px]:pb-10">
       {(title || back) && (
         <div className="flex items-center gap-2">
           {back && (

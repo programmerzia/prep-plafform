@@ -20,7 +20,7 @@ function Shell() {
   const { ready } = useStore();
   if (!ready) return <div className="p-6 text-center text-neutral-500">Loading…</div>;
   return (
-    <>
+    <div className="min-[900px]:pl-[220px]">
       <Routes>
         <Route path="/" element={<Today />} />
         <Route path="/learn" element={<Learn />} />
@@ -42,7 +42,7 @@ function Shell() {
         <Route path="*" element={<Today />} />
       </Routes>
       <TabBar />
-    </>
+    </div>
   );
 }
 

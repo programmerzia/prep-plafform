@@ -61,6 +61,9 @@ function LessonView({ id }: { id: string }) {
         <MasteryPill pct={mastery} />
       </div>
 
+      {/* One column on phones; from 900px the lesson sits left and practice / questions / notes right. */}
+      <div className="flex flex-col gap-3 min-[900px]:grid min-[900px]:grid-cols-[minmax(0,1fr)_400px] min-[900px]:items-start min-[900px]:gap-5">
+      <div className="min-w-0">
       <Card>
         {L.problem && (
           <>
@@ -199,7 +202,9 @@ function LessonView({ id }: { id: string }) {
           </>
         )}
       </Card>
+      </div>
 
+      <div className="flex min-w-0 flex-col gap-3">
       {m.practice.length > 0 && (
         <Card>
           <H2>Practice</H2>
@@ -239,6 +244,8 @@ function LessonView({ id }: { id: string }) {
           Interview me on it
         </Button>
       </Chips>
+      </div>
+      </div>
     </Page>
   );
 }
