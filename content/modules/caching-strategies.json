@@ -1,0 +1,115 @@
+{
+  "id": "caching-strategies",
+  "track": "redis",
+  "phase": 3,
+  "order": 1,
+  "title": "Caching strategies: what to cache, invalidation, stampedes",
+  "status": "unlocked",
+  "star": true,
+  "preview": {
+    "what": "Deciding what to remember instead of recompute, how long, how to forget it correctly, and how to survive the moment everyone asks at once.",
+    "picture": "A newspaper stand: print the front page once and hand out copies, but know when to reprint. A stampede is 1,000 people asking for the paper the second it sells out.",
+    "why": "'How would you cache this endpoint and keep it correct?' is asked constantly, and 'set a TTL' is the answer that ends the discussion. Invalidation and stampedes are where seniors are made.",
+    "bn": "কী মনে রাখবো (আবার হিসাব না করে), কতক্ষণ, ঠিকভাবে কীভাবে ভুলবো, আর সবাই একসাথে চাইলে কীভাবে বাঁচবো।"
+  },
+  "lesson": {
+    "problem": "The dashboard runs a 3-second aggregate query. You cache it for 10 minutes. Two new problems: sales updates a price and the dashboard shows the old number for up to 10 minutes — support tickets. And at 9:00 when the cache expires, 400 users hit refresh at once, 400 copies of the 3-second query run, the database locks up, and the site is down for 90 seconds. 'Add a cache' created an incident.",
+    "picture": "A newspaper stand. Printing the front page (the query) is expensive; handing out a copy (cache read) is cheap. Rule one: print once, hand out many. Rule two: when the news changes, you must reprint — deciding *when* is invalidation. Rule three: at 9:00 the pile runs out and 400 people arrive at once; if every one of them runs to the press, the press jams. Better: one person reprints while the others get yesterday's copy or wait a second — that's stampede protection.",
+    "hook": "Cache what's expensive and read-heavy. Invalidate on the write, not on a timer. Let one request refresh; serve stale to the rest.",
+    "concept": "**What to cache** — expensive to compute, read far more than written, tolerant of a little staleness: aggregates, rendered fragments, config, permissions, external API responses, hot lookups (tenant by key). Don't cache: anything user-specific under a shared key, anything where a stale read costs money (stock at checkout), tiny fast queries (the cache round-trip costs as much).\n\n**Where** — Redis in production (shared across servers, atomic ops, TTLs, tags), array/file only locally. In-process (static, `once()`, `Cache::driver('array')`) for per-request memoisation. HTTP caching (`Cache-Control`, ETag) for public responses at the edge/CDN.\n\n**Patterns**\n- *Cache-aside* (the default): `Cache::remember($key, $ttl, fn () => compute())` — check, miss → compute → store.\n- *Write-through*: update the cache when you write the source. Fresh, but every write pays.\n- *Write-behind*: write cache first, persist later. Fast, risky; rarely in PHP apps.\n- *Read-through / refresh-ahead*: refresh before expiry in the background.\n\n**Invalidation — the real problem.** Options, best first:\n1. **Event-driven**: on the write, `Cache::forget($key)` (or update it). The observer/listener from the events module. Precise, immediate.\n2. **Key versioning**: include a version or `updated_at` in the key (`\"dashboard:{$tenant}:{$version}\"`); bump the version on write; old keys expire naturally. No need to enumerate keys.\n3. **Tags** (Redis): `Cache::tags(['orders', \"tenant:$id\"])->remember(...)` and `Cache::tags(['orders'])->flush()`. Handy; tagged flush has a cost and tags don't work on file/database stores.\n4. **TTL as a safety net**, not the mechanism: always set one so a missed invalidation heals itself.\n\n**Stampede / dog-pile.** When a hot key expires, every concurrent request misses and recomputes. Fixes:\n- **Lock + single flight**: `Cache::lock(\"lock:$key\", 10)->block(5, fn () => Cache::remember(...))` — one request recomputes, others wait then read. Laravel's `Cache::flexible($key, [$fresh, $stale], fn)` (11.23+) implements stale-while-revalidate: serve within `$fresh` directly, between `$fresh` and `$stale` serve the old value and refresh once in the background (via deferred function), beyond `$stale` recompute inline.\n- **Jittered TTL**: `$ttl + random_int(0, 60)` so many keys don't expire at the same second.\n- **Never expire + background refresh**: a scheduled job rebuilds hot keys; readers never miss.\n\n**Consistency traps**\n- Caching a **query result that includes user-specific data** under a global key → data leak. Key by user/tenant, or cache only the shared part.\n- Caching **Eloquent models** with relations → stale relations and big payloads; cache arrays/DTOs or ids.\n- **Cache then read-your-write**: user updates profile, next page shows the old cached one. Invalidate in the same request, before responding.\n- **Thundering herd on cold start / deploy**: warm hot keys in a deploy step.\n- **Serialization**: store what you can rebuild; never store secrets in shared cache without need.\n\n**Redis specifics** — `SETNX`/locks are atomic; `INCR` for counters (rate limits); key naming with prefixes (`tenant:42:dashboard`); memory policy `allkeys-lru` for a pure cache; separate Redis for cache vs queue vs sessions so a flush doesn't log everyone out. Monitor hit rate: below ~80% on a hot path, the cache is mis-keyed or TTL too short.\n\n**HTTP-level**: `Cache-Control: public, max-age=60, stale-while-revalidate=300` and ETags let the CDN and browser absorb reads before Laravel runs at all.",
+    "simple": "You're the class monitor and the teacher asks you the class total marks ten times a day. Adding 40 numbers each time is slow. So you write the total on a sticky note (cache). Now answering is instant.\n\nProblem one: a student's mark gets corrected. Your sticky note is wrong until you notice. Bad plan: check every 10 minutes (a timer). Good plan: whoever changes a mark must tear up the sticky note (invalidate on write). Then the next question recomputes once and writes a new note.\n\nProblem two: you tear the note up at 9:00, and at 9:00 forty students all ask the total at once. If all forty of you start adding the 40 numbers, it takes ages and everyone's stuck. Better: one person adds, the other thirty-nine wait ten seconds — or read the old note, because 'a bit old' is fine for a total. That's stampede protection: let one refresh, serve stale to the rest.\n\nAnd a golden rule: never write 'MY marks' on a note that everyone reads.",
+    "wrong": {
+      "lang": "php",
+      "code": "// dashboard controller\n$stats = Cache::remember('dashboard-stats', 600, function () {\n    return DB::select(...3-second aggregate for the CURRENT tenant...);   // key has no tenant → tenant A sees tenant B\n});\n\n// price update elsewhere — cache never touched; stale for 10 minutes\n$product->update(['price' => $newPrice]);\n\n// hot key expires → 400 requests all recompute (stampede)\n\n// caching models with relations\nCache::put('user:'.$user->id, $user->load('roles', 'permissions'), 3600);  // stale roles for an hour after a change",
+      "why": "Wrong key (data leak), no invalidation on write (stale for the whole TTL), no stampede protection (outage at expiry), and cached objects that go stale independently of their source."
+    },
+    "right": {
+      "lang": "php",
+      "code": "// Keyed correctly, versioned, jittered TTL as a safety net\nclass DashboardStats\n{\n    public function for(Tenant $tenant): array\n    {\n        $version = Cache::get(\"tenant:{$tenant->id}:stats:v\", 1);\n        $key = \"tenant:{$tenant->id}:stats:v{$version}\";\n        return Cache::remember($key, now()->addMinutes(10)->addSeconds(random_int(0, 60)), fn () => $this->compute($tenant));\n    }\n    public function invalidate(Tenant $tenant): void\n    {\n        Cache::increment(\"tenant:{$tenant->id}:stats:v\");     // old key simply ages out\n    }\n}\n\n// Invalidate on the write (observer/listener) — the mechanism; TTL is only the net\nclass OrderObserver { public function saved(Order $o): void { app(DashboardStats::class)->invalidate($o->tenant); } }\n\n// Stampede protection: stale-while-revalidate (Laravel 11.23+)\n$stats = Cache::flexible($key, [300, 900], fn () => $this->compute($tenant));\n// 0–300s: fresh, served directly. 300–900s: stale served immediately, ONE background refresh. >900s: recompute inline.\n\n// Or explicit single-flight with a lock\n$stats = Cache::get($key) ?? Cache::lock(\"lock:$key\", 10)->block(5, function () use ($key) {\n    return Cache::remember($key, 600, fn () => $this->compute());  // re-check inside the lock\n});\n\n// Tags where the store supports them\nCache::tags(['orders', \"tenant:{$tenant->id}\"])->remember($key, 600, ...);\nCache::tags([\"tenant:{$tenant->id}\"])->flush();   // on tenant-wide change\n\n// Per-request memoisation (not Redis): the same lookup 50 times in one request\n$tenant = once(fn () => Tenant::find($id));   // Laravel 11 once()\n\n// HTTP caching for public responses\nreturn response()->json($data)->header('Cache-Control', 'public, max-age=60, stale-while-revalidate=300')->setEtag(md5(json_encode($data)));",
+      "why": "Tenant in the key stops leaks. The version bump invalidates instantly without listing keys. The jitter spreads expiries. flexible() (or a lock) turns the 9:00 stampede into one refresh. Tags handle broad invalidation; once() handles per-request repetition; HTTP headers let the CDN absorb public reads."
+    },
+    "bn": "কী cache করবো: দামি, বেশি পড়া, একটু পুরনো হলে ক্ষতি নেই (aggregate, config, permission, external API)। কী না: shared key-তে user-specific data (leak), যেখানে পুরনো মান টাকা খরচ করায় (checkout-এ stock), ছোট দ্রুত query। Production-এ Redis। Pattern: cache-aside (Cache::remember) default। Invalidation: (1) write হলেই forget/update — observer/listener; (2) key-তে version, write-এ version বাড়াও — পুরনো key নিজে মরে; (3) tags (Redis); (4) TTL শুধু safety net, mechanism না। Stampede: hot key expire হলে সবাই একসাথে recompute — Cache::flexible (fresh/stale window, একজন background-এ refresh), বা lock দিয়ে single-flight, TTL-এ random jitter, বা scheduled job দিয়ে আগে থেকেই warm। ফাঁদ: global key-তে user data, relation সহ model cache, নিজের write-এর পরেই পুরনো cache, deploy-এ cold start। Redis: cache/queue/session আলাদা instance, hit rate দেখো (৮০%-এর নিচে হলে key/TTL ভুল)। Public response-এ Cache-Control + ETag দিয়ে CDN-এ পড়া আটকাও।",
+    "versions": [
+      { "from": "Laravel 8/9", "to": "Laravel 10", "what": "Cache::lock()->block() atomic locks matured; tags on Redis only (removed for file/db); Cache::remember TTL accepts DateTime.", "why_it_matters": "'Do tags work on the database driver?' — no; be ready to say so." },
+      { "from": "Laravel 10", "to": "Laravel 11", "what": "Cache::flexible() stale-while-revalidate (11.23); once() helper for per-request memoisation; defer() for background refresh after the response; CACHE_STORE env replaces CACHE_DRIVER; database cache driver improvements.", "why_it_matters": "flexible() is the built-in stampede answer — knowing it exists beats hand-rolling a lock." },
+      { "from": "Laravel 11", "to": "Laravel 12", "what": "No cache API changes; Redis client defaults to phpredis when available.", "why_it_matters": "Say the API is stable; the 11.x additions are the ones to name." }
+    ],
+    "crossStack": [
+      { "concept": "Cache-aside with TTL", "laravel": "Cache::remember($key, $ttl, fn)", "symfony": "Symfony Cache contracts: $cache->get($key, fn (ItemInterface $item) => { $item->expiresAfter(600); ... }) — includes stampede protection (probabilistic early expiration) by default", "dotnet": "IMemoryCache.GetOrCreateAsync / IDistributedCache (Redis); HybridCache in .NET 9 with built-in stampede protection", "node": "cache-manager or ioredis GET/SET with EX; keyv; Next.js unstable_cache/revalidateTag" },
+      { "concept": "Tag-based invalidation", "laravel": "Cache::tags([...])->flush() (Redis)", "symfony": "TagAwareCacheInterface: $item->tag('orders'); $cache->invalidateTags(['orders'])", "dotnet": "HybridCache tags (.NET 9) / manual key registries", "node": "Next.js revalidateTag('orders'); Redis sets of keys per tag" }
+    ],
+    "simulator": "cache-stampede",
+    "docs": [
+      { "label": "Laravel: Cache", "url": "https://laravel.com/docs/12.x/cache" },
+      { "label": "Redis: caching patterns", "url": "https://redis.io/docs/latest/develop/use/patterns/" }
+    ]
+  },
+  "practice": [
+    {
+      "task": "On prep-app with Redis (docker run -d -p 6379:6379 redis:7 if you don't have a free one): cache the 'revenue per month for 2026' query keyed by tenant with a versioned key; invalidate via an Order observer; write a test proving that creating a paid order changes the cached result on the next read without waiting for TTL.",
+      "hint": "Cache::increment on the version key in saved(); read version inside the getter.",
+      "solution": "class MonthlyRevenue {\n    public function for(int $tenantId): array {\n        $v = Cache::get(\"t:$tenantId:rev:v\", 1);\n        return Cache::remember(\"t:$tenantId:rev:v$v\", 600, fn () => DB::table('orders')\n            ->selectRaw(\"DATE_FORMAT(created_at,'%Y-%m') ym, SUM(total) revenue\")\n            ->where('tenant_id', $tenantId)->where('status', 'paid')->whereYear('created_at', 2026)\n            ->groupBy('ym')->orderBy('ym')->get()->all());\n    }\n    public function bump(int $tenantId): void { Cache::increment(\"t:$tenantId:rev:v\"); }\n}\nclass OrderObserver { public function saved(Order $o): void { app(MonthlyRevenue::class)->bump($o->tenant_id); } }\n\npublic function test_cache_invalidates_on_new_paid_order(): void {\n    $svc = app(MonthlyRevenue::class);\n    $before = $svc->for(1);\n    Order::factory()->create(['tenant_id' => 1, 'status' => 'paid', 'total' => 100, 'created_at' => '2026-05-10']);\n    $after = $svc->for(1);\n    $this->assertNotEquals($before, $after);\n}\n// Cache::increment on a missing key sets it to 1 — so the first bump makes version 1→... check: get(...,1) default handles it.",
+      "why": "Versioned keys are the cleanest invalidation when you can't or don't want to enumerate keys. The test proves the mechanism, not the TTL — which is the point."
+    },
+    {
+      "task": "Simulate a stampede locally: a route whose compute() sleeps 2 seconds, cached 10 s. Use ab or a bash loop to fire 20 concurrent requests right after expiry; count how many times compute() ran (log a line). Then wrap with Cache::flexible or a lock and repeat.",
+      "hint": "ab -n 20 -c 20 http://localhost:8000/stats; grep the log for 'computing'.",
+      "solution": "// route\nRoute::get('/stats', function () {\n    return Cache::remember('stats', 10, function () { Log::info('computing'); sleep(2); return ['n' => rand()]; });\n});\n// wait 10s for expiry, then:  ab -n 20 -c 20 http://127.0.0.1:8000/stats\n// grep -c computing storage/logs/laravel.log   → ~20 (every request recomputed)\n\n// fixed\nRoute::get('/stats', function () {\n    return Cache::flexible('stats', [10, 60], function () { Log::info('computing'); sleep(2); return ['n' => rand()]; });\n});\n// after the fresh window: ab again → 1 'computing', 19 stale hits served instantly\n// Note: php artisan serve is single-threaded; use php -S with multiple workers, Octane, or nginx+fpm to see real concurrency.",
+      "why": "Counting 'computing' lines turns the stampede from a diagram into a number you produced. The single-thread caveat is itself a good thing to know."
+    },
+    {
+      "task": "Review this and list every caching mistake, then rewrite: Cache::remember('user-permissions', 86400, fn () => auth()->user()->getAllPermissions()) used in a middleware.",
+      "hint": "Key, TTL, invalidation, what's stored.",
+      "solution": "Mistakes:\n1. Global key for user-specific data → every user gets the first user's permissions (security bug).\n2. 24h TTL with no invalidation → a revoked permission persists a day.\n3. Caches model objects (Permission collection) → large payloads, serialisation coupling.\n4. Runs in middleware on every request → fine, but must be cheap: store permission names, not models.\n\nRewrite:\n$names = Cache::remember(\"user:{$user->id}:perms:v{$user->permissions_version}\", 3600, fn () => $user->getAllPermissions()->pluck('name')->all());\n// On role/permission change: $user->increment('permissions_version') (or Cache::forget the key). TTL is the safety net.\n// spatie/laravel-permission already caches the roles↔permissions map globally and invalidates on change — use that layer and cache only the per-user assignment if needed.",
+      "why": "This exact snippet appears in real codebases. Spotting the key bug first (security) and the invalidation bug second (correctness) is the order a senior reviews in."
+    }
+  ],
+  "interview": [
+    {
+      "q": "How would you cache a slow dashboard query and keep it correct?",
+      "model": "Cache-aside with a key that includes the tenant and a version, a TTL as a safety net with some jitter, and invalidation on the write — the order observer bumps the version so the next read recomputes. For the expiry moment I'd use stale-while-revalidate via Cache::flexible so one request refreshes while the rest get the old value, instead of 400 recomputes. And I'd cache the computed array, not Eloquent models.",
+      "missing": "Say what you would NOT cache this way: anything where staleness costs money — checkout stock reads go to the database with a lock.",
+      "followUp": "What's your cache hit rate target, and what do you do when it's 40%?",
+      "bn": "Cache-aside, key-তে tenant+version, TTL safety net (jitter সহ), write-এ observer version বাড়ায়; expiry-তে Cache::flexible দিয়ে একজন refresh, বাকিরা stale পায়।"
+    },
+    {
+      "q": "Explain a cache stampede and three ways to prevent it.",
+      "model": "A hot key expires and every concurrent request misses at once, so they all recompute — the database gets hundreds of copies of the expensive query and falls over. Prevent it by single-flight: one request takes a lock and recomputes while others wait or serve the stale value — Laravel's Cache::flexible does the stale-while-revalidate version; by jittering TTLs so keys don't expire together; or by never letting hot keys expire and refreshing them from a scheduled job.",
+      "missing": "Mention warming hot keys on deploy — cold-start is the same stampede with a different trigger.",
+      "followUp": "Where does the lock live, and what if the process holding it dies?",
+      "bn": "Hot key expire → সবাই একসাথে miss → শত শত recompute → DB পড়ে যায়; ঠিক: single-flight lock/flexible (একজন refresh, বাকি stale), jittered TTL, never-expire + scheduled refresh।"
+    },
+    {
+      "q": "TTL-based expiry vs invalidation on write — which do you use?",
+      "model": "Both, in different roles. Invalidation on write is the mechanism — the observer or listener forgets or version-bumps the key when the source changes, so readers are correct immediately. The TTL is the safety net so a missed invalidation heals itself. Relying on TTL alone means accepting staleness up to the TTL, which is fine for a homepage count and unacceptable for a price.",
+      "missing": "Add key versioning as the way to invalidate without knowing every key that depends on the data.",
+      "followUp": "How do you invalidate when one write affects fifty cached keys?",
+      "bn": "দুটোই: write-এ invalidate/version bump হলো mechanism, TTL হলো safety net; শুধু TTL মানে TTL পর্যন্ত পুরনো মান মেনে নেওয়া।"
+    },
+    {
+      "q": "A user updates their name and the next page still shows the old one. Why, and how do you fix it in a cached system?",
+      "model": "Read-your-own-write: the profile is cached, the update didn't invalidate before the response, so the next read hit the stale entry. Fix: invalidate or update the cache in the same request as the write — before returning — keyed per user so no one else is affected; or version the key on the user row. If it's HTTP or CDN caching, the response needs Cache-Control: private/no-store for authenticated pages.",
+      "missing": "Distinguish app cache from HTTP/CDN cache — the same symptom has two different fixes depending on which layer served the stale page.",
+      "followUp": "What if the write goes to the primary database and the read hits a replica?",
+      "bn": "নিজের write-এর পরেও পুরনো cache — write-এর সাথে সাথেই, response-এর আগেই invalidate/update; user-প্রতি key; HTTP/CDN হলে private/no-store।"
+    }
+  ],
+  "cards": [
+    { "q": "What is worth caching?", "a": "Expensive to compute, read far more than written, tolerant of some staleness. Not: user data under a shared key, money-critical reads, tiny fast queries." },
+    { "q": "Cache-aside in one line", "a": "Check cache; on miss compute, store, return — Cache::remember($key, $ttl, fn)." },
+    { "q": "Invalidation mechanism vs safety net", "a": "Invalidate on the write (forget / version bump / tags) is the mechanism; TTL is the safety net." },
+    { "q": "What is a cache stampede?", "a": "A hot key expires and all concurrent requests recompute at once, overloading the source." },
+    { "q": "Three stampede defences", "a": "Single-flight lock / stale-while-revalidate (Cache::flexible), jittered TTLs, never-expire + background refresh." },
+    { "q": "Why version keys instead of forgetting them?", "a": "Bumping a version invalidates every dependent key at once without enumerating them; old keys age out." },
+    { "q": "The classic cache security bug", "a": "User-specific data under a global key — everyone sees the first user's data." },
+    { "q": "Do cache tags work on the file or database store?", "a": "No — Redis (and Memcached) only." },
+    { "q": "What does Cache::flexible($key, [300, 900], fn) do?", "a": "0–300s fresh; 300–900s serve stale and refresh once in the background; beyond 900s recompute inline." }
+  ],
+  "glossary": [
+    { "term": "cache-aside", "plain": "The app checks the cache first and fills it on a miss.", "bn": "আগে cache দেখো, না পেলে হিসাব করে cache-এ রাখো।" },
+    { "term": "invalidation", "plain": "Removing or updating a cached value because its source changed.", "bn": "উৎস বদলানোয় cache-এর মান সরানো বা বদলানো।" },
+    { "term": "stampede (dog-pile)", "plain": "Many requests recomputing the same expired value at once.", "bn": "একই expire হওয়া মান অনেকে একসাথে recompute করা।" },
+    { "term": "stale-while-revalidate", "plain": "Serve the old value immediately while one refresh happens in the background.", "bn": "পুরনো মান সাথে সাথে দাও, background-এ একজন refresh করুক।" },
+    { "term": "TTL", "plain": "Time to live — how long a cached value stays before expiring.", "bn": "Cache-এর মান কতক্ষণ থাকবে।" }
+  ]
+}
