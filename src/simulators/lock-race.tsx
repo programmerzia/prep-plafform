@@ -52,8 +52,8 @@ export default function LockRaceSimulator() {
             </Chips>
           )}
           <label className="flex items-center gap-3">
-            <Muted className="whitespace-nowrap">Delay between taps: {delay === 0 ? 'same second' : `${delay} step${delay > 1 ? 's' : ''}`}</Muted>
-            <input type="range" min={0} max={4} step={1} value={delay} onChange={(e) => setDelay(Number(e.target.value))} className="min-h-[44px] flex-1" aria-label="Delay between users" />
+            <Muted className="w-36 shrink-0 whitespace-nowrap">Tap delay: {delay === 0 ? 'same second' : `${delay} step${delay > 1 ? 's' : ''}`}</Muted>
+            <input type="range" min={0} max={4} step={1} value={delay} onChange={(e) => setDelay(Number(e.target.value))} className="min-h-[44px] min-w-0 flex-1" aria-label="Delay between users" />
           </label>
         </div>
       }
