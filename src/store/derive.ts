@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
-import { ALL_CARDS, MODULES, UNLOCKED, cardsOf, type CardRef } from '../content/loader';
+import { ALL_CARDS, MODULES, LESSONS, WITH_CARDS, cardsOf, type CardRef } from '../content/loader';
 import type { Module } from '../content/schema';
-import { isDue, mastery, todayNumber, weakSpots, type CardState } from '../logic/leitner';
+import { isDue, isPassed, mastery, todayNumber, weakSpots, type CardState } from '../logic/leitner';
 import { useStore } from './Store';
 
 export function moduleMastery(m: Module, cards: Record<string, CardState>): number | null {
-  if (m.status !== 'unlocked') return null;
+  if (m.cards.length === 0) return null;
   return mastery(cardsOf(m).map((c) => c.key), cards);
 }
 
@@ -31,22 +31,22 @@ export function useWeakSpots(limit = 5) {
   return useMemo(() => weakSpots(ALL_CARDS, cards, limit), [cards, limit]);
 }
 
-/** Next module on the path = first preview module in path order. Weak = unlocked and under 60%. */
+/** Next module on the path = first module without a lesson, in path order. Weak = has cards and under 60%. */
 export function usePath() {
   const m = useMastery();
   return useMemo(() => {
-    const next = MODULES.find((x) => x.status === 'preview');
-    const weak = UNLOCKED.filter((x) => (m[x.id] ?? 0) < 60);
-    const passed = UNLOCKED.filter((x) => (m[x.id] ?? 0) >= 60);
-    // 60-day window: modules the mentor starred; passed = unlocked and mastery >= 60%
+    const next = MODULES.find((x) => !x.lesson);
+    const weak = WITH_CARDS.filter((x) => !isPassed(m[x.id]));
+    const passed = WITH_CARDS.filter((x) => isPassed(m[x.id]));
+    // 60-day window: modules the mentor starred; passed = mastery >= 60%
     const starred = MODULES.filter((x) => x.star);
-    const starredPassed = starred.filter((x) => x.status === 'unlocked' && (m[x.id] ?? 0) >= 60);
-    return { next, weak, passed, starred, starredPassed, unlocked: UNLOCKED.length, total: MODULES.length };
+    const starredPassed = starred.filter((x) => isPassed(m[x.id]));
+    return { next, weak, passed, starred, starredPassed, withLessons: LESSONS.length, total: MODULES.length };
   }, [m]);
 }
 
 export function trackMastery(track: string, m: Record<string, number | null>): number | null {
-  const mods = UNLOCKED.filter((x) => x.track === track);
+  const mods = WITH_CARDS.filter((x) => x.track === track);
   if (!mods.length) return null;
   return Math.round(mods.reduce((s, x) => s + (m[x.id] ?? 0), 0) / mods.length);
 }

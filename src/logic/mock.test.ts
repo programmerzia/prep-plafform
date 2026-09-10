@@ -26,9 +26,9 @@ describe('buildMock', () => {
     const qs = buildMock([mod('a', 3, 2)], fixed, 2);
     expect(qs.every((q) => q.q.includes('iq'))).toBe(true);
   });
-  it('skips preview modules and never repeats a question', () => {
-    const preview = { ...mod('p', 3), status: 'preview' as const };
-    const qs = buildMock([preview, mod('a', 4)], fixed);
+  it('skips modules with nothing to ask and never repeats a question', () => {
+    const empty = mod('p', 0);
+    const qs = buildMock([empty, mod('a', 4)], fixed);
     expect(qs).toHaveLength(4);
     expect(new Set(qs.map((q) => q.q)).size).toBe(4);
   });

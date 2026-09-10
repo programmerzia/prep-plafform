@@ -15,13 +15,12 @@ export const MOCK_MINUTES = 45;
 export const MOCK_SIZE = 6;
 
 /**
- * Six questions mixed across the unlocked modules of a track focus: round-robin over
+ * Six questions mixed across the modules of a track focus that have questions: round-robin over
  * shuffled modules so no module dominates. Interview questions first, drill cards as fallback.
  */
 export function buildMock(modules: Module[], random: () => number = Math.random, size = MOCK_SIZE): MockQuestion[] {
   const pools = shuffle(
     modules
-      .filter((m) => m.status === 'unlocked')
       .map((m) => ({
         m,
         qs: shuffle(

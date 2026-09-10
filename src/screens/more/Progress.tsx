@@ -1,8 +1,8 @@
-import { ALL_CARDS, MODULE_BY_ID, UNLOCKED } from '../../content/loader';
+import { ALL_CARDS, MODULE_BY_ID, WITH_CARDS } from '../../content/loader';
 import { TRACK_FOCUS, TRACKS, TRACK_ORDER, type TrackFocusId } from '../../content/tracks';
 import { useStore } from '../../store/Store';
 import { trackMastery, useMastery } from '../../store/derive';
-import { Bar, Big, Card, Empty, H2, Muted, Page, Pill, masteryTone } from '../../ui/primitives';
+import { Bar, Big, Card, Empty, H2, MasteryPill, Muted, Page, Pill } from '../../ui/primitives';
 
 export function Progress() {
   const { cards, history } = useStore();
@@ -45,11 +45,11 @@ export function Progress() {
 
       <Card>
         <H2>By module</H2>
-        {UNLOCKED.map((m) => (
+        {WITH_CARDS.map((m) => (
           <div key={m.id} className="my-2">
             <div className="flex justify-between text-[15px]">
               <span>{m.title}</span>
-              <Pill tone={masteryTone(mastery[m.id])}>{mastery[m.id] ?? 0}%{(mastery[m.id] ?? 0) >= 60 ? ' ✓' : ''}</Pill>
+              <MasteryPill pct={mastery[m.id] ?? 0} />
             </div>
             <Bar pct={mastery[m.id] ?? 0} />
           </div>

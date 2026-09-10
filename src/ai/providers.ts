@@ -10,8 +10,8 @@ export interface ProviderInfo {
 /** Ported from the legacy app. Keys are pasted by the user and never leave the device except to the provider. */
 export const PROVIDERS: Record<Provider, ProviderInfo> = {
   offline: {
-    name: 'Offline (built-in questions)',
-    help: 'No AI. You get a real interview question, answer it, reveal a model answer, and score yourself honestly. Always works.',
+    name: 'Built-in questions (default)',
+    help: 'Works offline, no key, no setup. You get a real interview question, answer it, reveal a model answer, and score yourself honestly.',
   },
   gemini: {
     name: 'Google Gemini — free',

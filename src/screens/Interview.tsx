@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { callLLM, PROVIDERS, type ChatMessage } from '../ai/providers';
 import { MODES, STRUCTURE, offlineQuestion, parseScore, structureHits, systemPrompt, type OfflineQuestion } from '../ai/interviewer';
-import { getModule, UNLOCKED } from '../content/loader';
+import { getModule, WITH_CARDS } from '../content/loader';
 import { todayNumber } from '../logic/leitner';
 import { useStore } from '../store/Store';
 import type { InterviewMode } from '../store/types';
@@ -16,7 +16,7 @@ type Stage = 'setup' | 'answer' | 'graded';
 export function Interview() {
   const [params, setParams] = useSearchParams();
   const tenMin = params.get('mode') === '10min';
-  const initial = params.get('module') ?? UNLOCKED[0]?.id;
+  const initial = params.get('module') ?? WITH_CARDS[0]?.id;
   const { settings, record } = useStore();
   const nav = useNavigate();
 
@@ -129,7 +129,7 @@ export function Interview() {
             </Button>
           </div>
           <Muted className="mt-2">
-            Using: {provName} · <Link to="/more/settings" className="text-accent">change</Link>
+            Interviewer: {provName} · <Link to="/more/settings" className="text-accent">change</Link>
           </Muted>
           {error && <div className="mt-2 text-sm text-danger">{error}</div>}
         </Card>

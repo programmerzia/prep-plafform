@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Changed
+- No locking: every module with a lesson is readable; "Passed" badge at 60% drill mastery replaces the old gate. The UI no longer mentions Claude. Built-in questions are the default interviewer; AI providers are optional.
+
 ### Added
 - `prebuild` content gate: `scripts/validate-content.ts` runs the Zod schema over every module and fails `npm run build` on the first invalid file, duplicate id, or id/filename mismatch.
 - Star field is live: ★ marker in Learn, "60-day progress" line on Today. `design-canvas` is a registered simulator id. crossStack renders as stacked cards under 600px.

@@ -13,7 +13,7 @@ his phone. Nothing here is a demo — it is his only study environment.
 - State/persistence: IndexedDB through `idb` (progress, drill schedule, settings, stories, notes)
 - Content: static JSON in `content/modules/*.json` loaded at build time (Vite glob import). One file = one module.
 - Deploy: GitHub Pages via `.github/workflows/deploy.yml` on push to main. `base` in vite.config must be `/prep-platform/`.
-- No backend. AI calls go straight from the browser to Gemini / Groq / OpenRouter using a key the user pastes (stored on device only). Offline mode must work with zero network.
+- No backend. The built-in offline interviewer is the default and needs no setup. AI calls go straight from the browser to Gemini / Groq / OpenRouter using a key the user pastes (stored on device only). Offline mode must work with zero network.
 - Tests: Vitest for pure logic (spaced repetition, content validation). No test theatre.
 
 ## Non-negotiable UX rules
@@ -22,19 +22,19 @@ his phone. Nothing here is a demo — it is his only study environment.
 - Bangla appears everywhere a summary appears. Global toggle: EN / EN+BN. Bangla text uses a font that renders Bengali cleanly (Noto Sans Bengali via CSS, self-hosted in /public/fonts).
 - Code blocks scroll horizontally; never wrap code. Font size ≥ 13.5px.
 - Simulators are React components in `src/simulators/<id>.tsx`, referenced from a module by id. They must work by touch.
-- Plain language in all UI. No jargon in labels.
+- Plain language in all UI. No jargon in labels. The UI never mentions Claude or any mentor; the learner just sees lessons, previews and his own progress.
 - Dark mode follows system preference.
 
 ## Screens (bottom tabs)
 1. **Today** — cards due, streak, "Your path" (next module, weak modules under 60%), 10-minute mobile mode button (drill 8 cards + 1 interview question), daily rhythm in EN and BN.
-2. **Learn** — tracks → modules. Locked modules show preview (what / picture / why interviewers ask / Bangla). Unlocked modules show the full lesson (see module schema). "Explain like I'm 12" toggle swaps `lesson.simple` for `lesson.concept`.
+2. **Learn** — tracks → modules. Nothing is locked: every module with a `lesson` is readable. Modules without a lesson show the preview (what / picture / why interviewers ask / Bangla). A "Passed" badge is earned at 60% drill mastery. "Explain like I'm 12" toggle swaps `lesson.simple` for `lesson.concept`.
 3. **Practice** — tasks per module; run locally on his machine; hidden solutions with explanation.
 4. **Drill** — spaced repetition. Leitner boxes with intervals [0,1,3,7,21,60] days. "Got it" moves up a box; "Missed" resets to box 0 and increments miss count. Weak spots = most-missed cards.
-5. **Interview** — pick module + style (technical / AI-screen / behavioural). AI provider chosen in settings; offline mode shows a question from the module's `interview` list, then model answer + "the sentence you're missing", user self-scores 1–10. AI-screen mode adds a 90-second timer and grades structure (context → decision → trade-off → outcome).
+5. **Interview** — pick module + style (technical / AI-screen / behavioural). Built-in questions are the default; an AI provider is optional and chosen in Settings. Built-in mode shows a question from the module's `interview` list, then model answer + "the sentence you're missing", user self-scores 1–10. AI-screen mode adds a 90-second timer and grades structure (context → decision → trade-off → outcome).
 6. **Mock** — 45-minute timed mock per track focus (Laravel / React-Next / .NET): 6 questions mixed across unlocked modules, scores recorded, written weak-spot report.
 7. **More** — Design canvas (draggable labelled boxes + arrows, save/load PNG/JSON), Stories (STAR stories, 2-min and 30-sec versions, rehearsal mode that hides text after 3 seconds), Cheat sheets (one page per track, printable), Glossary (term / plain meaning / Bangla / module link), Progress (mastery per track, mock history), Settings (AI provider + key, language, export/import progress JSON, reset).
 
-Mastery per module = average box level of its cards / 5. A module is "passed" when the mentor marks `status: "unlocked"` in the JSON AND mastery ≥ 60%.
+Mastery per module = average box level of its cards / 5. A module is "passed" when drill mastery ≥ 60%. Nothing else gates it; `status` only records whether the mentor has written the lesson (`unlocked`) or only the preview (`preview`).
 
 ## Content module schema (`content/modules/<id>.json`)
 ```json
@@ -104,3 +104,9 @@ Done (2026-09-09) by `scripts/migrate-legacy.mjs`; `src/content/content.test.ts`
 - The mock's grouping of tracks is called "Track focus" in the UI and code (`TRACK_FOCUS` in `src/content/tracks.ts`). The word "funnel" is not used in the UI.
 - `git` is its own track.
 - When a mentor delivers an unlocked module that supersedes a legacy preview, keep the preview only if it still covers something the new module does not, and give it a later `order`. Example: `js-closures-this` (unlocked) is order 2, `js-closures-this-prototypes` (preview, prototypes still untaught) is order 3.
+
+## Decisions (2026-09-10)
+- No locking. `src/content/loader.ts` exposes `LESSONS` (modules with a lesson, all readable) and `WITH_CARDS` (modules that can be drilled, interviewed on, passed). `status` stays in the schema as the mentor's marker but gates nothing in the UI.
+- "Passed" = `isPassed(mastery)` in `src/logic/leitner.ts`, 60% or more. Shown by `MasteryPill` as "✓ Passed · N%" in Learn, Today, the lesson header and Progress.
+- The UI never names Claude. Preview screens say a lesson is not written yet; Today's next stop says the same.
+- Interviewer provider `offline` is labelled "Built-in questions (default)"; AI providers are presented as optional in Settings.

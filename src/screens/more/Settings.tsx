@@ -61,8 +61,9 @@ export function Settings() {
       </Card>
 
       <Card>
-        <H2>AI interviewer</H2>
-        <Muted className="mb-1">Provider</Muted>
+        <H2>Interviewer</H2>
+        <Muted className="mb-2">Built-in questions are the default and always work. Connecting an AI provider is optional: it asks fresh questions and grades your answer.</Muted>
+        <Muted className="mb-1">Interviewer</Muted>
         <Chips>
           {(Object.keys(PROVIDERS) as Provider[]).map((k) => (
             <Chip key={k} on={settings.ai.provider === k} onClick={() => updateSettings({ ai: { ...settings.ai, provider: k } })}>

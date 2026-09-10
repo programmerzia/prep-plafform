@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useStore } from '../store/Store';
 import { useDueCards, useMastery, usePath, useWeakSpots } from '../store/derive';
-import { Bar, Big, Bn, Button, Card, H2, ListRow, Muted, Pill, masteryTone } from '../ui/primitives';
+import { Bar, Big, Bn, Button, Card, H2, ListRow, MasteryPill, Muted, Pill } from '../ui/primitives';
 import { phaseName } from '../content/tracks';
 
 export function Today() {
@@ -11,7 +11,7 @@ export function Today() {
   const path = usePath();
   const weak = useWeakSpots(5);
   const nav = useNavigate();
-  const pct = Math.round((100 * path.unlocked) / path.total);
+  const pct = Math.round((100 * path.withLessons) / path.total);
 
   return (
     <div className="mx-auto flex w-full max-w-[560px] flex-col gap-3 px-3 pt-3 pb-24">
@@ -48,7 +48,7 @@ export function Today() {
         <H2>Your path</H2>
         <div className="flex justify-between">
           <Muted>
-            {path.unlocked} of {path.total} topics unlocked · {path.passed.length} passed
+            {path.withLessons} of {path.total} topics have a lesson · {path.passed.length} passed
           </Muted>
           <Muted>{pct}%</Muted>
         </div>
@@ -65,7 +65,7 @@ export function Today() {
             <Muted className="mb-1.5">Finish these first (under 60% in drills)</Muted>
             <div className="flex flex-col gap-1.5">
               {path.weak.map((m) => (
-                <ListRow key={m.id} to={`/learn/${m.track}/${m.id}`} right={<Pill tone={masteryTone(mastery[m.id])}>{mastery[m.id] ?? 0}%</Pill>}>
+                <ListRow key={m.id} to={`/learn/${m.track}/${m.id}`} right={<MasteryPill pct={mastery[m.id] ?? 0} />}>
                   {m.title}
                 </ListRow>
               ))}
@@ -74,19 +74,19 @@ export function Today() {
         )}
         {path.next ? (
           <div>
-            <Muted className="mb-1.5">Next new topic · {phaseName(path.next.phase)}</Muted>
+            <Muted className="mb-1.5">Next on the path · {phaseName(path.next.phase)}</Muted>
             <ListRow to={`/learn/${path.next.track}/${path.next.id}`} right={<Pill>preview</Pill>}>
               {path.next.title}
             </ListRow>
-            <Muted className="mt-2">Ask Claude: "teach me {path.next.title}" — that unlocks it here.</Muted>
+            <Muted className="mt-2">No lesson written yet. The preview shows what it will cover.</Muted>
           </div>
         ) : (
-          <Muted>All topics unlocked.</Muted>
+          <Muted>Every topic has a lesson.</Muted>
         )}
         <Muted className="mt-3">
-          Daily rhythm: 5 min drill of due cards → one new topic with Claude → one interview question on it → write your LinkedIn draft when a topic passes 60%.
+          Daily rhythm: 5 min drill of due cards → one new topic → one interview question on it → write your LinkedIn draft when a topic passes 60%.
         </Muted>
-        <Bn className="mt-2">প্রতিদিন: ৫ মিনিট due card drill → Claude-এর সাথে একটা নতুন topic → তার ওপর একটা interview প্রশ্ন → topic ৬০% পার হলে LinkedIn draft।</Bn>
+        <Bn className="mt-2">প্রতিদিন: ৫ মিনিট due card drill → একটা নতুন topic → তার ওপর একটা interview প্রশ্ন → topic ৬০% পার হলে LinkedIn draft।</Bn>
       </Card>
 
       <Card>

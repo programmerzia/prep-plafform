@@ -8,10 +8,10 @@ import { Button, Card, CodeBlock, Empty, H3, ListRow, Muted, Page } from '../../
 export function CheatSheets() {
   return (
     <Page back="/more" title="Cheat sheets">
-      <Muted>One page per track, built from the unlocked modules: the hook, the analogy, the code, every drill card. Print from the page.</Muted>
+      <Muted>One page per track, built from the modules that have a lesson: the hook, the analogy, the code, every drill card. Print from the page.</Muted>
       <div className="flex flex-col gap-1.5">
         {TRACK_ORDER.map((t) => {
-          const n = MODULES.filter((m) => m.track === t && m.status === 'unlocked').length;
+          const n = MODULES.filter((m) => m.track === t && m.lesson).length;
           if (!n) return null;
           return (
             <ListRow key={t} to={`/more/cheatsheets/${t}`} right={<Muted>{n} modules</Muted>}>
@@ -28,7 +28,7 @@ export function CheatSheet() {
   const { track } = useParams();
   const { settings } = useStore();
   const name = TRACKS[track as TrackId];
-  const mods = modulesInTrack(track ?? '').filter((m) => m.status === 'unlocked');
+  const mods = modulesInTrack(track ?? '').filter((m) => m.lesson);
   if (!name) return <Page back="/more/cheatsheets" title="Unknown track"><Empty>No such track.</Empty></Page>;
   return (
     <Page back="/more/cheatsheets" title={`${name} — cheat sheet`} actions={<Button className="no-print" onClick={() => window.print()}>Print</Button>}>

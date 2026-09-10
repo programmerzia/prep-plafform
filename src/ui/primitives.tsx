@@ -77,6 +77,14 @@ export function Pill({ tone = 'neutral', children }: { tone?: 'neutral' | 'weak'
   return <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}>{children}</span>;
 }
 
+/** The mastery pill: "Passed · 72%" from 60% up, the percentage below that, "not drilled" at zero. */
+export function MasteryPill({ pct }: { pct: number | null | undefined }) {
+  if (pct === null || pct === undefined) return <Pill>no cards</Pill>;
+  if (pct >= 60) return <Pill tone="done">✓ Passed · {pct}%</Pill>;
+  if (pct === 0) return <Pill>not drilled</Pill>;
+  return <Pill tone={masteryTone(pct)}>{pct}%</Pill>;
+}
+
 export function masteryTone(m: number | null | undefined): 'neutral' | 'weak' | 'mid' | 'done' {
   if (m === null || m === undefined || m === 0) return 'neutral';
   if (m < 40) return 'weak';

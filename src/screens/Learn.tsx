@@ -2,17 +2,17 @@ import { useParams } from 'react-router-dom';
 import { MODULES, modulesInTrack } from '../content/loader';
 import { TRACKS, TRACK_ORDER, phaseName, type TrackId } from '../content/tracks';
 import { useMastery, trackMastery } from '../store/derive';
-import { ListRow, Muted, Page, Pill, masteryTone, Empty, Card } from '../ui/primitives';
+import { ListRow, MasteryPill, Muted, Page, Pill, masteryTone, Empty, Card } from '../ui/primitives';
 
 export function Learn() {
   const mastery = useMastery();
   return (
     <Page title="Learn">
-      <Muted>Tracks → modules. Locked modules show a preview; ask Claude to teach a topic and it unlocks here. ★ marks modules inside the 60-day window.</Muted>
+      <Muted>Tracks → modules. Every lesson is open to read. "Passed" is earned at 60% drill mastery. ★ marks modules inside the 60-day window.</Muted>
       <div className="flex flex-col gap-1.5">
         {TRACK_ORDER.map((t) => {
           const mods = MODULES.filter((m) => m.track === t);
-          const unlocked = mods.filter((m) => m.status === 'unlocked').length;
+          const withLesson = mods.filter((m) => m.lesson).length;
           const tm = trackMastery(t, mastery);
           return (
             <ListRow
@@ -21,7 +21,7 @@ export function Learn() {
               right={
                 <span className="flex items-center gap-1.5">
                   {tm !== null && <Pill tone={masteryTone(tm)}>{tm}%</Pill>}
-                  <Muted>{unlocked}/{mods.length}</Muted>
+                  <Muted>{withLesson}/{mods.length}</Muted>
                 </span>
               }
             >
@@ -50,18 +50,10 @@ export function TrackScreen() {
       )}
       <div className="flex flex-col gap-1.5">
         {mods.map((m) => {
-          const pct = mastery[m.id];
-          const pill =
-            m.status === 'preview' ? (
-              <Pill>locked</Pill>
-            ) : pct === null || pct === 0 ? (
-              <Pill>not drilled</Pill>
-            ) : (
-              <Pill tone={masteryTone(pct)}>{pct}%</Pill>
-            );
+          const pill = m.lesson ? <MasteryPill pct={mastery[m.id]} /> : <Pill>preview</Pill>;
           return (
             <ListRow key={m.id} to={`/learn/${m.track}/${m.id}`} right={pill}>
-              <span className={m.status === 'preview' ? 'opacity-70' : ''}>
+              <span className={m.lesson ? '' : 'opacity-70'}>
                 {m.star && <span className="mr-1 text-warn" title="In the 60-day window" aria-label="starred">★</span>}
                 {m.title}
               </span>

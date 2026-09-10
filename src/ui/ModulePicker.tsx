@@ -5,17 +5,17 @@ import { Chip, Chips, Muted } from './primitives';
 
 /**
  * Tap-only picker: phase chips, then module chips. No dropdowns anywhere.
- * onlyUnlocked hides modules without a lesson (drill / practice need cards).
+ * onlyWithCards hides modules that have no drill cards yet.
  */
 export function ModulePicker({
   value,
   onChange,
-  onlyUnlocked = true,
+  onlyWithCards = true,
   allLabel,
 }: {
   value: string | undefined;
   onChange: (moduleId: string | undefined) => void;
-  onlyUnlocked?: boolean;
+  onlyWithCards?: boolean;
   allLabel?: string;
 }) {
   const current = MODULES.find((m) => m.id === value);
@@ -38,7 +38,7 @@ export function ModulePicker({
         )}
         {PHASES.map((_, i) => {
           const p = i + 1;
-          const any = MODULES.some((m) => m.phase === p && (!onlyUnlocked || m.status === 'unlocked'));
+          const any = MODULES.some((m) => m.phase === p && (!onlyWithCards || m.cards.length > 0));
           return (
             <Chip key={p} on={phase === p} dim={!any} onClick={() => setPhase(p)}>
               {p}. {phaseShort(p)}
@@ -49,7 +49,7 @@ export function ModulePicker({
       {phase > 0 && (
         <Chips>
           {inPhase.map((m) => {
-            const ok = !onlyUnlocked || m.status === 'unlocked';
+            const ok = !onlyWithCards || m.cards.length > 0;
             return (
               <Chip key={m.id} on={value === m.id} dim={!ok} disabled={!ok} onClick={() => onChange(m.id)}>
                 {m.title}
@@ -58,8 +58,8 @@ export function ModulePicker({
           })}
         </Chips>
       )}
-      {phase > 0 && !inPhase.some((m) => !onlyUnlocked || m.status === 'unlocked') && (
-        <Muted>Nothing unlocked in this phase yet.</Muted>
+      {phase > 0 && !inPhase.some((m) => !onlyWithCards || m.cards.length > 0) && (
+        <Muted>No drill cards in this phase yet.</Muted>
       )}
     </div>
   );

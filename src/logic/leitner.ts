@@ -45,8 +45,11 @@ export function mastery(cardKeys: string[], states: Record<string, CardState | u
   return Math.round((100 * total) / (cardKeys.length * MAX_BOX));
 }
 
-export function isPassed(status: 'preview' | 'unlocked', masteryPct: number | null): boolean {
-  return status === 'unlocked' && (masteryPct ?? 0) >= 60;
+export const PASS_PCT = 60;
+
+/** "Passed" is earned by drilling: mastery of 60% or more. Nothing else gates it. */
+export function isPassed(masteryPct: number | null): boolean {
+  return (masteryPct ?? 0) >= PASS_PCT;
 }
 
 /** Most-missed cards first; cards with zero misses are excluded. */

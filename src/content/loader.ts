@@ -35,7 +35,10 @@ export function getModule(id: string | undefined): Module | undefined {
   return id ? MODULE_BY_ID[id] : undefined;
 }
 
-export const UNLOCKED: Module[] = MODULES.filter((m) => m.status === 'unlocked');
+/** Modules with a written lesson. Anything with a lesson is readable; nothing is locked. */
+export const LESSONS: Module[] = MODULES.filter((m) => !!m.lesson);
+/** Modules that can be drilled, interviewed on, and passed. */
+export const WITH_CARDS: Module[] = MODULES.filter((m) => m.cards.length > 0);
 
 export interface CardRef {
   key: string;
@@ -53,7 +56,7 @@ export function cardsOf(m: Module): CardRef[] {
   return m.cards.map((c: Card, i) => ({ key: cardKey(m.id, i), moduleId: m.id, moduleTitle: m.title, q: c.q, a: c.a }));
 }
 
-export const ALL_CARDS: CardRef[] = UNLOCKED.flatMap(cardsOf);
+export const ALL_CARDS: CardRef[] = WITH_CARDS.flatMap(cardsOf);
 
 export function modulesInTrack(track: string): Module[] {
   return MODULES.filter((m) => m.track === track).sort((a, b) => a.order - b.order);

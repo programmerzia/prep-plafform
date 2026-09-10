@@ -5,7 +5,7 @@ import { phaseName } from '../content/tracks';
 import { useStore } from '../store/Store';
 import { useMastery } from '../store/derive';
 import { Markdown } from '../ui/Markdown';
-import { Bn, Button, Card, Chip, Chips, CodeBlock, H2, H3, Muted, Page, Pill, Reveal, masteryTone } from '../ui/primitives';
+import { Bn, Button, Card, Chip, Chips, CodeBlock, H2, H3, MasteryPill, Muted, Page, Reveal } from '../ui/primitives';
 import { SIMULATORS } from '../simulators';
 
 const STACK_LABEL = { laravel: 'Laravel', symfony: 'Symfony', dotnet: '.NET', node: 'Node' } as const;
@@ -14,13 +14,14 @@ export function ModuleScreen() {
   const { moduleId } = useParams();
   const m = getModule(moduleId);
   if (!m) return <Page back="/learn" title="Not found">No such module.</Page>;
-  return m.status === 'preview' ? <PreviewView id={m.id} /> : <LessonView id={m.id} />;
+  // Anything with a lesson is readable. Without one, the preview says what the module will cover.
+  return m.lesson ? <LessonView id={m.id} /> : <PreviewView id={m.id} />;
 }
 
 function PreviewView({ id }: { id: string }) {
   const m = getModule(id)!;
   const stop = MODULES.indexOf(m) + 1;
-  const p = m.preview!;
+  const p = m.preview ?? { what: '', picture: '', why: '', bn: '' };
   return (
     <Page back={`/learn/${m.track}`} title={m.title}>
       <Card>
@@ -36,7 +37,7 @@ function PreviewView({ id }: { id: string }) {
         <H3>বাংলায়</H3>
         <Bn>{p.bn}</Bn>
         <div className="bn mt-4 rounded-xl bg-accent-soft/60 px-3 py-2 text-[15px] dark:bg-[#12291b]">
-          Not unlocked yet. Learn it with Claude first — the lesson, code, Bangla summary and drill cards land here after you pass the questions.
+          No lesson written yet. When it lands, the lesson, code, Bangla summary and drill cards appear here.
         </div>
       </Card>
     </Page>
@@ -57,7 +58,7 @@ function LessonView({ id }: { id: string }) {
     <Page back={`/learn/${m.track}`} title={m.title}>
       <div className="flex items-center justify-between">
         <Muted>{phaseName(m.phase)}</Muted>
-        <Pill tone={masteryTone(mastery)}>{mastery ? `${mastery}%` : 'not drilled'}</Pill>
+        <MasteryPill pct={mastery} />
       </div>
 
       <Card>

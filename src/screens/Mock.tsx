@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { UNLOCKED } from '../content/loader';
+import { WITH_CARDS } from '../content/loader';
 import { TRACK_FOCUS, type TrackFocusId } from '../content/tracks';
 import { Markdown } from '../ui/Markdown';
 import { todayNumber } from '../logic/leitner';
@@ -22,7 +22,7 @@ export function Mock() {
   const [timeUp, setTimeUp] = useState(false);
   const [report, setReport] = useState<{ avg: number; text: string } | null>(null);
 
-  const available = UNLOCKED.filter((m) => TRACK_FOCUS[focus].tracks.includes(m.track));
+  const available = WITH_CARDS.filter((m) => TRACK_FOCUS[focus].tracks.includes(m.track));
 
   const start = () => {
     const list = buildMock(available);
@@ -68,7 +68,7 @@ export function Mock() {
     return (
       <Page title="Mock">
         <Card>
-          <Muted>{MOCK_MINUTES} minutes, 6 questions mixed across the unlocked modules of one track focus. Answer each out loud, type the gist, self-score. You get a written weak-spot report at the end.</Muted>
+          <Muted>{MOCK_MINUTES} minutes, 6 questions mixed across the modules of one track focus. Answer each out loud, type the gist, self-score. You get a written weak-spot report at the end.</Muted>
           <Muted className="mt-2 mb-1">Track focus</Muted>
           <Chips>
             {(Object.keys(TRACK_FOCUS) as TrackFocusId[]).map((f) => (
@@ -77,7 +77,7 @@ export function Mock() {
               </Chip>
             ))}
           </Chips>
-          <Muted className="mt-2">{available.length} unlocked modules in this track focus.</Muted>
+          <Muted className="mt-2">{available.length} modules with questions in this track focus.</Muted>
           <Button variant="primary" full className="mt-3" disabled={!available.length} onClick={start}>
             Start {MOCK_MINUTES}-minute mock
           </Button>

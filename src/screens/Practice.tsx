@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { getModule, UNLOCKED } from '../content/loader';
+import { getModule, LESSONS } from '../content/loader';
 import { Card, Empty, H2, Muted, Page } from '../ui/primitives';
 import { ModulePicker } from '../ui/ModulePicker';
 import { PracticeItem } from './ModuleScreen';
@@ -8,7 +8,7 @@ export function Practice() {
   const { moduleId } = useParams();
   const nav = useNavigate();
   const m = getModule(moduleId) ?? (moduleId ? undefined : undefined);
-  const withTasks = UNLOCKED.filter((x) => x.practice.length > 0);
+  const withTasks = LESSONS.filter((x) => x.practice.length > 0);
 
   return (
     <Page title="Practice">

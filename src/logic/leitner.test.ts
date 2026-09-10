@@ -64,11 +64,11 @@ describe('mastery', () => {
   it('is null for modules without cards', () => {
     expect(mastery([], {})).toBeNull();
   });
-  it('passes only when unlocked and at least 60%', () => {
-    expect(isPassed('unlocked', 60)).toBe(true);
-    expect(isPassed('unlocked', 59)).toBe(false);
-    expect(isPassed('preview', 100)).toBe(false);
-    expect(isPassed('unlocked', null)).toBe(false);
+  it('passes at 60% mastery and nothing else gates it', () => {
+    expect(isPassed(60)).toBe(true);
+    expect(isPassed(59)).toBe(false);
+    expect(isPassed(100)).toBe(true);
+    expect(isPassed(null)).toBe(false);
   });
 });
 
