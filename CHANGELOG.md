@@ -6,6 +6,7 @@
 - No locking: every module with a lesson is readable; "Passed" badge at 60% drill mastery replaces the old gate. The UI no longer mentions Claude. Built-in questions are the default interviewer; AI providers are optional.
 
 ### Added
+- Simulators btree-walk, lock-race and idempotent-retry, each with a tested state machine.
 - Simulator kit (`src/simulators/kit`): predict-first with stored accuracy, Broken/Fixed toggle, presets, Step/Auto-play/Pause/Reset, EN+BN narration, story header, "What to notice". Event-loop and join-fanout rebuilt on it with tested step logic. More → Simulators list; prediction hit rate on Progress.
 - Desktop layout from 900px: left sidebar instead of bottom tabs, 1100px centred content, two-column lesson (lesson left; practice, questions, notes right). Phones unchanged.
 - Optional `lesson.versions` list rendered as "What changed across versions" (table on wide screens, cards on phones).
