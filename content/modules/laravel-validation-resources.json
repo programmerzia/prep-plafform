@@ -3,13 +3,111 @@
   "track": "laravel",
   "phase": 2,
   "order": 3,
-  "title": "Validation, Form Requests, API Resources",
-  "status": "preview",
-  "star": false,
+  "title": "Routing, Form Requests and API Resources: thin controllers",
+  "status": "unlocked",
+  "star": true,
   "preview": {
-    "what": "Validation, Form Requests, API Resources — clean boundaries in and out.",
-    "picture": "Airport security on the way in (Form Request), a tailored outfit on the way out (Resource) — the controller in between stays thin.",
-    "why": "Interviewers ask where validation belongs and how to version an API response.",
-    "bn": "ঢোকার সময় security (Form Request), বেরোনোর সময় সাজানো পোশাক (Resource), মাঝে controller পাতলা।"
-  }
+    "what": "The shape of a clean Laravel endpoint: route → Form Request (validate + authorize) → thin controller → service → API Resource (shape the output).",
+    "picture": "Airport security on the way in (Form Request), a tailored outfit on the way out (Resource). The controller in between is a corridor, not a room.",
+    "why": "Interviewers open your controller on the take-home first. A 200-line store() method ends the interview; a 10-line one that delegates starts a conversation.",
+    "bn": "পরিষ্কার Laravel endpoint-এর গঠন: route → Form Request (validate + authorize) → পাতলা controller → service → API Resource (output সাজানো)।"
+  },
+  "lesson": {
+    "problem": "A `store()` method validates with `$request->validate([...])`, checks `if ($user->cannot(...))`, builds the model, sends an email, formats the JSON by hand, and returns it. Then mobile needs a different JSON shape, admin needs extra fields, and validation rules must be reused in `update()`. The method doubles. Every change touches a 200-line function nobody wants to open.",
+    "picture": "An airport. Arriving passengers go through security *before* they reach the gate: passport checked (authorization), bag scanned (validation). By the time you're at the gate, everyone is cleared — the gate agent (controller) just says 'welcome, this way'. On the way out of the country you don't leave in your pyjamas: a tailor (API Resource) dresses each passenger appropriately — one outfit for a business trip, another for the beach — from the same person.",
+    "hook": "Validate and authorize before the controller. Shape after it. The controller only connects the two.",
+    "concept": "**Routing.** `Route::get/post/...`, groups with `prefix`, `middleware`, `name`; `Route::apiResource('orders', OrderController::class)` for the 5 REST actions; versioning via a `v1` prefix group. Route model binding: `{order}` → `Order $order` auto-fetched (404 if missing); customise the key with `{order:uuid}`; scope nested bindings (`/users/{user}/orders/{order}` with `scopeBindings()`) so an order must belong to that user.\n\n**Form Requests** — one class per intent (`StoreOrderRequest`, `UpdateOrderRequest`):\n- `authorize()`: returns bool — `return $this->user()->can('create', Order::class)`. False → 403 before validation.\n- `rules()`: `['items' => 'required|array|min:1', 'items.*.product_id' => ['required', Rule::exists('products','id')->where('tenant_id', $this->user()->tenant_id)], 'coupon' => 'nullable|string']`. Unique with ignore on update: `Rule::unique('users','email')->ignore($this->user)`.\n- `prepareForValidation()` to normalise input (trim, lowercase email); `messages()`/`attributes()` for wording; `after()` hooks for cross-field rules; `validated()` returns only validated keys; `safe()->only([...])`.\n- Failed validation → 422 with a JSON error bag for API requests, redirect-back for web. No code in the controller.\n\n**Thin controller.** Inject the Form Request and the bound model; call a service or action class; return a Resource. No business logic, no queries beyond trivial ones, no formatting. Rule of thumb: if you can't read the whole method without scrolling, it's not thin.\n\n**Services / Actions.** `PlaceOrder::handle(User $user, array $data): Order` holds the transaction, the stock check, the events. Testable without HTTP. Naming: verbs for actions (`PlaceOrder`), nouns for services with several methods (`OrderService`).\n\n**API Resources** — `OrderResource::make($order)` / `OrderResource::collection($orders)`:\n- `toArray()` returns the public shape; `whenLoaded('items')` includes relations only if eager-loaded (no N+1 surprise); `when($user->isAdmin(), fn () => ...)` for conditional fields; `$this->mergeWhen(...)`.\n- Pagination: return `OrderResource::collection(Order::paginate())` — Laravel adds `data`, `links`, `meta`.\n- Versioning: `V1\\OrderResource` vs `V2\\OrderResource`; the model never changes shape for the client.\n- `JsonResource::withoutWrapping()` if you don't want the `data` key.\n\n**Errors.** Let exceptions propagate; map domain exceptions to HTTP in `bootstrap/app.php` (`withExceptions`) or a handler: `OutOfStock → 409`, `ModelNotFound → 404`, validation → 422. Consistent error envelope `{message, errors}`.\n\n**Ordering inside a request:** route middleware → Form Request authorize() → rules() → controller → service → resource. Know it; they ask it.",
+    "simple": "Think of a kitchen order at a restaurant. A customer (the request) writes what they want. Before it reaches the chef, a waiter checks it: is this customer allowed to order alcohol (authorize)? Is the order complete and sensible — a quantity, a real dish (validate)? Wrong orders go back to the customer with a note (422) and never reach the chef.\n\nThe chef (service) cooks. The person who passes the order from waiter to chef (controller) does nothing else — they don't cook, they don't check. Then the plating station (Resource) decides how it looks on the plate: the kids' menu version has no garnish, the VIP version has extra. Same dish, different presentation, and the chef never has to know.",
+    "wrong": {
+      "lang": "php",
+      "code": "public function store(Request $request)\n{\n    if (!$request->user()->isCustomer()) abort(403);\n    $request->validate(['items' => 'required|array']);\n    foreach ($request->items as $item) {\n        $product = Product::find($item['product_id']);           // no tenant scope, no existence check → null\n        if ($product->stock < $item['qty']) return response()->json(['error' => 'no stock'], 400);\n    }\n    $order = Order::create(['user_id' => $request->user()->id, 'total' => 0]);\n    foreach ($request->items as $item) { /* create items, sum total */ }\n    Mail::to($request->user())->send(new OrderPlaced($order));\n    return response()->json([\n        'id' => $order->id,\n        'total' => $order->total / 100,\n        'items' => $order->items->map(fn ($i) => ['name' => $i->product->name, 'qty' => $i->qty]),   // N+1\n    ]);\n}",
+      "why": "Authorization, validation, business rules, persistence, side effects and output formatting all in one method. Untestable without HTTP, unreusable for update(), leaks a null-pointer on a bad product_id, and hand-formats JSON that mobile will need differently next week."
+    },
+    "right": {
+      "lang": "php",
+      "code": "// routes/api.php\nRoute::prefix('v1')->middleware('auth:sanctum')->group(function () {\n    Route::apiResource('orders', OrderController::class)->only(['index', 'store', 'show']);\n});\n\n// app/Http/Requests/StoreOrderRequest.php\nclass StoreOrderRequest extends FormRequest\n{\n    public function authorize(): bool { return $this->user()->can('create', Order::class); }\n\n    protected function prepareForValidation(): void { $this->merge(['coupon' => strtoupper(trim((string) $this->coupon))]); }\n\n    public function rules(): array\n    {\n        return [\n            'items'              => ['required', 'array', 'min:1', 'max:50'],\n            'items.*.product_id' => ['required', 'integer', Rule::exists('products', 'id')->where('tenant_id', $this->user()->tenant_id)],\n            'items.*.qty'        => ['required', 'integer', 'min:1', 'max:100'],\n            'coupon'             => ['nullable', 'string', 'max:20'],\n        ];\n    }\n}\n\n// app/Http/Controllers/Api/V1/OrderController.php\nclass OrderController extends Controller\n{\n    public function store(StoreOrderRequest $request, PlaceOrder $placeOrder): OrderResource\n    {\n        $order = $placeOrder->handle($request->user(), $request->validated());\n        return OrderResource::make($order->load('items.product'));\n    }\n\n    public function show(Order $order): OrderResource       // route model binding + policy via authorizeResource or middleware('can:view,order')\n    {\n        return OrderResource::make($order->load('items.product'));\n    }\n}\n\n// app/Actions/PlaceOrder.php\nclass PlaceOrder\n{\n    public function handle(User $user, array $data): Order\n    {\n        return DB::transaction(function () use ($user, $data) {\n            // stock checks with lockForUpdate, create order + items, compute total_minor, dispatch events afterCommit\n        });\n    }\n}\n\n// app/Http/Resources/V1/OrderResource.php\nclass OrderResource extends JsonResource\n{\n    public function toArray(Request $request): array\n    {\n        return [\n            'id'      => $this->id,\n            'status'  => $this->status,\n            'total'   => ['amount_minor' => $this->total_minor, 'currency' => $this->currency],\n            'items'   => OrderItemResource::collection($this->whenLoaded('items')),\n            'placed_at' => $this->created_at->toIso8601String(),\n            'admin'   => $this->when($request->user()->isAdmin(), fn () => ['margin_minor' => $this->margin_minor]),\n        ];\n    }\n}",
+      "why": "Security and validation are done before the controller runs; rules are tenant-aware and reusable; the controller is four lines; the action holds the transaction and is unit-testable; the Resource decides the public shape, includes relations only when loaded, and shows admin fields conditionally. Mobile gets V2\\OrderResource without touching anything else."
+    },
+    "bn": "Route → Form Request → পাতলা controller → service/action → API Resource। Form Request: authorize() (false হলে 403), rules() (fail হলে API-তে 422), prepareForValidation() (input পরিষ্কার), validated() (শুধু যাচাই করা key)। Rule::exists()-এ tenant শর্ত দাও; update-এ unique()->ignore()। Controller: request আর bound model inject, service ডাকো, Resource ফেরাও — কোনো business logic, কোনো JSON হাতে বানানো না। Action/service-এ transaction, stock check, event। Resource: toArray()-এ public shape, whenLoaded() দিয়ে relation শুধু eager-load হলে (N+1 নেই), when() দিয়ে conditional field, collection-এ pagination meta আপনি আসে, V1/V2 folder দিয়ে versioning। Domain exception-কে HTTP-তে map করো (OutOfStock → 409)। ক্রম: middleware → authorize → rules → controller → service → resource।",
+    "versions": [
+      { "from": "Laravel 8", "to": "Laravel 9/10", "what": "Rule objects and invokable rules (ValidationRule interface) replace closures for reusable rules; Route::scopeBindings(); Enum casting and enum validation rules; typed Form Request signatures.", "why_it_matters": "Writing a custom rule as a class implementing ValidationRule is what they expect in 2026, not Validator::extend." },
+      { "from": "Laravel 10", "to": "Laravel 11", "what": "Routes for API are opt-in (php artisan install:api creates routes/api.php and installs Sanctum); exception mapping moves to bootstrap/app.php withExceptions(); Kernel.php gone; new health route; Precognition for live validation in SPAs.", "why_it_matters": "'Where is routes/api.php?' is the first Laravel 11 surprise; know install:api." },
+      { "from": "Laravel 11", "to": "Laravel 12", "what": "No changes to validation/resources; starter kits rebuilt (React/Vue/Livewire) with Inertia 2.", "why_it_matters": "Say routing/validation has been stable across 10–12; the skeleton changed in 11." }
+    ],
+    "crossStack": [
+      { "concept": "Validate + authorize before the handler", "laravel": "FormRequest authorize() + rules()", "symfony": "DTO with #[Assert\\...] constraints + #[MapRequestPayload]; security via #[IsGranted]", "dotnet": "FluentValidation or DataAnnotations on a DTO + [Authorize(Policy=...)]; ModelState invalid → 400/422", "node": "NestJS ValidationPipe with class-validator DTOs + Guards" },
+      { "concept": "Shape the output", "laravel": "JsonResource / ResourceCollection with whenLoaded()", "symfony": "Serializer with serialization groups (#[Groups(['order:read'])])", "dotnet": "Response DTOs mapped with AutoMapper/Mapster; never return entities", "node": "class-transformer @Expose/@Exclude with ClassSerializerInterceptor, or explicit mappers" }
+    ],
+    "docs": [
+      { "label": "Laravel: Validation (Form Requests)", "url": "https://laravel.com/docs/12.x/validation#form-request-validation" },
+      { "label": "Laravel: API Resources", "url": "https://laravel.com/docs/12.x/eloquent-resources" }
+    ]
+  },
+  "practice": [
+    {
+      "task": "In prep-app build POST /api/v1/customers and GET /api/v1/customers/{customer}: StoreCustomerRequest (name required, email required+email+unique per tenant_id — add tenant_id=1 to the prep customers for now, country in:BD,NO,DE,US,IN), thin controller, CustomerResource that hides email unless the requester is the customer, and feature tests for 201, 422 and 404.",
+      "hint": "Rule::unique('customers','email')->where('tenant_id', 1); Resource: 'email' => $this->when($request->user()?->id === $this->id, $this->email).",
+      "solution": "// StoreCustomerRequest\npublic function rules(): array {\n    return [\n        'name'    => ['required', 'string', 'max:100'],\n        'email'   => ['required', 'email', 'max:150', Rule::unique('customers', 'email')->where('tenant_id', 1)],\n        'country' => ['required', Rule::in(['BD','NO','DE','US','IN'])],\n    ];\n}\n\n// CustomerController\npublic function store(StoreCustomerRequest $r): JsonResponse {\n    $c = Customer::create($r->validated() + ['tenant_id' => 1, 'created_at' => now()]);\n    return CustomerResource::make($c)->response()->setStatusCode(201);\n}\npublic function show(Customer $customer): CustomerResource { return CustomerResource::make($customer); }\n\n// CustomerResource\npublic function toArray(Request $request): array {\n    return ['id' => $this->id, 'name' => $this->name, 'country' => $this->country,\n            'email' => $this->when($request->user()?->id === $this->id, $this->email)];\n}\n\n// tests\npublic function test_creates_customer(): void {\n    $this->postJson('/api/v1/customers', ['name' => 'Zia', 'email' => 'z@x.com', 'country' => 'BD'])\n         ->assertCreated()->assertJsonPath('data.name', 'Zia')->assertJsonMissingPath('data.email');\n}\npublic function test_rejects_bad_country(): void {\n    $this->postJson('/api/v1/customers', ['name' => 'Zia', 'email' => 'z@x.com', 'country' => 'XX'])\n         ->assertUnprocessable()->assertJsonValidationErrors(['country']);\n}\npublic function test_404_for_missing(): void { $this->getJson('/api/v1/customers/999999999')->assertNotFound(); }",
+      "why": "Three status codes, three tests, each one line of arrangement. assertJsonValidationErrors proves the Form Request; assertJsonMissingPath proves the Resource's conditional field. This is the shape of every endpoint you'll write in a take-home."
+    },
+    {
+      "task": "Refactor: the wrong-example store() above into StoreOrderRequest + PlaceOrder action + OrderResource. Write a unit test for PlaceOrder that does not go through HTTP and asserts OutOfStock is thrown when stock is insufficient.",
+      "hint": "The action receives (User, array) and is constructed by the container; test with $this->app->make(PlaceOrder::class).",
+      "solution": "public function test_place_order_throws_when_out_of_stock(): void {\n    $user = User::factory()->create();\n    $product = Product::factory()->create(['stock' => 0]);\n    $this->expectException(OutOfStock::class);\n    app(PlaceOrder::class)->handle($user, ['items' => [['product_id' => $product->id, 'qty' => 1]]]);\n}\n// Map it: in bootstrap/app.php\n->withExceptions(function (Exceptions $e) {\n    $e->render(fn (OutOfStock $ex) => response()->json(['message' => $ex->getMessage()], 409));\n})",
+      "why": "Business rules tested without HTTP run in milliseconds and read as the rule itself. The exception mapping keeps the controller free of if/else on errors."
+    },
+    {
+      "task": "Explain and fix: GET /orders returns 'items' as an empty array for every order, but GET /orders/{id} returns them. Same Resource.",
+      "hint": "whenLoaded.",
+      "solution": "// index() does Order::paginate() without ->with('items'); whenLoaded('items') then omits or returns nothing —\n// the Resource is correct, the controller forgot to eager load.\npublic function index(): AnonymousResourceCollection {\n    return OrderResource::collection(Order::with('items.product')->latest()->paginate(20));\n}\n// This is the design working as intended: the Resource never triggers N+1; the controller decides what is loaded.\n// Optional: accept ?include=items and load conditionally (spatie/laravel-query-builder does this cleanly).",
+      "why": "whenLoaded is the guard that keeps Resources from causing N+1 — understanding that the missing data is a controller decision, not a Resource bug, is the point."
+    }
+  ],
+  "interview": [
+    {
+      "q": "What does a well-structured Laravel controller method look like to you?",
+      "model": "Four or five lines. A Form Request comes in already validated and authorized, a route-bound model if there is one, an action or service is called with the validated data, and a Resource shapes the response. No queries beyond loading relations, no business rules, no hand-built JSON. If I can't read it without scrolling, I've put something in the wrong layer.",
+      "missing": "State the ordering: middleware → authorize → rules → controller → service → resource — it shows you know the pipeline, not just the shape.",
+      "followUp": "Where do you put a rule like 'orders over 50,000 taka need manager approval'?",
+      "bn": "চার-পাঁচ লাইন: validated Form Request, bound model, action/service call, Resource return — কোনো business logic বা হাতে JSON না।"
+    },
+    {
+      "q": "Form Request vs $request->validate() in the controller?",
+      "model": "Same validator underneath. Form Request moves validation and authorization out of the controller into a reusable, testable class, gives me prepareForValidation to normalise input, and keeps rules for store and update side by side. Inline validate() is fine for a one-off tiny endpoint; anything with more than three rules or reused rules gets a Form Request.",
+      "missing": "Mention authorize() returning false gives 403 before rules run — validation never leaks whether the resource exists to an unauthorized caller.",
+      "followUp": "How do you validate that a product_id belongs to the caller's tenant?",
+      "bn": "একই validator; Form Request validation+authorization controller থেকে বের করে reusable class-এ রাখে, prepareForValidation দেয়; ছোট endpoint-এ inline ঠিক।"
+    },
+    {
+      "q": "Why use API Resources instead of returning the model?",
+      "model": "Returning the model couples my API to my database columns: every new column leaks, renaming a column breaks clients, and sensitive fields need $hidden gymnastics. A Resource is an explicit contract — I choose the fields, the names, the nesting, and I can version it. whenLoaded keeps it from causing N+1, and conditional fields handle roles without branching in controllers.",
+      "missing": "Add pagination: Resource::collection on a paginator gives a consistent data/links/meta envelope for free.",
+      "followUp": "How do you add fields for admins without a second endpoint?",
+      "bn": "Model ফেরালে API database column-এর সাথে বাঁধা পড়ে; Resource স্পষ্ট চুক্তি — field, নাম, nesting আমি ঠিক করি, version করা যায়, whenLoaded-এ N+1 নেই।"
+    },
+    {
+      "q": "How do you handle a domain error like 'out of stock' in an API?",
+      "model": "Throw a domain exception from the service — OutOfStock — and map it to an HTTP response in one place, the exception handler: 409 with a consistent {message} body. Controllers stay free of error branching, the service stays HTTP-agnostic, and every endpoint that can hit that rule gets the same response without repeating code.",
+      "missing": "Name the codes: 422 validation, 403 authorization, 404 missing, 409 conflict/business rule, 500 unexpected — and that you never return 200 with an error body.",
+      "followUp": "Where does that mapping live in Laravel 11?",
+      "bn": "Service থেকে domain exception throw (OutOfStock), exception handler-এ এক জায়গায় HTTP-তে map (409) — controller-এ error branching নেই।"
+    }
+  ],
+  "cards": [
+    { "q": "Order of a request: middleware, rules(), authorize(), controller, service, resource", "a": "middleware → authorize() → rules() → controller → service → resource." },
+    { "q": "What does Form Request authorize() returning false produce?", "a": "403, before validation runs." },
+    { "q": "Failed validation on an API request returns …", "a": "422 with a JSON error bag (message + errors keyed by field)." },
+    { "q": "How do you make Rule::exists tenant-aware?", "a": "Rule::exists('products','id')->where('tenant_id', $this->user()->tenant_id)." },
+    { "q": "What does whenLoaded('items') do in a Resource?", "a": "Includes the relation only if it was eager-loaded — prevents Resources from causing N+1." },
+    { "q": "Unique email on update — the rule", "a": "Rule::unique('users','email')->ignore($this->user)." },
+    { "q": "What belongs in an action/service class?", "a": "Business rules, the transaction, persistence, events — everything the controller must not contain." },
+    { "q": "How do you version API output?", "a": "V1\\OrderResource and V2\\OrderResource under a v1/v2 route prefix; the model never changes shape for clients." },
+    { "q": "Laravel 11: how do you get routes/api.php?", "a": "php artisan install:api — API routes are opt-in and it installs Sanctum." }
+  ],
+  "glossary": [
+    { "term": "Form Request", "plain": "A request class that validates and authorizes before the controller runs.", "bn": "Controller-এর আগে validate আর authorize করা request class।" },
+    { "term": "API Resource", "plain": "A class that turns a model into the JSON shape clients see.", "bn": "Model-কে client-এর দেখা JSON shape-এ বদলানো class।" },
+    { "term": "route model binding", "plain": "Laravel fetching the model for a route parameter automatically (404 if missing).", "bn": "Route parameter থেকে Laravel নিজে model আনা (না থাকলে 404)।" },
+    { "term": "action class", "plain": "A single-purpose class with one handle() method holding one business operation.", "bn": "একটা business operation-এর জন্য এক handle() method-এর class।" }
+  ]
 }

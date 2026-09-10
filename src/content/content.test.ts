@@ -53,24 +53,29 @@ describe('legacy migration fidelity', () => {
   // eslint-disable-next-line @typescript-eslint/no-implied-eval
   const { TOPICS } = new Function(`${src}; return { TOPICS };`)() as { TOPICS: LegacyTopic[] };
   const modules = files.map((f) => parseModule(JSON.parse(readFileSync(join(dir, f), 'utf8')), f));
+  // legacy id -> module id, read from the migration script so the two never drift
+  const script = readFileSync(join(process.cwd(), 'scripts/migrate-legacy.mjs'), 'utf8');
+  const MAP: Record<string, string> = {};
+  for (const m of script.matchAll(/^\s+'?([a-z0-9-]+)'?: \['([a-z0-9-]+)', '[a-z-]+'\],$/gm)) MAP[m[1]] = m[2];
+  const byId = Object.fromEntries(modules.map((m) => [m.id, m]));
 
   interface LegacyTopic {
     id: string; phase: number; title: string; ready?: boolean; analogy?: string; concept?: string;
     code?: string; bn?: string; practice?: [string, string][]; cards?: [string, string][]; pre?: [string, string, string];
   }
 
-  it('every legacy topic exists once with the same title and phase', () => {
+  it('the migration map covers every legacy topic and every mapped module exists', () => {
     for (const t of TOPICS) {
-      const found = modules.filter((m) => m.title === t.title);
-      expect(found, t.title).toHaveLength(1);
-      expect(found[0].phase).toBe(t.phase + 1);
-      expect(found[0].status).toBe(t.ready ? 'unlocked' : 'preview');
+      expect(MAP[t.id], `no mapping for legacy ${t.id}`).toBeTruthy();
+      expect(byId[MAP[t.id]], `missing module for legacy ${t.id}`).toBeTruthy();
+      expect(byId[MAP[t.id]].phase).toBe(t.phase + 1);
     }
   });
 
-  it('unlocked topics keep analogy, concept, code, Bangla, practice and cards verbatim', () => {
+  it('the eight legacy lessons keep analogy, concept, code, Bangla, practice and cards verbatim', () => {
     for (const t of TOPICS.filter((x) => x.ready)) {
-      const m = modules.find((x) => x.title === t.title)!;
+      const m = byId[MAP[t.id]];
+      expect(m.title).toBe(t.title);
       expect(m.lesson?.picture).toBe(t.analogy);
       expect(m.lesson?.concept).toBe(t.concept);
       expect(m.lesson?.right?.code).toBe(t.code);
@@ -83,15 +88,20 @@ describe('legacy migration fidelity', () => {
     }
   });
 
-  it('preview topics keep what / picture / why / Bangla verbatim', () => {
+  it('legacy previews that are still previews keep what / picture / why / Bangla verbatim', () => {
+    let stillPreview = 0;
     for (const t of TOPICS.filter((x) => !x.ready)) {
-      const m = modules.find((x) => x.title === t.title)!;
+      const m = byId[MAP[t.id]];
+      if (m.lesson) continue; // the mentor has since written the lesson; the preview may have been rewritten with it
+      stillPreview++;
+      expect(m.title).toBe(t.title);
       expect(m.preview).toEqual({ what: t.pre![0], picture: t.pre![1], why: t.pre![2], bn: t.bn });
     }
+    expect(stillPreview).toBeGreaterThan(0);
   });
 
-  it('the two simulators are attached to the right modules', () => {
-    expect(modules.find((m) => m.id === 'js-event-loop')?.lesson?.simulator).toBe('event-loop');
-    expect(modules.find((m) => m.id === 'sql-joins-fanout')?.lesson?.simulator).toBe('join-fanout');
+  it('the two legacy simulators are attached to the right modules', () => {
+    expect(byId['js-event-loop']?.lesson?.simulator).toBe('event-loop');
+    expect(byId['sql-joins-fanout']?.lesson?.simulator).toBe('join-fanout');
   });
 });

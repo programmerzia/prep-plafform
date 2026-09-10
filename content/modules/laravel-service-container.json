@@ -3,13 +3,112 @@
   "track": "laravel",
   "phase": 2,
   "order": 2,
-  "title": "Service container, providers, contextual binding",
-  "status": "preview",
-  "star": false,
+  "title": "Service container, providers and dependency injection",
+  "status": "unlocked",
+  "star": true,
   "preview": {
-    "what": "The service container: bindings, singletons, contextual binding, auto-wiring.",
-    "picture": "A hotel concierge: you ask for 'a payment gateway' and it hands you the right one, already set up, without you knowing which company it called.",
-    "why": "'How does Laravel know what to inject?' is the classic Laravel senior opener.",
-    "bn": "Hotel-এর concierge: 'একটা payment gateway দাও' বললে ঠিকটা সাজিয়ে দেয়, তুমি জানো না কাকে ডাকল।"
-  }
+    "what": "How Laravel builds your objects for you: what a binding is, when singletons are right, what providers do, and how a type-hint turns into a real object.",
+    "picture": "A hotel concierge. You say 'I need a payment gateway' and one arrives, already configured, without you knowing which company was called or how.",
+    "why": "'How does Laravel know what to inject?' is the classic Laravel senior opener. The follow-ups — singleton vs bind, register vs boot, contextual binding — separate people who use Laravel from people who understand it.",
+    "bn": "Laravel কীভাবে তোমার object বানিয়ে দেয়: binding কী, singleton কখন, provider কী করে, type-hint থেকে object কীভাবে আসে।"
+  },
+  "lesson": {
+    "problem": "A controller does `new StripeGateway(config('stripe.key'))` in three places. The client switches to bKash; you change three files and miss a fourth in a queued job. Tests hit the real Stripe API because there's no way to swap it. Later, someone binds a per-request object as a singleton and a user sees another user's cart. All of this is the container's job, done by hand, badly.",
+    "picture": "A hotel concierge desk. You don't go to the kitchen, the garage and the laundry yourself. You say 'I need a car' and the concierge knows which company to call, what to tell them, and hands you keys. The concierge is the container. The list of 'when someone asks for a car, call this company' is the bindings. Service providers are the staff who write that list before the hotel opens. Type-hinting `PaymentGateway $gateway` in a constructor is you telling the concierge what you need — you never say how.",
+    "hook": "Ask for what you need by type. The container decides how. Providers write the rules before the first request.",
+    "concept": "**The container** is a registry of 'how to build X'. `app(Foo::class)` or `resolve(Foo::class)` asks it for X. If there's no binding, it **auto-wires**: reflects on Foo's constructor, resolves each type-hinted parameter recursively, and builds it. This is why most classes need no binding at all — concrete classes with typed constructors just work.\n\n**When you must bind:** interfaces (the container can't instantiate an interface), classes that need config values, third-party clients, and anything you want to swap in tests.\n\n```php\n$this->app->bind(PaymentGateway::class, BkashGateway::class);       // new instance every resolve\n$this->app->singleton(PaymentGateway::class, fn ($app) => new BkashGateway(config('services.bkash')));  // one instance per request lifecycle\n$this->app->scoped(CurrentTenant::class, fn () => ...);              // one instance per request, reset between Octane requests\n$this->app->instance(Clock::class, $fakeClock);                      // an existing object\n```\n\n**bind vs singleton vs scoped.** `bind`: a fresh object each time — safe default for anything holding request-specific state. `singleton`: built once, shared — for stateless services and expensive clients (HTTP clients, parsers). `scoped`: like singleton but reset per request under Octane/queue workers — use it for 'current user/tenant' style objects. The classic bug: singleton for something that holds user data; under Octane the second request sees the first user's data.\n\n**Contextual binding** — the same interface, different implementation depending on who asks:\n```php\n$this->app->when(InvoiceService::class)->needs(Filesystem::class)->give(fn () => Storage::disk('invoices'));\n$this->app->when(ReportService::class)->needs(Filesystem::class)->give(fn () => Storage::disk('reports'));\n```\nAlso `->needs('$apiKey')->give(config(...))` for primitive constructor params, and `#[Config('services.bkash.key')]`-style attributes in Laravel 11+.\n\n**Service providers.** Each has `register()` and `boot()`. Laravel calls `register()` on *every* provider first, then `boot()` on every provider. So: in `register()` only put bindings — other services may not exist yet. In `boot()` you may use anything: routes, policies, event listeners, macros, `Model::preventLazyLoading`, view composers. Deferred providers (`DeferrableProvider`) are loaded only when one of their bindings is requested — for heavy packages.\n\n**Where injection happens:** constructors of controllers, jobs, listeners, middleware, commands; controller *method* parameters; closures passed to `app()->call()`. Facades are a static face over `app('name')`; `Cache::get()` is `app('cache')->get()`. Real-time facades (`Facades\\App\\Services\\Foo`) are the same trick for your own classes.\n\n**Method injection + route model binding** coexist: `public function show(Request $request, Order $order)` — Request comes from the container, Order from the route parameter.\n\n**Testing** is the payoff: `$this->app->instance(PaymentGateway::class, new FakeGateway())` or `$this->mock(PaymentGateway::class)` and every consumer gets the fake without knowing.\n\n**Anti-patterns:** `app()->make()` sprinkled inside business code (service locator — hides dependencies); `new` on collaborators inside classes; binding in `boot()` (works, but breaks the register/boot contract other packages rely on); giant `AppServiceProvider` — split providers by domain.",
+    "simple": "Imagine you're a chef and you shout 'I need a knife!' You don't say which drawer, which brand. A helper hands you a knife. The helper is the container. Before the restaurant opened, the manager wrote on a board: 'knife → the Japanese ones in drawer 3', 'oven → the big one'. That board is the bindings, and the manager writing it is a service provider's `register()`. When the restaurant is open and the manager turns on the lights and the music, that's `boot()` — you can only do that after everything is in place.\n\n'Singleton' means there's exactly one big oven and everyone shares it. Fine for an oven. Terrible for a plate — if everyone shares one plate, your food ends up on someone else's table. Request-specific things are plates: make a new one each time.\n\nWhen you want to test a recipe without turning on the real oven, you tell the helper 'today, oven means this toy oven'. Every recipe that asks for an oven gets the toy. That's why asking-by-type is powerful: you can swap the real thing for a fake in one line.",
+    "wrong": {
+      "lang": "php",
+      "code": "class CheckoutController extends Controller\n{\n    public function store(Request $request)\n    {\n        $gateway = new StripeGateway(config('services.stripe.key'));   // hard-wired, untestable\n        $cart = app(Cart::class);                                      // service locator hides the dependency\n        ...\n    }\n}\n\n// AppServiceProvider::register()\n$this->app->singleton(Cart::class, fn () => new Cart(auth()->user()));  // per-user data as a singleton\n\n// AppServiceProvider::register()\nRoute::model('order', Order::class);   // using the router before it's registered",
+      "why": "`new` in the controller means every consumer changes when the gateway changes and tests hit real APIs. `app(Cart::class)` inside the method hides that the controller needs a Cart. A singleton holding the user's cart leaks across requests under Octane/queues. Using the router in register() breaks when provider order changes."
+    },
+    "right": {
+      "lang": "php",
+      "code": "// app/Providers/PaymentServiceProvider.php\nclass PaymentServiceProvider extends ServiceProvider\n{\n    public function register(): void\n    {\n        $this->app->singleton(PaymentGateway::class, function ($app) {      // stateless, expensive client: singleton is right\n            return match (config('services.payment.driver')) {\n                'bkash'  => new BkashGateway(config('services.bkash')),\n                'stripe' => new StripeGateway(config('services.stripe')),\n            };\n        });\n        $this->app->scoped(Cart::class, fn ($app) => Cart::forUser($app['request']->user()));   // per request\n    }\n\n    public function boot(): void\n    {\n        Model::preventLazyLoading(!$this->app->isProduction());\n        Gate::policy(Order::class, OrderPolicy::class);\n    }\n}\n\n// The consumer never knows which gateway exists\nclass CheckoutController extends Controller\n{\n    public function __construct(private PaymentGateway $gateway, private Cart $cart) {}\n\n    public function store(CheckoutRequest $request, Order $order)   // Form Request + route model binding, both injected\n    {\n        $this->gateway->charge($order, $this->cart->totalMinor());\n    }\n}\n\n// Test: swap the real thing\n$this->app->instance(PaymentGateway::class, new FakeGateway());\n// or\n$this->mock(PaymentGateway::class)->shouldReceive('charge')->once();",
+      "why": "One place decides which gateway exists; every consumer asks by interface. singleton for the stateless client, scoped for the per-user cart. boot() uses the Gate and Model classes safely because all providers have registered. Tests replace the binding with one line."
+    },
+    "bn": "Container = 'X কীভাবে বানাবো' তার registry। Binding না থাকলে auto-wire: constructor-এর type-hint দেখে নিজে বানায় — তাই বেশিরভাগ class-এ binding লাগে না। Binding লাগে interface-এ, config লাগলে, third-party client-এ, test-এ বদলাতে চাইলে। bind = প্রতিবার নতুন (request-এর data থাকলে এটাই); singleton = একবার বানিয়ে শেয়ার (stateless, দামি client); scoped = প্রতি request-এ এক, Octane-এ reset (current user/tenant)। Singleton-এ user-এর data রাখলে Octane-এ অন্য user-এর data দেখা যায়। Contextual binding: কে চাইছে তার ওপর ভিন্ন implementation। Provider: register() = শুধু binding, অন্য service নেই; boot() = সব provider register হয়ে গেছে, route/policy/listener দাও। Facade = app('name')-এর static মুখ। Test-এ $this->app->instance() বা $this->mock() দিয়ে এক লাইনে বদলাও। app()->make() business code-এ ছড়িও না।",
+    "versions": [
+      { "from": "Laravel 8/9", "to": "Laravel 10", "what": "scoped() binding added (per-request singleton safe for Octane); native type hints across the framework; invokable validation rules.", "why_it_matters": "scoped vs singleton is the Octane-safety question." },
+      { "from": "Laravel 10", "to": "Laravel 11", "what": "Slim skeleton: config/app.php providers array gone, providers registered in bootstrap/providers.php; middleware configured in bootstrap/app.php; Kernel.php files removed; #[Config], #[Give], #[Tag], #[Auth] contextual attributes for constructor injection.", "why_it_matters": "If you say 'add it to config/app.php providers' in a Laravel 11+ interview, you date yourself." },
+      { "from": "Laravel 11", "to": "Laravel 12", "what": "No container semantics changes; maintenance release focused on dependency updates and new starter kits.", "why_it_matters": "You can say the container has been stable since 10; the packaging around it changed in 11." }
+    ],
+    "crossStack": [
+      { "concept": "Register a service", "laravel": "$this->app->bind(Interface::class, Impl::class) in a provider's register()", "symfony": "services.yaml autowire: true + autoconfigure; or #[Autowire] / bind by interface alias", "dotnet": "builder.Services.AddScoped<IGateway, BkashGateway>() in Program.cs", "node": "NestJS: providers: [{ provide: GATEWAY, useClass: BkashGateway }] in a @Module" },
+      { "concept": "Lifetimes", "laravel": "bind (transient) / scoped (per request) / singleton (app)", "symfony": "shared: true (default, per-container = per request in FPM) / shared: false", "dotnet": "AddTransient / AddScoped / AddSingleton — identical concepts, same names", "node": "Nest: DEFAULT (singleton) / REQUEST / TRANSIENT scopes" }
+    ],
+    "docs": [
+      { "label": "Laravel: Service Container", "url": "https://laravel.com/docs/12.x/container" },
+      { "label": "Laravel: Service Providers", "url": "https://laravel.com/docs/12.x/providers" }
+    ]
+  },
+  "practice": [
+    {
+      "task": "In your prep-app: create interface App\\Contracts\\SmsSender with send(string $to, string $body): void, two implementations (LogSmsSender that writes to the log, FakeSmsSender that stores messages in an array), bind by config value, inject it into an artisan command sms:test that sends one message, and write a feature test that swaps in FakeSmsSender and asserts the message was 'sent'.",
+      "hint": "Provider register() with a match on config('services.sms.driver'); test uses $this->app->instance().",
+      "solution": "// app/Contracts/SmsSender.php\ninterface SmsSender { public function send(string $to, string $body): void; }\n\n// app/Services/LogSmsSender.php\nclass LogSmsSender implements SmsSender { public function send(string $to, string $body): void { Log::info(\"SMS to $to: $body\"); } }\n\n// app/Services/FakeSmsSender.php\nclass FakeSmsSender implements SmsSender { public array $sent = []; public function send(string $to, string $body): void { $this->sent[] = compact('to','body'); } }\n\n// app/Providers/AppServiceProvider.php register()\n$this->app->singleton(SmsSender::class, fn () => match (config('services.sms.driver', 'log')) {\n    'log' => new LogSmsSender(),\n    'fake' => new FakeSmsSender(),\n});\n\n// app/Console/Commands/SmsTest.php\nclass SmsTest extends Command {\n    protected $signature = 'sms:test {to}';\n    public function handle(SmsSender $sms): int { $sms->send($this->argument('to'), 'hello'); return self::SUCCESS; }\n}\n\n// tests/Feature/SmsTestCommandTest.php\npublic function test_it_sends_one_sms(): void {\n    $fake = new FakeSmsSender();\n    $this->app->instance(SmsSender::class, $fake);\n    $this->artisan('sms:test', ['to' => '01700000000'])->assertSuccessful();\n    $this->assertCount(1, $fake->sent);\n    $this->assertSame('01700000000', $fake->sent[0]['to']);\n}",
+      "why": "Command handle() gets method injection from the container. The test replaces the binding with a real object, so no mocking library is needed and the assertion reads like plain PHP. This is the full loop: interface → binding → injection → swap in test."
+    },
+    {
+      "task": "Bug hunt. A singleton CurrentTenant is resolved from the request's X-Tenant header. Under php artisan serve it works; under Octane, the second request sometimes sees the first request's tenant. Explain and fix with the smallest change.",
+      "hint": "singleton → scoped.",
+      "solution": "// Under PHP-FPM every request is a fresh process, so 'singleton' effectively means 'per request'. Under Octane the\n// worker process lives across requests, so the singleton built for request 1 is reused for request 2.\n\n$this->app->scoped(CurrentTenant::class, fn ($app) => CurrentTenant::fromRequest($app['request']));\n// scoped() = singleton within a request, flushed between requests by Octane and by queue workers.\n\n// Rule: anything derived from the request or the authenticated user is scoped, never singleton.",
+      "why": "This exact bug is the standard 'have you actually run Octane' interview question, and it also bites long-running queue workers. Knowing the three lifetimes and which data belongs to which is the whole answer."
+    },
+    {
+      "task": "Two report services need different filesystem disks but both type-hint Illuminate\\Contracts\\Filesystem\\Filesystem. Write the contextual bindings, then explain why you did NOT create two interfaces.",
+      "hint": "when()->needs()->give().",
+      "solution": "$this->app->when(InvoiceExporter::class)\n    ->needs(Filesystem::class)\n    ->give(fn () => Storage::disk('invoices'));\n\n$this->app->when(AuditExporter::class)\n    ->needs(Filesystem::class)\n    ->give(fn () => Storage::disk('audit'));\n\n// Both classes depend on the same CONTRACT (a filesystem); only the instance differs by consumer.\n// Two interfaces would duplicate the contract and force every future consumer to choose one — contextual binding keeps\n// one contract and moves the decision to configuration.",
+      "why": "Contextual binding is the container feature most people have never used; being able to explain when it's better than a new interface is a senior-level distinction."
+    }
+  ],
+  "interview": [
+    {
+      "q": "How does Laravel know what to inject into a controller constructor?",
+      "model": "The container resolves the controller. It reflects on the constructor, and for each type-hinted parameter it checks its bindings — if there's a binding it uses it, otherwise it auto-wires by recursively constructing the concrete class. Interfaces must be bound because they can't be instantiated; concrete classes usually need nothing. Bindings are registered in service providers' register() methods, and the same mechanism handles method injection on controller actions, jobs, listeners and commands.",
+      "missing": "Mention reflection explicitly and that it's cached in production — shows you know there's a cost and that it's handled.",
+      "followUp": "What happens if a constructor parameter is a string like $apiKey?",
+      "bn": "Container controller বানায়: constructor reflect করে, প্রতিটা type-hint-এর binding দেখে, না থাকলে concrete class নিজে বানায় (auto-wire); interface-এ binding লাগবেই।"
+    },
+    {
+      "q": "bind vs singleton vs scoped — when do you use each?",
+      "model": "bind gives a new instance every resolve — my default for anything that holds per-operation state. singleton builds once and shares — for stateless services and expensive clients like an HTTP client. scoped is a singleton for the duration of one request and is flushed between requests under Octane and queue workers — for objects derived from the request or user, like current tenant or cart. The bug to avoid is a singleton holding user data: under Octane it leaks to the next request.",
+      "missing": "Give the FPM detail: under PHP-FPM singleton and scoped behave the same because the process dies per request — which is why the bug only shows up on Octane.",
+      "followUp": "Where else besides Octane does a long-lived container bite you?",
+      "bn": "bind = প্রতিবার নতুন; singleton = একবার, শেয়ার (stateless/দামি); scoped = প্রতি request-এ এক, Octane-এ flush (current user/tenant)।"
+    },
+    {
+      "q": "register() vs boot() in a service provider?",
+      "model": "Laravel runs register() on every provider first, then boot() on every provider. In register() I only bind things into the container, because other providers' services may not exist yet. In boot() everything is registered, so I can use the router, gates, events, models, and other services. Registering routes or listeners in register() works by luck and breaks when provider order changes.",
+      "missing": "Add deferred providers: they aren't loaded until one of their bindings is requested, which is how heavy packages avoid slowing every request.",
+      "followUp": "What's the difference between a provider's boot() and the booted() callback?",
+      "bn": "সব provider-এর register() আগে, তারপর সব boot(); register()-এ শুধু binding, boot()-এ router/gate/event/model ব্যবহার করা যায়।"
+    },
+    {
+      "q": "How do you test code that depends on a payment gateway without calling the real API?",
+      "model": "The code depends on a PaymentGateway interface, not a concrete class, so in the test I bind a fake — $this->app->instance(PaymentGateway::class, new FakeGateway()) or $this->mock() — and every consumer gets it through the container. The fake records calls so I can assert on them. That's the whole reason for injecting by interface; no dependency injection, no cheap fakes.",
+      "missing": "Distinguish fake (a real simple implementation) from mock (expectations on calls) and say when you prefer each.",
+      "followUp": "How would you make sure the real gateway is never called in CI?",
+      "bn": "Interface-এ depend করি, test-এ $this->app->instance() বা $this->mock() দিয়ে fake bind — সব consumer container থেকে fake পায়।"
+    }
+  ],
+  "cards": [
+    { "q": "What does the container do when there's no binding for a class?", "a": "Auto-wires: reflects the constructor, resolves each type-hinted dependency recursively, builds the object." },
+    { "q": "When MUST you bind?", "a": "Interfaces, classes needing config values, third-party clients, anything you want to swap in tests." },
+    { "q": "bind / singleton / scoped in one line each", "a": "bind: new each time. singleton: one shared instance. scoped: one per request, flushed under Octane/queue workers." },
+    { "q": "The singleton bug under Octane", "a": "A singleton holding request/user data is reused by the next request — use scoped for anything derived from the request." },
+    { "q": "register() vs boot()", "a": "register(): bindings only, other services may not exist. boot(): all providers registered; routes, gates, listeners, macros go here." },
+    { "q": "What is contextual binding?", "a": "when(Consumer)->needs(Contract)->give(impl): same interface, different implementation depending on who asks." },
+    { "q": "What is a Facade really?", "a": "A static proxy to a container binding: Cache::get() is app('cache')->get()." },
+    { "q": "How do you swap a dependency in a test?", "a": "$this->app->instance(Interface::class, $fake) or $this->mock(Interface::class)." },
+    { "q": "Laravel 11: where are providers and middleware registered?", "a": "bootstrap/providers.php and bootstrap/app.php — config/app.php providers array and Kernel.php are gone." }
+  ],
+  "glossary": [
+    { "term": "service container", "plain": "Laravel's registry that knows how to build and hand out objects.", "bn": "Laravel-এর registry যা object বানিয়ে দেয়।" },
+    { "term": "binding", "plain": "A rule: 'when someone asks for X, build it like this'.", "bn": "নিয়ম: 'X চাইলে এভাবে বানাও'।" },
+    { "term": "auto-wiring", "plain": "The container building a class by reading its constructor's type-hints.", "bn": "Constructor-এর type-hint পড়ে container-এর নিজে বানানো।" },
+    { "term": "service provider", "plain": "A class that registers bindings (register) and sets things up (boot) at startup.", "bn": "Startup-এ binding দেয় (register) আর সাজায় (boot) এমন class।" },
+    { "term": "facade", "plain": "A static-looking front for a container-resolved object.", "bn": "Container-এর object-এর static-মতো মুখ।" }
+  ]
 }

@@ -2,14 +2,114 @@
   "id": "laravel-queues-jobs",
   "track": "laravel",
   "phase": 2,
-  "order": 5,
-  "title": "Queues, jobs, retries, backoff, failed jobs, Horizon",
-  "status": "preview",
-  "star": false,
+  "order": 7,
+  "title": "Queues, jobs, retries and failures",
+  "status": "unlocked",
+  "star": true,
   "preview": {
-    "what": "Queues: jobs, retries, backoff, failed jobs, Horizon, and what can go wrong.",
-    "picture": "A restaurant ticket rail: the waiter (web request) posts the ticket and moves on; cooks (workers) pick tickets up. Some dishes fail and need re-cooking — but not forever.",
-    "why": "Queues are where most 'tell me about a production incident' stories live.",
-    "bn": "Restaurant-এর টিকিট রেল: waiter টিকিট দিয়ে চলে যায়, cook তোলে; ব্যর্থ হলে আবার, কিন্তু চিরকাল না।"
-  }
+    "what": "Moving slow work out of the request, and making that work survive crashes, retries and bad data.",
+    "picture": "A restaurant ticket rail: the waiter posts the ticket and goes back to the tables; cooks pick tickets up. Some dishes fail and need re-cooking — but not forever.",
+    "why": "Queues are where most 'tell me about a production incident' stories live: the job that ran 40 times, the email sent twice, the worker that silently died on Friday.",
+    "bn": "ধীর কাজ request থেকে সরানো, আর সেই কাজ crash, retry, খারাপ data-র পরেও টিকিয়ে রাখা।"
+  },
+  "lesson": {
+    "problem": "Checkout takes 6 seconds because it sends an email, generates a PDF and calls a CRM inline. You move them to a queue; checkout is 200 ms. Monday: the CRM was down for an hour and 3,000 jobs each retried instantly 255 times, hammering it. Tuesday: a worker died mid-job and one customer got two receipts. Wednesday: a job with bad data fails forever and blocks nothing but fills the log. Each of these has a specific setting you didn't know existed.",
+    "picture": "A restaurant. The waiter (web request) writes a ticket and clips it to the rail (queue) — 2 seconds, back to the customers. Cooks (workers) take tickets in order. A dish fails (out of stock): the cook puts the ticket back with 'try again in 5 minutes' (release/backoff). After three failures the ticket goes to the manager's tray (failed_jobs) instead of clogging the rail. If a cook faints while holding a ticket (worker crash), the ticket must go back on the rail — and the customer must not get two meals when it's cooked again (idempotency).",
+    "hook": "Dispatch fast, process later, retry with growing gaps, give up on purpose, and make every job safe to run twice.",
+    "concept": "**The parts.** A *job* is a class with `handle()`; `dispatch()` serialises it (with its constructor arguments) onto a *queue* backed by a driver — Redis (default in production), database (fine for small apps), SQS. *Workers* (`php artisan queue:work`) pull jobs and run them. *Horizon* supervises Redis workers with a dashboard, metrics and auto-scaling.\n\n**Serialisation trap.** Eloquent models in job properties are stored as class + id (`SerializesModels`) and re-fetched when the job runs. If the model was deleted in between → `ModelNotFoundException`. Pass ids or small DTOs when the model might change; never pass a closure or a huge collection.\n\n**Retries.** Job properties: `$tries` (max attempts), `$backoff` (seconds between attempts; an array gives exponential: `[10, 60, 300]`), `$timeout` (kill the job after N seconds — must be less than the worker's `retry_after`), `$maxExceptions`. `retryUntil()` returns a time instead of a count — good for 'retry for an hour then stop'. `$this->release(30)` puts the job back with a delay without counting as an exception. Rate-limited APIs: `RateLimited` middleware or `WithoutOverlapping`.\n\n**Failures.** After `$tries` the job goes to `failed_jobs`; `failed(Throwable $e)` runs for cleanup/alerting. `queue:retry <id>` or `queue:retry all` re-queues. Alert on the failed_jobs count — a silent pile-up is the common incident.\n\n**At-least-once delivery.** A worker that crashes after doing the work but before acking means the job runs again. So every job must be **idempotent**: check before doing (`if ($order->receipt_sent_at) return;`), or use a unique key (`ShouldBeUnique`, `WithoutOverlapping`), or make the side effect itself idempotent (payment idempotency keys).\n\n**Transactions.** Dispatching inside a transaction can run the job before commit — the job then can't find the row. Use `->afterCommit()` or `dispatchAfterCommit`, or set `after_commit => true` on the queue connection.\n\n**Ordering and priority.** Queues are roughly FIFO per queue, not globally. Use multiple queues (`high`, `default`, `low`) and run workers with `--queue=high,default`. Chains (`Bus::chain([...])`) run jobs in order, one after another; batches (`Bus::batch([...])`) run in parallel with a completion callback and progress.\n\n**Operations.** Workers must be restarted after deploy (`queue:restart`) or they run old code. Supervisor (or Horizon) keeps them alive. Memory leaks → `--max-jobs` / `--max-time`. Monitor: jobs per minute, wait time, failed count, oldest job age.\n\n**Anti-patterns:** giant jobs that do ten things (split into chained jobs); jobs that read config at dispatch time and stale state at run time; catching all exceptions inside `handle()` so the job never fails and never retries; `sleep()` for rate limiting instead of `release()`.",
+    "simple": "Your mum asks you to do five chores. Instead of doing them all before you answer her, you write each on a sticky note, put them on the fridge, and say 'done!' — you'll actually do them one by one later. The fridge is the queue, you are the worker, the notes are jobs.\n\nOne chore is 'buy milk' but the shop is closed. You don't stand at the door knocking 255 times. You put the note back with 'try again in 10 minutes', then 30, then an hour. That's backoff. After three tries you put the note in a special 'couldn't do' box and tell mum. That's failed jobs.\n\nIf you get distracted halfway through 'water the plants' and forget whether you did it, you might water them twice. So you make the chore safe to repeat: check if the soil is wet first. That's idempotency, and it's the most important rule of all.",
+    "wrong": {
+      "lang": "php",
+      "code": "class SendReceipt implements ShouldQueue\n{\n    use Queueable, SerializesModels;\n\n    public function __construct(public Order $order) {}   // model + no tries/backoff = 1 attempt, or infinite with a bad worker config\n\n    public function handle(): void\n    {\n        try {\n            Mail::to($this->order->user)->send(new ReceiptMail($this->order));  // runs again on retry → duplicate email\n            $this->crm->push($this->order);                                       // 3rd party down → exception swallowed below\n        } catch (\\Throwable $e) {\n            Log::error($e);   // job 'succeeds', never retries, nobody alerted\n        }\n    }\n}\n\n// dispatched inside a transaction — may run before the order row exists\nDB::transaction(function () use ($data) {\n    $order = Order::create($data);\n    SendReceipt::dispatch($order);\n});",
+      "why": "No idempotency check (duplicate emails on retry), a swallowed exception (never fails, never retries, never alerts), two unrelated side effects in one job (one failing re-runs the other), and a dispatch that can outrun the commit."
+    },
+    "right": {
+      "lang": "php",
+      "code": "class SendReceipt implements ShouldQueue\n{\n    use Queueable, SerializesModels;\n\n    public int $tries = 5;\n    public array $backoff = [30, 120, 600, 1800];   // seconds between attempts\n    public int $timeout = 60;\n\n    public function __construct(public readonly int $orderId) {}   // id, not model\n\n    public function middleware(): array\n    {\n        return [new WithoutOverlapping($this->orderId), new RateLimited('mailer')];\n    }\n\n    public function handle(Mailer $mailer): void\n    {\n        $order = Order::findOrFail($this->orderId);\n        if ($order->receipt_sent_at) {                 // idempotent: safe to run twice\n            return;\n        }\n        $mailer->to($order->user)->send(new ReceiptMail($order));\n        $order->update(['receipt_sent_at' => now()]);\n        // let exceptions propagate — that's how retries and failed_jobs work\n    }\n\n    public function failed(\\Throwable $e): void\n    {\n        Log::critical('Receipt failed permanently', ['order' => $this->orderId, 'error' => $e->getMessage()]);\n        // alert / mark for manual follow-up\n    }\n}\n\n// separate concerns: CRM sync is its own job with its own retry policy\nDB::transaction(function () use ($data) {\n    $order = Order::create($data);\n    Bus::chain([\n        new SendReceipt($order->id),\n        new SyncOrderToCrm($order->id),\n    ])->dispatch()->afterCommit();   // or SendReceipt::dispatch($order->id)->afterCommit()\n});",
+      "why": "Retries with growing gaps and a hard stop; timeout below the worker's retry_after; id instead of model; an idempotency check before the side effect; exceptions propagate so retries happen; failed() alerts; one job per concern, chained; dispatched after commit."
+    },
+    "bn": "Job = handle() সহ class; dispatch() করলে serialize হয়ে queue-তে (Redis/database/SQS) যায়; worker (queue:work) তুলে চালায়; Horizon Redis worker দেখাশোনা করে। Model property হিসেবে দিলে শুধু class+id রাখে, চলার সময় আবার fetch — মুছে গেলে exception; id পাঠাও। Retry: $tries, $backoff (array দিলে ক্রমবর্ধমান), $timeout (worker-এর retry_after-এর কম), retryUntil(), release(). $tries শেষে failed_jobs-এ, failed() চলে, queue:retry দিয়ে ফেরত। Delivery at-least-once: worker crash করলে job আবার চলে — তাই প্রতিটা job idempotent: আগে দেখো করা হয়েছে কিনা, ShouldBeUnique/WithoutOverlapping, payment-এ idempotency key। Transaction-এর ভেতরে dispatch করলে commit-এর আগেই চলতে পারে — afterCommit()। একাধিক queue (high/default/low), chain = পরপর, batch = একসাথে। Deploy-এর পর queue:restart, Supervisor/Horizon দিয়ে চালু রাখো, failed count monitor করো। handle()-এ সব exception গিলে ফেললে কখনো retry হয় না।",
+    "versions": [
+      { "from": "Laravel 8", "to": "Laravel 9", "what": "Job batching matured; $backoff as array for exponential; ShouldBeUnique / WithoutOverlapping / RateLimited middleware became standard.", "why_it_matters": "Interviewers ask 'how do you stop the same job running twice concurrently' — the answer is WithoutOverlapping, not a manual lock." },
+      { "from": "Laravel 9", "to": "Laravel 10/11", "what": "Job/queue timeouts enforced by pcntl; queue:work --max-time; Laravel 11: dispatchAfterCommit and afterCommit() on chains/batches, ShouldQueueAfterCommit interface; failed_jobs UUIDs; Horizon 5.", "why_it_matters": "'Job ran before commit' is a classic bug; the modern answer is ShouldQueueAfterCommit or after_commit => true in config/queue.php." },
+      { "from": "Laravel 11", "to": "Laravel 12", "what": "Queue internals stable; deferred functions (defer()) offer a lightweight 'after response' alternative for tiny tasks without a queue.", "why_it_matters": "Knowing when NOT to use a queue (defer for trivial post-response work) is a good senior aside." }
+    ],
+    "crossStack": [
+      { "concept": "Queue a job", "laravel": "SendReceipt::dispatch($id)->onQueue('high')", "symfony": "Messenger: $bus->dispatch(new SendReceipt($id)) with a transport (AMQP/Doctrine/Redis), messenger:consume", "dotnet": "IHostedService/BackgroundService reading Azure Queue / RabbitMQ; or Hangfire BackgroundJob.Enqueue", "node": "BullMQ: queue.add('receipt', { id }) with attempts and backoff options; NestJS @Processor" },
+      { "concept": "Retry policy", "laravel": "$tries, $backoff, retryUntil(), failed()", "symfony": "messenger.yaml retry_strategy: max_retries, delay, multiplier; failed transport", "dotnet": "Polly policies / Hangfire AutomaticRetry attribute", "node": "BullMQ: attempts, backoff: { type: 'exponential', delay }; failed event" }
+    ],
+    "simulator": "queue-backoff",
+    "docs": [
+      { "label": "Laravel: Queues", "url": "https://laravel.com/docs/12.x/queues" },
+      { "label": "Laravel Horizon", "url": "https://laravel.com/docs/12.x/horizon" }
+    ]
+  },
+  "practice": [
+    {
+      "task": "In prep-app with the database queue driver: create a job GenerateInvoicePdf(int $orderId) that throws on the first two attempts (use a cache counter) and succeeds on the third, with backoff [5, 10]. Run a worker, dispatch it, and watch the attempts and timing in the jobs table. Then set $tries = 2 and see it land in failed_jobs; retry it from artisan.",
+      "hint": "php artisan queue:table && migrate; QUEUE_CONNECTION=database; php artisan queue:work --tries=... is overridden by the job's $tries.",
+      "solution": "class GenerateInvoicePdf implements ShouldQueue {\n    use Queueable;\n    public int $tries = 3;\n    public array $backoff = [5, 10];\n    public function __construct(public readonly int $orderId) {}\n    public function handle(): void {\n        $n = Cache::increment(\"pdf-attempts:{$this->orderId}\");\n        if ($n < 3) throw new \\RuntimeException(\"simulated failure #{$n}\");\n        Log::info(\"PDF generated for {$this->orderId} on attempt {$n}\");\n    }\n    public function failed(\\Throwable $e): void { Log::error('PDF failed permanently: '.$e->getMessage()); }\n}\n// php artisan tinker → GenerateInvoicePdf::dispatch(1);\n// php artisan queue:work --verbose   (watch: Processing → Failed → wait 5s → Failed → wait 10s → Processed)\n// SELECT id, attempts, available_at FROM jobs;   between attempts shows the delay\n// With $tries = 2: SELECT * FROM failed_jobs;  then  php artisan queue:retry all",
+      "why": "Seeing the available_at timestamp move by exactly the backoff, and the job appear in failed_jobs, is worth ten paragraphs. The cache counter is a trick you'll reuse to test retry paths."
+    },
+    {
+      "task": "Make the job from task 1 idempotent and prove it: dispatch it twice for the same order and show the PDF is generated once. Then add WithoutOverlapping and explain what it protects against that your check doesn't.",
+      "hint": "A generated_at column or a cache flag checked at the top of handle(); WithoutOverlapping covers the window between check and write when two workers run concurrently.",
+      "solution": "public function middleware(): array { return [new WithoutOverlapping($this->orderId)]; }\n\npublic function handle(): void {\n    $order = Order::findOrFail($this->orderId);\n    if ($order->invoice_pdf_generated_at) return;          // idempotent check\n    // ... generate ...\n    $order->update(['invoice_pdf_generated_at' => now()]);\n}\n\n// Dispatch twice → log shows one 'generated'. Without WithoutOverlapping, two workers could both pass the check\n// before either writes generated_at (the read-then-write race from the transactions module). WithoutOverlapping\n// takes a cache lock keyed by orderId so the second job waits or is released.",
+      "why": "The check makes re-runs safe; the middleware makes concurrent runs safe. Interviewers who know queues will ask about exactly that gap."
+    },
+    {
+      "task": "Design the job structure for 'on order paid: send receipt, sync to CRM, notify warehouse, update analytics'. Which run in parallel, which in sequence, what happens if CRM is down for an hour, and how do you know?",
+      "hint": "Independent side effects → separate jobs, batch or independent dispatch; anything dependent → chain; CRM job gets long backoff + retryUntil; alert on failed_jobs.",
+      "solution": "// Four independent side effects → four jobs, each with its own retry policy. Nothing depends on another, so no chain.\nBus::batch([\n    new SendReceipt($order->id),           // tries 5, backoff [30,120,600]\n    new SyncOrderToCrm($order->id),        // retryUntil(now()->addHours(6)), backoff [60,300,900,1800]\n    new NotifyWarehouse($order->id),       // tries 3, high queue\n    new RecordOrderAnalytics($order->id),  // tries 1 — best effort, low queue\n])->allowFailures()->dispatch()->afterCommit();\n\n// CRM down for an hour: SyncOrderToCrm keeps retrying with growing gaps for up to 6 hours; nothing else is blocked\n// because it is its own job on its own queue. Visibility: Horizon dashboard (wait time, failed), an alert when\n// failed_jobs grows or when a job's age exceeds N minutes, and the CRM job's failed() posting to Slack.\n// If they were dependent (e.g. warehouse needs the CRM id) → Bus::chain in that order.",
+      "why": "Separation of side effects is the core design idea; the retry policy per job is the operational idea; observability is what makes it a senior answer rather than a correct one."
+    }
+  ],
+  "interview": [
+    {
+      "q": "A queued job sent a customer the same email twice. Walk me through why and how you'd prevent it.",
+      "model": "Queues are at-least-once: if a worker crashes or times out after sending but before acknowledging, the job runs again. So the job must be idempotent — check a receipt_sent_at flag before sending and set it after; for concurrent duplicates use WithoutOverlapping keyed on the order; and give the job an explicit tries and timeout below the worker's retry_after so a slow send isn't re-queued while still running.",
+      "missing": "Name retry_after vs timeout — a timeout larger than retry_after is the exact configuration that causes duplicates.",
+      "followUp": "What if the email provider itself supports idempotency keys?",
+      "bn": "Queue at-least-once: crash/timeout-এ job আবার চলে; তাই flag চেক করে idempotent করো, WithoutOverlapping দাও, timeout retry_after-এর কম রাখো।"
+    },
+    {
+      "q": "A third-party API is down for an hour. What happens to your jobs and what should happen?",
+      "model": "With defaults, jobs fail fast, retry immediately, exhaust tries within seconds, and pile into failed_jobs — thousands to retry by hand. What should happen: exponential backoff with a cap, retryUntil of a few hours, a rate limiter so recovery doesn't hammer the API, and an alert when failed or delayed job counts cross a threshold. When the API is back, the jobs drain themselves.",
+      "missing": "Mention the circuit-breaker idea: if the API is known down, release jobs with a long delay instead of even attempting.",
+      "followUp": "How do you avoid the retry storm when the API comes back and 3,000 jobs become due at once?",
+      "bn": "Default-এ সাথে সাথে retry, কয়েক সেকেন্ডে failed_jobs ভরে যায়; চাই: exponential backoff, retryUntil কয়েক ঘণ্টা, rate limit, alert — API ফিরলে নিজে নিজে drain হয়।"
+    },
+    {
+      "q": "Why pass an id to a job instead of the model?",
+      "model": "SerializesModels stores the model as class and key and re-fetches it when the job runs, which is fine — until the row was deleted or changed in between. Passing the id makes that explicit: I fetch fresh state in handle(), decide what to do if it's gone, and the payload stays tiny. I pass the model only when I'm sure it's stable and I want the convenience.",
+      "missing": "Note the related trap: eager-loaded relations are not serialised by default, so relations are lazy-loaded again in the job.",
+      "followUp": "What does the job do if the order was deleted before it runs?",
+      "bn": "Model দিলে class+id রেখে চলার সময় আবার fetch — মুছে গেলে exception; id দিলে handle()-এ fresh fetch, স্পষ্ট সিদ্ধান্ত, ছোট payload।"
+    },
+    {
+      "q": "A job dispatched from a controller runs but says the order doesn't exist. The order is there. What's going on?",
+      "model": "The dispatch happened inside a database transaction and the worker picked up the job before the transaction committed — the row wasn't visible yet. Fix: dispatch after commit with ->afterCommit(), implement ShouldQueueAfterCommit, or set after_commit true on the queue connection so it's the default.",
+      "missing": "Add the queue-driver angle: with the database driver on the same connection the job row itself is inside the transaction, so the symptom differs — with Redis it's the classic race.",
+      "followUp": "Where would you set this so no developer can forget it?",
+      "bn": "Transaction-এর ভেতরে dispatch, worker commit-এর আগেই নিল — afterCommit(), ShouldQueueAfterCommit, বা config-এ after_commit true।"
+    }
+  ],
+  "cards": [
+    { "q": "Why must every queued job be idempotent?", "a": "Delivery is at-least-once: a crash/timeout after the work but before ack re-runs the job." },
+    { "q": "$tries, $backoff, $timeout, retryUntil — one line each", "a": "tries: max attempts. backoff: seconds between (array = exponential). timeout: kill after N s (must be < retry_after). retryUntil: retry until a time instead of a count." },
+    { "q": "What does WithoutOverlapping protect against?", "a": "Two instances of the same job (same key) running concurrently — a cache lock keyed on the id." },
+    { "q": "Job dispatched inside a transaction — the bug and the fix", "a": "Worker may run it before commit. ->afterCommit(), ShouldQueueAfterCommit, or after_commit => true in config." },
+    { "q": "Why pass an id instead of a model?", "a": "The model is re-fetched at run time anyway; passing the id makes 'row deleted/changed' explicit and keeps the payload small." },
+    { "q": "What happens after $tries is exhausted?", "a": "Job goes to failed_jobs, failed() runs; retry with queue:retry <id|all>." },
+    { "q": "Chain vs batch", "a": "Chain: run in order, one after another. Batch: run in parallel with progress and a completion callback." },
+    { "q": "After a deploy, what must you do to queue workers?", "a": "queue:restart (or Horizon terminate) — long-running workers keep old code in memory." },
+    { "q": "Swallowing exceptions inside handle() — why is it wrong?", "a": "The job counts as success: no retry, no failed_jobs, no alert. Let exceptions propagate; handle cleanup in failed()." }
+  ],
+  "glossary": [
+    { "term": "worker", "plain": "A long-running process that pulls jobs off the queue and runs them.", "bn": "Queue থেকে job তুলে চালানো দীর্ঘস্থায়ী process।" },
+    { "term": "backoff", "plain": "Waiting longer between each retry.", "bn": "প্রতিটা retry-র মাঝে ক্রমে বেশি অপেক্ষা।" },
+    { "term": "dead-letter / failed_jobs", "plain": "Where jobs go after giving up, so they can be inspected and retried by hand.", "bn": "হাল ছেড়ে দেওয়া job যেখানে জমা হয়, দেখে আবার চালানোর জন্য।" },
+    { "term": "at-least-once", "plain": "A guarantee that a job runs one or more times — never zero, possibly twice.", "bn": "Job অন্তত একবার চলবেই — শূন্য নয়, দুবারও হতে পারে।" },
+    { "term": "Horizon", "plain": "Laravel's dashboard and supervisor for Redis queue workers.", "bn": "Redis queue worker-এর জন্য Laravel-এর dashboard ও supervisor।" }
+  ]
 }

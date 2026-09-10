@@ -2,14 +2,114 @@
   "id": "sql-transactions-locking",
   "track": "sql",
   "phase": 3,
-  "order": 5,
-  "title": "Transactions, isolation levels & locking",
-  "status": "preview",
-  "star": false,
+  "order": 6,
+  "title": "Transactions, isolation levels and locking",
+  "status": "unlocked",
+  "star": true,
   "preview": {
-    "what": "Transactions, isolation levels, and locking — correctness when two things happen at once.",
-    "picture": "Two people booking the last seat at the same second. A transaction is 'all or nothing'; a lock is putting your hand on the seat while you pay.",
-    "why": "Double-spend and overselling scenarios appear in almost every senior backend loop.",
-    "bn": "শেষ সিট দুজন একই সেকেন্ডে বুক করছে: transaction = হয় সব না হয় কিছুই না, lock = দাম দেওয়ার সময় হাত রাখা।"
-  }
+    "what": "Making several changes succeed or fail together, and stopping two people from changing the same thing at the same moment.",
+    "picture": "Two people booking the last seat in the same second. A transaction is 'all or nothing'; a lock is putting your hand on the seat while you pay.",
+    "why": "Double-booking, overselling and double-spending scenarios appear in almost every senior backend interview, and 'I wrapped it in a transaction' is the wrong answer they are waiting for.",
+    "bn": "কয়েকটা বদল একসাথে হয় বা একটাও হয় না (transaction); একই জিনিস দুজন একই মুহূর্তে বদলাতে পারে না (lock)।"
+  },
+  "lesson": {
+    "problem": "An e-commerce client sells a limited item. Stock is 1. Two customers click Buy within 50 ms. Both requests read stock = 1, both see it's > 0, both write stock = 0 and create an order. Two orders, one item, one furious customer. The developer 'fixes' it by wrapping the code in DB::transaction — and it still happens, because a transaction is not a lock.",
+    "picture": "A bus with one seat left. A transaction is the rule 'either you get the seat AND pay, or neither' — no half-bookings. That's atomicity. But two people can still both look at the seat, both see it empty, and both sit. The fix is a hand on the seat: 'while I'm paying, nobody else can even look at it' — that's a lock. Isolation levels are how strict the bus company is about people peeking at seats while someone is paying.",
+    "hook": "A transaction makes writes atomic. A lock makes a read-then-write safe. You need both.",
+    "concept": "**Transaction = ACID for one unit of work.** BEGIN … COMMIT; any failure → ROLLBACK and nothing you wrote remains. Use it whenever two or more writes must succeed together: order + items + stock, invoice + ledger entries, user + profile.\n\nIn Laravel: `DB::transaction(fn () => ...)` commits on return, rolls back on exception. Keep transactions **short** — no HTTP calls, no emails, no sleeping inside; every second you hold one, you hold its locks.\n\n**The read-then-write race.** `SELECT stock … if (stock > 0) UPDATE stock = stock - 1` is two steps. Between them, another transaction can do the same. Wrapping both in a transaction does NOT stop the other transaction from reading the same old value. Three real fixes:\n\n1. **Pessimistic lock:** `SELECT … FOR UPDATE` inside the transaction. The row is locked until you commit; the other transaction's SELECT FOR UPDATE waits, then sees the new value. Laravel: `->lockForUpdate()`. Use when conflicts are common and the critical section is tiny.\n2. **Atomic conditional write:** `UPDATE products SET stock = stock - 1 WHERE id = ? AND stock > 0` and check affected rows. One statement, the database serialises it. No explicit lock needed. Best for counters.\n3. **Optimistic locking:** a `version` column. Read version 5, `UPDATE … SET version = 6 WHERE id = ? AND version = 5`; zero rows affected means someone else changed it — reload and retry or tell the user. Use when conflicts are rare and you don't want waiting.\n\n**Isolation levels** (what other transactions can see while yours is open):\n- READ UNCOMMITTED — can see uncommitted data (dirty reads). Never.\n- READ COMMITTED — sees only committed data, but the same SELECT can return different rows later (non-repeatable read). **Postgres default.**\n- REPEATABLE READ — your transaction sees a snapshot as of its start. **MySQL InnoDB default.** Note: a plain SELECT reads the snapshot, so it can show stock = 1 even after another transaction committed 0. FOR UPDATE reads the latest committed row — that's why it's the fix.\n- SERIALIZABLE — as if transactions ran one at a time. Safest, slowest, more deadlocks/serialisation failures; you must retry.\n\n**Deadlocks.** T1 locks A then wants B; T2 locks B then wants A. The database kills one (`Deadlock found`). Prevention: lock rows in a consistent order (e.g. by id ascending), keep transactions short, retry on deadlock (Laravel: `DB::transaction($fn, attempts: 3)`).\n\n**Gap locks (MySQL REPEATABLE READ):** a `SELECT … WHERE created_at > ? FOR UPDATE` can lock the *gap* so inserts in that range wait. Surprising in high-write tables; another reason to lock by primary key.\n\n**What NOT to do:** hold a transaction across a payment gateway call; use `LOCK TABLES`; assume 'transaction' means 'thread-safe'.",
+    "simple": "Two friends want the last chocolate in a box. The rule 'take the chocolate AND write your name in the notebook, or do neither' is a transaction — nobody ends up with a chocolate and no name. But both friends can open the lid at the same time, both see one chocolate, both grab. The transaction didn't stop that.\n\nFix 1: put your hand over the box while you decide — nobody else can even look until you're done. That's `FOR UPDATE`.\n\nFix 2: don't look first at all. Just say 'give me a chocolate if there is one' and the box either gives it or says no. That's the one-line `UPDATE … WHERE stock > 0`.\n\nFix 3: the box has a sticker with a number. You read 5. You may take the chocolate only if the sticker still says 5 when you reach in; if someone changed it to 6, you missed — try again. That's a version column.\n\nA deadlock is two friends each holding one of two boxes and each waiting for the other's. Someone has to let go — the database picks one and says 'you lose, try again'.",
+    "wrong": {
+      "lang": "php",
+      "code": "// Looks safe. Is not.\nDB::transaction(function () use ($productId, $userId) {\n    $product = Product::find($productId);          // plain SELECT: reads the snapshot / old value\n    if ($product->stock < 1) {\n        throw new OutOfStock();\n    }\n    $product->decrement('stock');                  // both requests reach here\n    Order::create(['user_id' => $userId, 'product_id' => $productId]);\n});",
+      "why": "Two concurrent requests both read stock = 1 before either writes. The transaction guarantees each request's writes are atomic — it does nothing about the other request reading stale data. Result: stock -1 (or 0 with two orders)."
+    },
+    "right": {
+      "lang": "php",
+      "code": "// Fix 1: pessimistic lock — hand on the seat\nDB::transaction(function () use ($productId, $userId) {\n    $product = Product::whereKey($productId)->lockForUpdate()->first();   // SELECT ... FOR UPDATE\n    if ($product->stock < 1) {\n        throw new OutOfStock();\n    }\n    $product->decrement('stock');\n    Order::create(['user_id' => $userId, 'product_id' => $productId]);\n}, attempts: 3);   // retry on deadlock\n\n// Fix 2: atomic conditional write — no lock, one statement\n$sold = Product::whereKey($productId)->where('stock', '>', 0)->decrement('stock');\nif ($sold === 0) {\n    throw new OutOfStock();\n}\nOrder::create([...]);   // wrap both in a transaction so a failed order restores stock\n\n// Fix 3: optimistic — version column\n$p = Product::find($productId);\n$updated = Product::whereKey($p->id)->where('version', $p->version)\n    ->update(['stock' => $p->stock - 1, 'version' => $p->version + 1]);\nif ($updated === 0) { /* someone else changed it: reload and retry, or tell the user */ }\n\n-- The SQL behind fix 1 (MySQL):\nSTART TRANSACTION;\nSELECT * FROM products WHERE id = 42 FOR UPDATE;   -- T2 running the same line now WAITS here\nUPDATE products SET stock = stock - 1 WHERE id = 42;\nINSERT INTO orders (...) VALUES (...);\nCOMMIT;                                            -- T2 wakes, sees stock = 0, throws OutOfStock",
+      "why": "FOR UPDATE makes the second transaction wait until the first commits, then read the real value. The atomic UPDATE avoids the read entirely. The version column detects the conflict after the fact. Choose by conflict rate: common → lock; counters → atomic; rare → optimistic."
+    },
+    "bn": "Transaction = সব write একসাথে হবে নয়তো একটাও না (atomic) — কিন্তু এটা lock না। 'আগে পড়ো, তারপর লেখো' দুই ধাপে race হয়: দুজনই stock=1 পড়ে, দুজনই লেখে। তিনটা আসল সমাধান: (1) SELECT ... FOR UPDATE / lockForUpdate() — row-এ হাত রাখো, অন্যজন commit পর্যন্ত অপেক্ষা করে; (2) এক লাইনে UPDATE ... WHERE stock > 0 আর affected rows দেখো; (3) version column — পড়ার সময়ের version না মিললে retry। Isolation level: READ COMMITTED (Postgres default), REPEATABLE READ (MySQL default — plain SELECT পুরনো snapshot দেখায়, FOR UPDATE সর্বশেষ দেখায়), SERIALIZABLE (নিরাপদ, ধীর, retry লাগে)। Deadlock: দুজন দুটো row উল্টো ক্রমে lock করছে — একই ক্রমে lock করো, transaction ছোট রাখো, retry করো। Transaction-এর ভেতরে কখনো payment API call বা email না।",
+    "versions": [
+      { "from": "MySQL 5.7", "to": "MySQL 8.0+", "what": "SELECT ... FOR UPDATE SKIP LOCKED and NOWAIT added; better deadlock diagnostics in SHOW ENGINE INNODB STATUS.", "why_it_matters": "SKIP LOCKED is how you build a job queue on a table without workers blocking each other — a common interview follow-up." },
+      { "from": "Laravel 9", "to": "Laravel 10+", "what": "DB::transaction($callback, $attempts) retries on deadlock; ->lockForUpdate() / ->sharedLock() unchanged; Laravel 11 added DB::afterCommit hooks for jobs and events (dispatchAfterCommit / afterCommit()).", "why_it_matters": "Dispatching a job inside a transaction that later rolls back is a classic bug; afterCommit is the answer they expect." },
+      { "from": "Postgres 12", "to": "Postgres 16", "what": "No isolation semantics change; performance of SERIALIZABLE improved. Default remains READ COMMITTED.", "why_it_matters": "The MySQL vs Postgres default-isolation difference is a standard question." }
+    ],
+    "crossStack": [
+      { "concept": "Pessimistic row lock", "laravel": "Model::whereKey($id)->lockForUpdate()->first() inside DB::transaction", "symfony": "$em->find(Product::class, $id, LockMode::PESSIMISTIC_WRITE) inside $em->wrapInTransaction", "dotnet": "EF Core: raw 'SELECT ... FOR UPDATE' via FromSqlRaw, or SQL Server UPDLOCK hint; optimistic via [Timestamp]/IsConcurrencyToken is the EF default advice", "node": "Prisma: $transaction with $queryRaw FOR UPDATE; Knex: .forUpdate()" },
+      { "concept": "Optimistic version", "laravel": "manual version column, or a package; check affected rows", "symfony": "#[ORM\\Version] on a field — Doctrine throws OptimisticLockException automatically", "dotnet": "[ConcurrencyCheck] / rowversion → DbUpdateConcurrencyException", "node": "Prisma: version field + updateMany where version = x" }
+    ],
+    "simulator": "lock-race",
+    "docs": [
+      { "label": "MySQL locking reads", "url": "https://dev.mysql.com/doc/refman/8.4/en/innodb-locking-reads.html" },
+      { "label": "Laravel: pessimistic locking", "url": "https://laravel.com/docs/12.x/queries#pessimistic-locking" }
+    ]
+  },
+  "practice": [
+    {
+      "task": "Reproduce the race on your prep database with two terminals. Terminal A: START TRANSACTION; SELECT stock FROM products WHERE id = 1; (add a stock column first: ALTER TABLE products ADD stock INT NOT NULL DEFAULT 1). Terminal B: the same. Then both UPDATE stock = stock - 1 and COMMIT. What is stock at the end? Then repeat with FOR UPDATE on the SELECT and describe what terminal B did.",
+      "hint": "Without FOR UPDATE both proceed; stock ends at -1. With FOR UPDATE, terminal B's SELECT blocks until A commits.",
+      "solution": "-- Run 1 (no lock): both SELECT return 1; both UPDATEs succeed; stock = -1. The transaction did not help.\n-- Run 2 (FOR UPDATE): terminal B's SELECT ... FOR UPDATE hangs. After A COMMITs, B's SELECT returns 0.\n--   B's code should now refuse to sell. If B still runs the UPDATE, stock = -1 again — the lock gives you the\n--   fresh value; YOUR code must act on it.\n-- Run 3 (atomic): UPDATE products SET stock = stock - 1 WHERE id = 1 AND stock > 0; in both terminals.\n--   First returns 'Rows matched: 1 Changed: 1', second 'Rows matched: 0'. No explicit lock, no waiting beyond the row write.",
+      "why": "Seeing terminal B freeze is the moment 'transaction ≠ lock' becomes physical. Run 3 shows why the atomic UPDATE is usually the cleanest fix for counters."
+    },
+    {
+      "task": "Write the Laravel service method transferMoney(fromId, toId, amountMinor) between two accounts. It must never lose money, never allow overdraft, and never deadlock when two transfers run in opposite directions at once.",
+      "hint": "Lock both rows FOR UPDATE, in ascending id order regardless of direction.",
+      "solution": "public function transfer(int $fromId, int $toId, int $amountMinor): void\n{\n    if ($fromId === $toId || $amountMinor <= 0) throw new InvalidTransfer();\n    DB::transaction(function () use ($fromId, $toId, $amountMinor) {\n        [$firstId, $secondId] = $fromId < $toId ? [$fromId, $toId] : [$toId, $fromId];\n        $accounts = Account::whereIn('id', [$firstId, $secondId])\n            ->orderBy('id')->lockForUpdate()->get()->keyBy('id');   // consistent lock order\n        $from = $accounts[$fromId]; $to = $accounts[$toId];\n        if ($from->balance_minor < $amountMinor) throw new InsufficientFunds();\n        $from->decrement('balance_minor', $amountMinor);\n        $to->increment('balance_minor', $amountMinor);\n        LedgerEntry::create(['account_id' => $fromId, 'delta' => -$amountMinor, 'ref' => ...]);\n        LedgerEntry::create(['account_id' => $toId,   'delta' =>  $amountMinor, 'ref' => ...]);\n    }, attempts: 3);\n}",
+      "why": "Locking in id order means A→B and B→A both lock the lower id first, so they queue instead of deadlocking. The ledger rows make the transfer auditable and reconcilable — that's the payments module's territory, seeded here."
+    },
+    {
+      "task": "Explain what goes wrong here and rewrite it:\n\nDB::transaction(function () use ($order) {\n    $order->update(['status' => 'paid']);\n    $this->gateway->charge($order);        // HTTP call, 2–8 seconds\n    SendReceipt::dispatch($order);\n});",
+      "hint": "Two problems: a lock held during an HTTP call, and a job dispatched before commit.",
+      "solution": "// Problem 1: the row lock on orders is held for the whole gateway call — other requests touching that order (and possibly gap-locked neighbours) wait seconds.\n// Problem 2: SendReceipt may run before the transaction commits (or after a rollback) and see status != paid.\n// Problem 3: if the gateway succeeds and the transaction then fails, the customer is charged with no paid order.\n\n$charge = $this->gateway->charge($order, idempotencyKey: $order->payment_key);   // outside the transaction\nDB::transaction(function () use ($order, $charge) {\n    $order->update(['status' => 'paid', 'charge_id' => $charge->id]);\n    Payment::create([...]);\n});\nSendReceipt::dispatch($order)->afterCommit();   // or dispatch after the transaction block\n// Reconciliation job: charges with no paid order → refund or mark. This is where idempotency keys earn their keep.",
+      "why": "Transactions are for database writes only. External calls go outside, made safe by idempotency keys and a reconciliation path. afterCommit is Laravel's answer to 'the job ran before the data existed'."
+    }
+  ],
+  "interview": [
+    {
+      "q": "Two users buy the last item at the same time. You wrapped the code in a transaction. Why can it still oversell?",
+      "model": "Because a transaction makes my writes atomic but doesn't stop another transaction from reading the same old stock value before I write. Both read 1, both pass the check, both write. To fix it I either lock the row when I read it — SELECT FOR UPDATE — so the second reader waits and sees 0; or I skip the read and do a conditional UPDATE WHERE stock > 0 and check affected rows; or, for rare conflicts, an optimistic version column.",
+      "missing": "State it as a sentence: 'atomicity is about my writes; isolation is about other people's reads' — and name MySQL's REPEATABLE READ snapshot as the reason the plain SELECT shows stale data.",
+      "followUp": "Which of the three would you pick for a flash sale with 10,000 buyers, and why?",
+      "bn": "Transaction আমার write-কে atomic করে, অন্যের পড়া আটকায় না — দুজনই পুরনো stock পড়ে; FOR UPDATE, atomic UPDATE, বা version column লাগে।"
+    },
+    {
+      "q": "Explain isolation levels without a textbook definition.",
+      "model": "They're how much one transaction can see of another's in-progress work. Read committed: I only see what's committed, but if I run the same SELECT twice I might get different answers. Repeatable read — MySQL's default — I see a snapshot from when my transaction started, so my reads are consistent but possibly stale; FOR UPDATE bypasses the snapshot. Serializable: the database behaves as if transactions ran one after another, and will abort mine if that's impossible, so I must retry. I pick the default unless I have a specific anomaly to prevent.",
+      "missing": "Give one concrete anomaly per level (dirty read, non-repeatable read, phantom) — interviewers want the vocabulary attached to the story.",
+      "followUp": "What's a phantom read, and which level prevents it in MySQL?",
+      "bn": "অন্যের অসমাপ্ত কাজের কতটা দেখতে পাবো: read committed = শুধু committed, repeatable read = শুরুর snapshot (MySQL default), serializable = একের পর এক চলার মতো, retry লাগে।"
+    },
+    {
+      "q": "How do you prevent deadlocks?",
+      "model": "Mostly by locking in a consistent order — if every transfer locks the lower account id first, two opposite transfers queue instead of each holding one row and waiting for the other. Then keep transactions short so locks are held briefly, lock by primary key to avoid gap locks, and retry on deadlock because the database will always pick a victim eventually — Laravel's DB::transaction has an attempts parameter for exactly that.",
+      "missing": "Say that deadlocks are not fully preventable in a busy system — the goal is rare + retried, not zero.",
+      "followUp": "How would you find which queries are deadlocking in production?",
+      "bn": "সবসময় একই ক্রমে lock করো (ছোট id আগে), transaction ছোট রাখো, primary key দিয়ে lock করো, deadlock হলে retry — একদম শূন্য করা যায় না।"
+    },
+    {
+      "q": "Should the payment gateway call be inside the transaction?",
+      "model": "No. A transaction holds row locks, and an HTTP call can take seconds or hang, so I'd be blocking other requests on that order and its neighbours. Also, if the charge succeeds and my transaction fails, I've taken money with no record. I call the gateway outside with an idempotency key, then record the result in a short transaction, and run a reconciliation job for the gap between the two.",
+      "missing": "Mention afterCommit for jobs and events dispatched from inside a transaction — the related bug they'll probe next.",
+      "followUp": "What happens if the process crashes between the charge succeeding and the transaction committing?",
+      "bn": "না — lock ধরে HTTP call করলে অন্যরা আটকে থাকে, আর charge হয়ে transaction fail করলে টাকা গেছে কিন্তু record নেই; বাইরে idempotency key দিয়ে call, ছোট transaction-এ record, reconciliation job।"
+    }
+  ],
+  "cards": [
+    { "q": "Transaction vs lock — one sentence", "a": "A transaction makes my writes all-or-nothing; a lock stops others from reading-then-writing the same row in between. Read-then-write needs both." },
+    { "q": "Three fixes for the read-then-write race", "a": "SELECT ... FOR UPDATE (pessimistic); UPDATE ... WHERE stock > 0 + check affected rows (atomic); version column + retry (optimistic)." },
+    { "q": "MySQL default isolation and its trap", "a": "REPEATABLE READ: plain SELECTs read a snapshot from transaction start, so they can show stale stock. FOR UPDATE reads the latest committed row." },
+    { "q": "Postgres default isolation", "a": "READ COMMITTED — each statement sees data committed before it started; the same SELECT can differ within one transaction." },
+    { "q": "How do you avoid deadlocks between two transfers A→B and B→A?", "a": "Lock rows in a consistent order (by id ascending), keep transactions short, retry on deadlock." },
+    { "q": "What must never be inside a transaction?", "a": "HTTP calls (payment gateways), emails, sleeps — anything slow or external. Locks are held until commit." },
+    { "q": "Job dispatched inside a transaction — the bug and the fix", "a": "It may run before commit or after rollback. Use ->afterCommit() / dispatch after the transaction." },
+    { "q": "What does DB::transaction($fn, attempts: 3) do?", "a": "Retries the whole callback up to 3 times when a deadlock exception occurs." },
+    { "q": "SKIP LOCKED — what is it for?", "a": "SELECT ... FOR UPDATE SKIP LOCKED lets multiple workers take different unlocked rows — a table-based job queue without blocking." }
+  ],
+  "glossary": [
+    { "term": "atomicity", "plain": "All the writes in a transaction happen, or none do.", "bn": "Transaction-এর সব write হবে, নয়তো একটাও না।" },
+    { "term": "isolation level", "plain": "How much of other transactions' in-progress work yours can see.", "bn": "অন্য transaction-এর অসমাপ্ত কাজ কতটা দেখা যাবে।" },
+    { "term": "pessimistic lock", "plain": "Lock the row when you read it so nobody else can change it until you commit.", "bn": "পড়ার সময়ই row lock — commit পর্যন্ত কেউ বদলাতে পারে না।" },
+    { "term": "optimistic lock", "plain": "Don't lock; detect a conflict at write time with a version number and retry.", "bn": "Lock না করে version number দিয়ে লেখার সময় সংঘর্ষ ধরা, তারপর retry।" },
+    { "term": "deadlock", "plain": "Two transactions each waiting for a lock the other holds; the database kills one.", "bn": "দুই transaction একে অপরের lock-এর জন্য অপেক্ষা; database একটাকে বাতিল করে।" }
+  ]
 }
