@@ -1,6 +1,7 @@
 import { ListRow, Muted, Page } from '../../ui/primitives';
 
 const ITEMS = [
+  { to: '/more/simulators', label: 'Simulators', hint: 'Predict, break it, fix it' },
   { to: '/more/canvas', label: 'Design canvas', hint: 'Boxes and arrows for system design answers' },
   { to: '/more/stories', label: 'Stories', hint: 'STAR stories, 2-minute and 30-second versions' },
   { to: '/more/cheatsheets', label: 'Cheat sheets', hint: 'One printable page per track' },

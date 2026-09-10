@@ -1,6 +1,7 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { grade, freshCard, todayNumber, touchStreak as bumpStreak, type CardState } from '../logic/leitner';
 import * as dbApi from './db';
+import { recordPrediction as bumpPrediction, type SimStats } from '../simulators/kit/stats';
 import {
   DEFAULT_SETTINGS,
   type CanvasDoc,
@@ -21,6 +22,8 @@ interface StoreValue {
   stories: Story[];
   canvases: CanvasDoc[];
   notes: Note[];
+  simStats: SimStats;
+  recordPrediction: (simId: string, hit: boolean) => Promise<void>;
   gradeCard: (key: string, ok: boolean) => Promise<void>;
   updateSettings: (patch: Partial<Settings>) => Promise<void>;
   record: (entry: HistoryEntry) => Promise<void>;
@@ -45,6 +48,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [stories, setStories] = useState<Story[]>([]);
   const [canvases, setCanvases] = useState<CanvasDoc[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
+  const [simStats, setSimStats] = useState<SimStats>({});
 
   useEffect(() => {
     let alive = true;
@@ -59,6 +63,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setStories(d.stories);
         setCanvases(d.canvases);
         setNotes(d.notes);
+        setSimStats(d.simStats ?? {});
       })
       .catch((e) => console.error('IndexedDB unavailable', e))
       .finally(() => alive && setReady(true));
@@ -123,6 +128,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     await dbApi.putNote(n);
   }, []);
 
+  // Ref mirror so a simulator can record without depending on a stale closure.
+  const simStatsRef = useRef<SimStats>({});
+  useEffect(() => {
+    simStatsRef.current = simStats;
+  }, [simStats]);
+  const recordPrediction = useCallback(async (simId: string, hit: boolean) => {
+    const next = bumpPrediction(simStatsRef.current, simId, hit);
+    simStatsRef.current = next;
+    setSimStats(next);
+    await dbApi.putKv('simStats', next);
+  }, []);
+
   const exportBundle = useCallback(
     (): ExportBundle => ({
       version: 1,
@@ -135,8 +152,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       stories,
       canvases,
       notes,
+      simStats,
     }),
-    [cards, settings, streak, history, stories, canvases, notes],
+    [cards, settings, streak, history, stories, canvases, notes, simStats],
   );
 
   const importBundle = useCallback(
@@ -155,6 +173,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         notes: b.notes ?? [],
         streak: b.streak ?? { lastDay: null, streak: 0 },
         settings: nextSettings,
+        simStats: b.simStats ?? {},
       };
       await dbApi.replaceAll(data);
       const fresh = await dbApi.loadAll();
@@ -165,6 +184,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setNotes(fresh.notes);
       setStreak(data.streak);
       setSettings(nextSettings);
+      setSimStats(data.simStats);
     },
     [settings],
   );
@@ -174,15 +194,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setCards({});
     setHistory([]);
     setStreak({ lastDay: null, streak: 0 });
+    setSimStats({});
   }, []);
 
   const value = useMemo<StoreValue>(
     () => ({
-      ready, cards, settings, streak, history, stories, canvases, notes,
+      ready, cards, settings, streak, history, stories, canvases, notes, simStats, recordPrediction,
       gradeCard, updateSettings, record, saveStory, removeStory, saveCanvas, removeCanvas, saveNote,
       exportBundle, importBundle, resetProgress,
     }),
-    [ready, cards, settings, streak, history, stories, canvases, notes, gradeCard, updateSettings, record, saveStory, removeStory, saveCanvas, removeCanvas, saveNote, exportBundle, importBundle, resetProgress],
+    [ready, cards, settings, streak, history, stories, canvases, notes, simStats, recordPrediction, gradeCard, updateSettings, record, saveStory, removeStory, saveCanvas, removeCanvas, saveNote, exportBundle, importBundle, resetProgress],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

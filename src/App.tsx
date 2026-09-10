@@ -15,6 +15,7 @@ import { CheatSheets, CheatSheet } from './screens/more/CheatSheets';
 import { Glossary } from './screens/more/Glossary';
 import { Progress } from './screens/more/Progress';
 import { Settings } from './screens/more/Settings';
+import { Simulators, SimulatorScreen } from './screens/more/Simulators';
 
 function Shell() {
   const { ready } = useStore();
@@ -39,6 +40,8 @@ function Shell() {
         <Route path="/more/glossary" element={<Glossary />} />
         <Route path="/more/progress" element={<Progress />} />
         <Route path="/more/settings" element={<Settings />} />
+        <Route path="/more/simulators" element={<Simulators />} />
+        <Route path="/more/simulators/:id" element={<SimulatorScreen />} />
         <Route path="*" element={<Today />} />
       </Routes>
       <TabBar />

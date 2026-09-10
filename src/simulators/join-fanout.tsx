@@ -1,88 +1,81 @@
-import { useState } from 'react';
-import { Chip, Chips, Muted } from '../ui/primitives';
-
-/** Ported from legacy demoJoin. Same data, same two query shapes, same wording. */
-interface Item { id: number; order_id: number; product_id: number }
-interface Order { id: number; customer_id: number; total: number }
-
-const items: Item[] = [
-  { id: 1, order_id: 10, product_id: 42 },
-  { id: 2, order_id: 10, product_id: 7 },
-  { id: 3, order_id: 10, product_id: 42 },
-];
-const orders: Order[] = [
-  { id: 10, customer_id: 1, total: 500 },
-  { id: 11, customer_id: 1, total: 200 },
-];
-const items2: Item[] = [...items, { id: 4, order_id: 11, product_id: 7 }];
-
-type Product = 'all' | 42 | 7;
+import { useMemo, useState } from 'react';
+import { Muted } from '../ui/primitives';
+import { SimShell } from './kit';
+import { buildSteps, MODES, PRESETS, realRevenue, sumOf, type JoinState, type Mode } from './logic/join-fanout';
 
 export default function JoinFanoutSimulator() {
-  const [mode, setMode] = useState<'join' | 'exists'>('join');
-  const [product, setProduct] = useState<Product>(42);
-  const p = product;
-  const matches = (i: Item, o: Order) => i.order_id === o.id && (p === 'all' || i.product_id === p);
+  const [mode, setMode] = useState<Mode>('join');
+  const [preset, setPreset] = useState<string>('42');
+  const steps = useMemo(() => buildSteps(mode, preset), [mode, preset]);
+  const real = realRevenue(preset);
+  const joinSum = sumOf('join', preset);
+  const actual = sumOf(mode, preset);
 
-  const rows: { o: Order; i: Item | null }[] = [];
-  if (mode === 'join') {
-    orders.forEach((o) => items2.filter((i) => matches(i, o)).forEach((i) => rows.push({ o, i })));
-  } else {
-    orders.filter((o) => items2.some((i) => matches(i, o))).forEach((o) => rows.push({ o, i: null }));
-  }
-  const sum = rows.reduce((s, r) => s + r.o.total, 0);
-  const real = orders.filter((o) => items2.some((i) => matches(i, o))).reduce((s, o) => s + o.total, 0);
-  const cols = mode === 'join' ? 'grid-cols-5' : 'grid-cols-3';
-  const ok = sum === real;
+  const prediction = useMemo(() => {
+    const choices = [{ id: 'real', label: String(real) }];
+    if (joinSum !== real) choices.push({ id: 'join', label: String(joinSum) });
+    choices.push({ id: 'zero', label: '0' });
+    return { question: 'What will SUM(o.total) return?', choices, correct: actual === real ? 'real' : 'join', actual: String(actual) };
+  }, [real, joinSum, actual]);
 
   return (
-    <div className="flex flex-col gap-2 text-[14px]">
-      <Muted>Data: Ziaur has order 10 (total 500, items: product 42, 7, 42) and order 11 (total 200, item: product 7).</Muted>
-      <Muted>Query shape</Muted>
-      <Chips>
-        <Chip on={mode === 'join'} onClick={() => setMode('join')}>JOIN order_items</Chip>
-        <Chip on={mode === 'exists'} onClick={() => setMode('exists')}>WHERE EXISTS (…)</Chip>
-      </Chips>
-      <Muted>Filter</Muted>
-      <Chips>
-        {(['all', 42, 7] as Product[]).map((v) => (
-          <Chip key={String(v)} on={product === v} onClick={() => setProduct(v)}>
-            {v === 'all' ? 'no product filter' : `product_id = ${v}`}
-          </Chip>
-        ))}
-      </Chips>
-      <Muted>Rows the database builds before SUM runs:</Muted>
-      <div className="overflow-hidden rounded-xl border border-line text-[13px] dark:border-[#2a2e38]">
-        <div className={`grid ${cols} bg-neutral-100 px-2 py-1.5 font-semibold dark:bg-[#1f232b]`}>
-          <span>customer</span><span>o.id</span><span>o.total</span>
-          {mode === 'join' && (<><span>i.id</span><span>i.product</span></>)}
-        </div>
-        {rows.length ? (
-          rows.map((r, k) => (
-            <div key={k} className={`grid ${cols} border-t border-line px-2 py-1.5 dark:border-[#2a2e38]`}>
-              <span>Ziaur</span><span>{r.o.id}</span><span>{r.o.total}</span>
-              {r.i && (<><span>{r.i.id}</span><span>{r.i.product_id}</span></>)}
+    <SimShell<JoinState>
+      id="join-fanout"
+      title="One order, three items, one bill"
+      story="Ziaur has order 10 (total 500, items: product 42, 7, 42) and order 11 (total 200, item: product 7). A report asks for revenue from orders that contain product 42. Joining the items table copies the order row once per item — the bill gets counted three times."
+      storyBn="Order 10-এর ৩টা item। items table JOIN করলে order-এর row ৩ বার আসে — একই বিল ৩ বার গোনা হয়।"
+      modes={[...MODES]}
+      mode={mode}
+      onMode={(m) => setMode(m as Mode)}
+      presets={[...PRESETS]}
+      preset={preset}
+      onPreset={setPreset}
+      steps={steps}
+      prediction={prediction}
+      notice={{
+        bullets: [
+          'JOIN brings rows in; each matching child row copies the parent row.',
+          'EXISTS only asks yes/no per parent and stops at the first hit — the parent stays one row.',
+          'GROUP BY does not fix fan-out: the copies sit inside the same group. DISTINCT hides it and breaks legitimate duplicates.',
+        ],
+        takeaway: 'Never bring a one-to-many table into the row set just to filter. Ask it a yes/no question with EXISTS.',
+        takeawayBn: 'শুধু filter করার জন্য one-to-many table JOIN কোরো না — EXISTS দিয়ে "আছে কি?" জিজ্ঞেস করো।',
+        challenge: 'Switch to "no product filter" in JOIN mode and predict how far off the SUM will be.',
+      }}
+      render={(st) => {
+        const cols = mode === 'join' ? 'grid-cols-5' : 'grid-cols-3';
+        return (
+          <div className="flex flex-col gap-2">
+            <Muted>Rows the database builds before SUM runs:</Muted>
+            <div className="overflow-hidden rounded-xl border border-line text-[13px] dark:border-[#2a2e38]">
+              <div className={`grid ${cols} bg-neutral-100 px-2 py-1.5 font-semibold dark:bg-[#1f232b]`}>
+                <span>customer</span><span>o.id</span><span>o.total</span>
+                {mode === 'join' && (<><span>i.id</span><span>i.product</span></>)}
+              </div>
+              {st.rows.length ? (
+                st.rows.map((r, k) => (
+                  <div key={k} className={`grid ${cols} border-t border-line px-2 py-1.5 dark:border-[#2a2e38] ${r.o.id === st.cursorOrder ? 'bg-warn-soft/60 dark:bg-[#2c2410]' : ''}`}>
+                    <span>Ziaur</span><span>{r.o.id}</span><span>{r.o.total}</span>
+                    {r.i && (<><span>{r.i.id}</span><span>{r.i.product_id}</span></>)}
+                  </div>
+                ))
+              ) : (
+                <div className="p-2 text-neutral-500">no rows yet</div>
+              )}
             </div>
-          ))
-        ) : (
-          <div className="p-2 text-neutral-500">no rows</div>
-        )}
-      </div>
-      <div className="mt-1 flex justify-between">
-        <div>
-          <Muted>SUM(o.total) the query returns</Muted>
-          <div className={`text-2xl font-semibold ${ok ? 'text-accent' : 'text-danger'}`}>{sum}</div>
-        </div>
-        <div className="text-right">
-          <Muted>real revenue</Muted>
-          <div className="text-2xl font-semibold">{real}</div>
-        </div>
-      </div>
-      <div>
-        {ok
-          ? 'Correct. Each order appears exactly once.'
-          : `Wrong by ${sum - real}. The order row was copied once per matching item — that is fan-out. GROUP BY would not change this number.`}
-      </div>
-    </div>
+            <div className="mt-1 flex justify-between">
+              <div>
+                <Muted>SUM(o.total) the query returns</Muted>
+                <div className={`text-2xl font-semibold ${st.sum === null ? 'text-neutral-400' : st.sum === st.real ? 'text-accent' : 'text-danger'}`}>{st.sum ?? '…'}</div>
+              </div>
+              <div className="text-right">
+                <Muted>real revenue</Muted>
+                <div className="text-2xl font-semibold">{st.real}</div>
+              </div>
+            </div>
+          </div>
+        );
+      }}
+    />
   );
 }

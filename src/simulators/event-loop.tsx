@@ -1,71 +1,11 @@
-import { useState } from 'react';
-import { Button, Chip, Chips, Muted } from '../ui/primitives';
-
-/** Ported from legacy demoLoop. Same presets, same stepping rules, same wording. */
-type Kind = 'sync' | 'micro' | 'macro';
-interface Line { t: Kind; l: string }
-
-const PRESETS: Record<string, { label: string; lines: [Kind, string][] }> = {
-  a: { label: 'Basic', lines: [['sync', 'log(1)'], ['macro', 'setTimeout → log(2)'], ['micro', 'promise.then → log(3)'], ['sync', 'log(4)']] },
-  b: { label: 'await', lines: [['sync', "log('a')"], ['micro', "after await → log('b')"], ['sync', "log('c')"]] },
-  c: {
-    label: 'Nested',
-    lines: [
-      ['macro', "setTimeout → log('T1') + queues micro log('M-in-T1')"],
-      ['micro', "promise.then → log('M1') + queues macro log('T-in-M1')"],
-      ['sync', "log('S')"],
-    ],
-  },
-};
-
-interface State {
-  stack: string[];
-  micro: string[];
-  macro: string[];
-  out: string[];
-  script: Line[];
-  note: string;
-  done: boolean;
-}
-
-// Non-greedy on purpose: the legacy demo matched the LAST log() on a line, so the
-// Nested preset printed the queued task's name instead of the one actually running.
-const logOf = (s: string) => s.replace(/^.*?log\(([^)]*)\).*$/, '$1');
-
-function build(key: string): State {
-  return { stack: [], micro: [], macro: [], out: [], script: PRESETS[key].lines.map(([t, l]) => ({ t, l })), note: '', done: false };
-}
-
-function step(st: State): State {
-  if (st.done) return st;
-  // 1. run script synchronously: sync lines go to output, others enqueue
-  if (st.script.length) {
-    const [s, ...rest] = st.script;
-    const next: State = { ...st, script: rest, stack: [s.l] };
-    if (s.t === 'sync') next.out = [...st.out, logOf(s.l)];
-    else if (s.t === 'micro') next.micro = [...st.micro, s.l];
-    else next.macro = [...st.macro, s.l];
-    next.note = s.t === 'sync' ? 'Synchronous: runs now.' : s.t === 'micro' ? 'Promise callback → microtask queue (VIP tray).' : 'Timer callback → macrotask queue (regular tickets).';
-    return next;
-  }
-  // 2. drain microtasks
-  if (st.micro.length) {
-    const [m, ...rest] = st.micro;
-    const macro = /queues macro/.test(m) ? [...st.macro, "setTimeout → log('T-in-M1')"] : st.macro;
-    return { ...st, micro: rest, macro, stack: [m], out: [...st.out, logOf(m)], note: 'Stack empty → drain ALL microtasks before any timer.' };
-  }
-  // 3. one macrotask
-  if (st.macro.length) {
-    const [m, ...rest] = st.macro;
-    const micro = /queues micro/.test(m) ? [...st.micro, "promise.then → log('M-in-T1')"] : st.micro;
-    return { ...st, macro: rest, micro, stack: [m], out: [...st.out, logOf(m)], note: 'Microtasks empty → take ONE macrotask, then check microtasks again.' };
-  }
-  return { ...st, stack: [], done: true, note: 'Done. Compare the output with your prediction.' };
-}
+import { useMemo, useState } from 'react';
+import { Muted } from '../ui/primitives';
+import { SimShell } from './kit';
+import { buildSteps, MODES, PRESETS, outputOf, type LoopState, type Mode } from './logic/event-loop';
 
 function Box({ title, items, tone }: { title: string; items: string[]; tone: string }) {
   return (
-    <div className="min-w-[110px] flex-1">
+    <div className="min-w-[100px] flex-1">
       <Muted className="mb-1">{title}</Muted>
       <div className={`min-h-[64px] rounded-xl border border-dashed border-line p-1.5 dark:border-[#2a2e38] ${tone}`}>
         {items.length ? (
@@ -83,34 +23,66 @@ function Box({ title, items, tone }: { title: string; items: string[]; tone: str
 }
 
 export default function EventLoopSimulator() {
-  const [key, setKey] = useState('a');
-  const [st, setSt] = useState<State>(() => build('a'));
+  const [mode, setMode] = useState<Mode>('real');
+  const [preset, setPreset] = useState('a');
+  const steps = useMemo(() => buildSteps(mode, preset), [mode, preset]);
+  const actual = outputOf(mode, preset);
+  const other = outputOf(mode === 'real' ? 'naive' : 'real', preset);
+
+  const prediction = useMemo(() => {
+    const choices = [{ id: 'real', label: outputOf('real', preset) }];
+    const naive = outputOf('naive', preset);
+    if (naive !== choices[0].label) choices.push({ id: 'naive', label: naive });
+    const scriptOrder = PRESETS[preset].lines.map(([, l]) => l.replace(/^.*?log\(([^)]*)\).*$/, '$1')).join(' ');
+    if (!choices.some((c) => c.label === scriptOrder)) choices.push({ id: 'script', label: scriptOrder });
+    return { question: 'Which order will the console show?', choices, correct: mode === 'real' ? 'real' : 'naive', actual };
+  }, [preset, mode, actual]);
 
   return (
-    <div className="flex flex-col gap-2 text-[14px]">
-      <Chips>
-        {Object.entries(PRESETS).map(([k, p]) => (
-          <Chip key={k} on={key === k} onClick={() => { setKey(k); setSt(build(k)); }}>
-            {p.label}
-          </Chip>
-        ))}
-      </Chips>
-      <Muted>Script left to run:</Muted>
-      <div className="min-h-[20px]">
-        {st.script.length ? st.script.map((s, i) => <div key={i} className="text-[13px]"><code>{s.l}</code></div>) : <span className="text-xs text-neutral-400">— all lines executed —</span>}
-      </div>
-      <div className="flex gap-2">
-        <Box title="Call stack" items={st.stack} tone="bg-neutral-100 dark:bg-[#1f232b]" />
-        <Box title="Microtasks" items={st.micro} tone="bg-accent-soft dark:bg-[#12291b]" />
-        <Box title="Macrotasks" items={st.macro} tone="bg-warn-soft dark:bg-[#2c2410]" />
-      </div>
-      <Muted>Console output</Muted>
-      <pre className="m-0">{st.out.join('  ') || ' '}</pre>
-      <div className="min-h-[24px]">{st.note || 'Predict the output first. Then press Step.'}</div>
-      <div className="flex gap-2">
-        <Button variant="primary" className="flex-1" disabled={st.done} onClick={() => setSt(step(st))}>Step</Button>
-        <Button onClick={() => setSt(build(key))}>Reset</Button>
-      </div>
-    </div>
+    <SimShell<LoopState>
+      id="event-loop"
+      title="A restaurant with one chef"
+      story="The chef (the single thread) finishes the dish in hand no matter what. Then he clears the VIP tray completely (promises). Only then does he take the next regular ticket (setTimeout)."
+      storyBn="একজন chef (একটাই thread): হাতের রান্না আগে শেষ, তারপর VIP tray (promise) পুরো খালি, তারপর একটা সাধারণ টিকিট (setTimeout)।"
+      modes={[...MODES]}
+      mode={mode}
+      onMode={(m) => setMode(m as Mode)}
+      presets={Object.entries(PRESETS).map(([id, p]) => ({ id, label: p.label }))}
+      preset={preset}
+      onPreset={setPreset}
+      steps={steps}
+      prediction={prediction}
+      notice={{
+        bullets: [
+          'All synchronous code runs to the end before any callback.',
+          'Every microtask runs before the next macrotask, even one queued later.',
+          `Naive single queue would print "${mode === 'real' ? other : actual}"; the real engine prints "${mode === 'real' ? actual : other}".`,
+        ],
+        takeaway: 'setTimeout 0 is never "now": promises always jump the queue.',
+        takeawayBn: 'setTimeout 0 কখনো "এখনই" না — promise সবসময় লাইন টপকে যায়।',
+        challenge: 'Pick "Nested" and predict where M-in-T1 lands before pressing Step.',
+      }}
+      render={(st) => (
+        <div className="flex flex-col gap-2">
+          <Muted>Script left to run:</Muted>
+          <div className="min-h-[20px]">
+            {st.script.length ? st.script.map((s, i) => <div key={i} className="text-[13px]"><code>{s.l}</code></div>) : <span className="text-xs text-neutral-400">— all lines executed —</span>}
+          </div>
+          <div className="flex gap-2">
+            <Box title="Call stack" items={st.stack} tone="bg-neutral-100 dark:bg-[#1f232b]" />
+            {mode === 'real' ? (
+              <>
+                <Box title="Microtasks (VIP tray)" items={st.micro} tone="bg-accent-soft dark:bg-[#12291b]" />
+                <Box title="Macrotasks (tickets)" items={st.macro} tone="bg-warn-soft dark:bg-[#2c2410]" />
+              </>
+            ) : (
+              <Box title="One queue (naive)" items={st.fifo} tone="bg-danger-soft dark:bg-[#3a1512]" />
+            )}
+          </div>
+          <Muted>Console output</Muted>
+          <pre className="m-0">{st.out.join('  ') || ' '}</pre>
+        </div>
+      )}
+    />
   );
 }

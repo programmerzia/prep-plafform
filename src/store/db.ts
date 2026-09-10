@@ -1,6 +1,7 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type { CardState } from '../logic/leitner';
 import type { CanvasDoc, HistoryEntry, Note, Settings, Story, Streak } from './types';
+import type { SimStats } from '../simulators/kit/stats';
 
 interface PrepDB extends DBSchema {
   cards: { key: string; value: CardState & { key: string } };
@@ -32,7 +33,7 @@ export function db(): Promise<IDBPDatabase<PrepDB>> {
 
 export async function loadAll() {
   const d = await db();
-  const [cardRows, settings, streak, history, stories, canvases, notes] = await Promise.all([
+  const [cardRows, settings, streak, history, stories, canvases, notes, simStats] = await Promise.all([
     d.getAll('cards'),
     d.get('kv', 'settings') as Promise<Settings | undefined>,
     d.get('kv', 'streak') as Promise<Streak | undefined>,
@@ -40,13 +41,14 @@ export async function loadAll() {
     d.getAll('stories'),
     d.getAll('canvases'),
     d.getAll('notes'),
+    d.get('kv', 'simStats') as Promise<SimStats | undefined>,
   ]);
   const cards: Record<string, CardState> = {};
   for (const row of cardRows) {
     const { key, ...state } = row;
     cards[key] = state;
   }
-  return { cards, settings, streak, history, stories, canvases, notes };
+  return { cards, settings, streak, history, stories, canvases, notes, simStats };
 }
 
 export async function putCard(key: string, state: CardState) {
@@ -77,7 +79,7 @@ export async function putNote(n: Note) {
 export async function clearProgress() {
   const d = await db();
   const tx = d.transaction(['cards', 'history', 'kv'], 'readwrite');
-  await Promise.all([tx.objectStore('cards').clear(), tx.objectStore('history').clear(), tx.objectStore('kv').delete('streak')]);
+  await Promise.all([tx.objectStore('cards').clear(), tx.objectStore('history').clear(), tx.objectStore('kv').delete('streak'), tx.objectStore('kv').delete('simStats')]);
   await tx.done;
 }
 
@@ -89,6 +91,7 @@ export async function replaceAll(data: {
   notes: Note[];
   streak: Streak;
   settings: Settings;
+  simStats: SimStats;
 }) {
   const d = await db();
   const tx = d.transaction(['cards', 'history', 'kv', 'stories', 'canvases', 'notes'], 'readwrite');
@@ -110,5 +113,6 @@ export async function replaceAll(data: {
   for (const n of data.notes) await tx.objectStore('notes').put(n);
   await tx.objectStore('kv').put(data.streak, 'streak');
   await tx.objectStore('kv').put(data.settings, 'settings');
+  await tx.objectStore('kv').put(data.simStats, 'simStats');
   await tx.done;
 }

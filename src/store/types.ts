@@ -1,4 +1,5 @@
 import type { CardState } from '../logic/leitner';
+import type { SimStats } from '../simulators/kit/stats';
 
 export type Lang = 'en' | 'en-bn';
 export type Provider = 'offline' | 'gemini' | 'groq' | 'openrouter';
@@ -78,4 +79,5 @@ export interface ExportBundle {
   stories: Story[];
   canvases: CanvasDoc[];
   notes: Note[];
+  simStats?: SimStats;
 }

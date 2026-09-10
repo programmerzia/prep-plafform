@@ -1,11 +1,14 @@
 import { ALL_CARDS, MODULE_BY_ID, WITH_CARDS } from '../../content/loader';
 import { TRACK_FOCUS, TRACKS, TRACK_ORDER, type TrackFocusId } from '../../content/tracks';
 import { useStore } from '../../store/Store';
+import { SIM_LIST } from '../../simulators';
+import { hitRate, overallHitRate } from '../../simulators/kit/stats';
 import { trackMastery, useMastery } from '../../store/derive';
 import { Bar, Big, Card, Empty, H2, MasteryPill, Muted, Page, Pill } from '../../ui/primitives';
 
 export function Progress() {
-  const { cards, history } = useStore();
+  const { cards, history, simStats } = useStore();
+  const simOverall = overallHitRate(simStats);
   const mastery = useMastery();
   const seen = ALL_CARDS.filter((c) => cards[c.key]?.seen).length;
   const longTerm = ALL_CARDS.filter((c) => (cards[c.key]?.box ?? 0) >= 3).length;
@@ -54,6 +57,22 @@ export function Progress() {
             <Bar pct={mastery[m.id] ?? 0} />
           </div>
         ))}
+      </Card>
+
+      <Card>
+        <H2>Prediction hit rate</H2>
+        <Muted className="mb-2">How often your guess in a simulator matched what happened.</Muted>
+        {simOverall === null && <Empty>Run a simulator and predict first.</Empty>}
+        {SIM_LIST.map((s) => {
+          const r = hitRate(simStats[s.id]);
+          if (r === null) return null;
+          return (
+            <div key={s.id} className="flex justify-between py-1 text-[15px]">
+              <span>{s.title}</span>
+              <Pill tone={r >= 60 ? 'done' : 'mid'}>{r}% · {simStats[s.id].asked} runs</Pill>
+            </div>
+          );
+        })}
       </Card>
 
       <Card>

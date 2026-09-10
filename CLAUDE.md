@@ -21,7 +21,7 @@ his phone. Nothing here is a demo — it is his only study environment.
 - Every answer, solution, and model answer is hidden until the user taps "Show". Never render solutions expanded by default.
 - Bangla appears everywhere a summary appears. Global toggle: EN / EN+BN. Bangla text uses a font that renders Bengali cleanly (Noto Sans Bengali via CSS, self-hosted in /public/fonts).
 - Code blocks scroll horizontally; never wrap code. Font size ≥ 13.5px.
-- Simulators are React components in `src/simulators/<id>.tsx`, referenced from a module by id. They must work by touch.
+- Simulators are React components in `src/simulators/<id>.tsx`, referenced from a module by id. They must work by touch. Full spec in `SIMULATORS.md`; every simulator is built on `src/simulators/kit/SimShell` with its pure step logic in `src/simulators/logic/<id>.ts` (tested).
 - Plain language in all UI. No jargon in labels. The UI never mentions Claude or any mentor; the learner just sees lessons, previews and his own progress.
 - Dark mode follows system preference.
 
@@ -112,3 +112,4 @@ Done (2026-09-09) by `scripts/migrate-legacy.mjs`; `src/content/content.test.ts`
 - The UI never names Claude. Preview screens say a lesson is not written yet; Today's next stop says the same.
 - Interviewer provider `offline` is labelled "Built-in questions (default)"; AI providers are presented as optional in Settings.
 - `lesson.versions` (optional, plain text) renders as "What changed across versions" right after the concept: a table from 600px up, stacked cards below. Use it when a topic's answer depends on the version (PHP 7→8, Laravel 10→11, React 18→19).
+- Simulator kit (2026-09-10): `SimShell` owns predict-first, Broken/Fixed modes, presets, Step/Auto-play/Pause/Reset, narration EN+BN, story header and the notice box. A simulator only supplies `steps[]` (pure, from `logic/<id>.ts`), a `render(state)` and its texts. Prediction accuracy is stored in IndexedDB (`simStats`) and shown on Progress and More → Simulators. `SIM_LIST` in `src/simulators/index.ts` is the free-play listing.
