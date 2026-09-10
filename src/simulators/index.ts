@@ -10,6 +10,7 @@ export const SIMULATORS: Record<string, LazyExoticComponent<ComponentType>> = {
   'cache-stampede': lazy(() => import('./cache-stampede')),
   'react-race': lazy(() => import('./react-race')),
   'vue-reactivity': lazy(() => import('./vue-reactivity')),
+  'lru-cache': lazy(() => import('./lru-cache')),
   'design-canvas': lazy(() => import('./design-canvas')),
 };
 
@@ -23,9 +24,10 @@ export const SIM_LIST: { id: string; title: string; story: string; moduleId?: st
   { id: 'cache-stampede', title: 'Cache stampede', story: 'Everyone wants the newspaper the second it sells out.', moduleId: 'caching-strategies-stampedes' },
   { id: 'react-race', title: 'React effect race', story: 'Two coffees, the second arrives first.', moduleId: 'react-effects-race-conditions' },
   { id: 'vue-reactivity', title: 'Vue reactivity', story: 'The spreadsheet cell that stopped updating.', moduleId: 'vue-reactivity' },
+  { id: 'lru-cache', title: 'LRU cache', story: 'A small shelf: the least-used item falls off.', moduleId: 'problem-stacks-queues-lru' },
   { id: 'design-canvas', title: 'Design canvas', story: 'Drawing the building before laying bricks.' },
 ];
 
 export const PLANNED_SIMULATORS = [
-  'lru-cache', 'queue-backoff', 'tenant-isolation',
+  'queue-backoff', 'tenant-isolation',
 ];
