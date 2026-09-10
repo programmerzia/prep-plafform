@@ -58,6 +58,7 @@ export interface CanvasDoc {
   name: string;
   boxes: CanvasBox[];
   arrows: CanvasArrow[];
+  notes?: string;
   updated: number;
 }
 export interface CanvasBox { id: string; x: number; y: number; w: number; h: number; label: string }
