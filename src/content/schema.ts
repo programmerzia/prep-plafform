@@ -24,6 +24,14 @@ const crossStackRow = z.object({
 
 const docLink = z.object({ label: z.string(), url: z.string().url() });
 
+/** One row of "what changed across versions": e.g. from "PHP 7.4" to "PHP 8.0". */
+const versionChange = z.object({
+  from: z.string(),
+  to: z.string(),
+  what: z.string(),
+  why_it_matters: z.string(),
+});
+
 export const previewSchema = z.object({
   what: z.string(),
   picture: z.string(),
@@ -43,6 +51,7 @@ export const lessonSchema = z.object({
   crossStack: z.array(crossStackRow).default([]),
   simulator: z.string().optional(),
   docs: z.array(docLink).max(3).default([]),
+  versions: z.array(versionChange).default([]),
 });
 
 export const practiceSchema = z.object({

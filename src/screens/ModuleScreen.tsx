@@ -91,6 +91,38 @@ function LessonView({ id }: { id: string }) {
         {settings.simple && !L.simple && <Muted className="mb-2">No simple version for this module yet — showing the full one.</Muted>}
         <Markdown text={simple ? L.simple : L.concept} className="text-[15.5px]" />
 
+        {L.versions.length > 0 && (
+          <>
+            <H3>What changed across versions</H3>
+            {/* Under 600px: one card per change. 600px and up: a table. */}
+            <div className="flex flex-col gap-2 min-[600px]:hidden">
+              {L.versions.map((v, i) => (
+                <div key={i} className="rounded-xl border border-line p-3 text-[14px] dark:border-[#2a2e38]">
+                  <div className="mb-1 font-semibold">{v.from} → {v.to}</div>
+                  <div>{v.what}</div>
+                  <Muted className="mt-1">Why it matters: {v.why_it_matters}</Muted>
+                </div>
+              ))}
+            </div>
+            <div className="hidden overflow-x-auto min-[600px]:block">
+              <table className="min-w-full text-[13.5px]">
+                <thead>
+                  <tr className="text-left text-neutral-500">
+                    <th className="pr-3">From</th><th className="pr-3">To</th><th className="pr-3">What changed</th><th>Why it matters</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {L.versions.map((v, i) => (
+                    <tr key={i} className="border-t border-line align-top dark:border-[#2a2e38]">
+                      <td className="py-1 pr-3 whitespace-nowrap">{v.from}</td><td className="py-1 pr-3 whitespace-nowrap">{v.to}</td><td className="py-1 pr-3">{v.what}</td><td className="py-1">{v.why_it_matters}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+
         {L.wrong && (
           <>
             <H3>The wrong way</H3>

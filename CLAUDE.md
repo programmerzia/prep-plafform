@@ -58,7 +58,8 @@ Mastery per module = average box level of its cards / 5. A module is "passed" wh
     "bn": "",                             // Bangla summary
     "crossStack": [ { "concept": "", "laravel": "", "symfony": "", "dotnet": "", "node": "" } ],
     "simulator": "join-fanout",           // optional, id of src/simulators/<id>.tsx
-    "docs": [ { "label": "", "url": "" } ] // official docs only, at most 3
+    "docs": [ { "label": "", "url": "" } ], // official docs only, at most 3
+    "versions": [ { "from": "PHP 7.4", "to": "PHP 8.0", "what": "", "why_it_matters": "" } ] // optional
   },
   "practice": [ { "task": "", "hint": "", "solution": "", "why": "" } ],
   "interview": [ { "q": "", "model": "", "missing": "", "followUp": "", "bn": "" } ],
@@ -110,3 +111,4 @@ Done (2026-09-09) by `scripts/migrate-legacy.mjs`; `src/content/content.test.ts`
 - "Passed" = `isPassed(mastery)` in `src/logic/leitner.ts`, 60% or more. Shown by `MasteryPill` as "✓ Passed · N%" in Learn, Today, the lesson header and Progress.
 - The UI never names Claude. Preview screens say a lesson is not written yet; Today's next stop says the same.
 - Interviewer provider `offline` is labelled "Built-in questions (default)"; AI providers are presented as optional in Settings.
+- `lesson.versions` (optional, plain text) renders as "What changed across versions" right after the concept: a table from 600px up, stacked cards below. Use it when a topic's answer depends on the version (PHP 7→8, Laravel 10→11, React 18→19).

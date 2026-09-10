@@ -5,7 +5,7 @@ import type { Module } from '../content/schema';
 function mod(id: string, cards: number, interview = 0): Module {
   return {
     id, track: 'sql', phase: 1, order: 1, title: id.toUpperCase(), status: 'unlocked', star: false,
-    lesson: { problem: '', picture: '', hook: '', concept: 'c', simple: '', bn: 'b', crossStack: [], docs: [] },
+    lesson: { problem: '', picture: '', hook: '', concept: 'c', simple: '', bn: 'b', crossStack: [], docs: [], versions: [] },
     practice: [],
     interview: Array.from({ length: interview }, (_, i) => ({ q: `${id}-iq${i}`, model: 'm', missing: `${id}-miss`, followUp: '', bn: '' })),
     cards: Array.from({ length: cards }, (_, i) => ({ q: `${id}-c${i}`, a: 'a' })),

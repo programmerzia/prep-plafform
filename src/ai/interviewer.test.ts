@@ -4,7 +4,7 @@ import type { Module } from '../content/schema';
 
 const base: Module = {
   id: 'x', track: 'sql', phase: 1, order: 1, title: 'X', status: 'unlocked', star: false,
-  lesson: { problem: '', picture: '', hook: '', concept: 'c', simple: '', bn: 'b', crossStack: [], docs: [] },
+  lesson: { problem: '', picture: '', hook: '', concept: 'c', simple: '', bn: 'b', crossStack: [], docs: [], versions: [] },
   practice: [], interview: [], cards: [{ q: 'cq', a: 'ca' }], glossary: [],
 };
 

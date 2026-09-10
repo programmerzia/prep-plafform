@@ -22,6 +22,17 @@ describe('content modules', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
+  it('accepts an optional versions list and rejects a malformed row', () => {
+    const base = { id: 'x', track: 'php', phase: 1, order: 1, title: 'x', status: 'unlocked', cards: [{ q: 'q', a: 'a' }] };
+    const ok = moduleSchema.safeParse({ ...base, lesson: { concept: 'c', bn: 'b', versions: [{ from: 'PHP 7.4', to: 'PHP 8.0', what: 'match', why_it_matters: 'screens' }] } });
+    expect(ok.success).toBe(true);
+    if (ok.success) expect(ok.data.lesson?.versions).toHaveLength(1);
+    const none = moduleSchema.safeParse({ ...base, lesson: { concept: 'c', bn: 'b' } });
+    expect(none.success && none.data.lesson?.versions).toEqual([]);
+    const bad = moduleSchema.safeParse({ ...base, lesson: { concept: 'c', bn: 'b', versions: [{ from: 'a', to: 'b', what: 'c' }] } });
+    expect(bad.success).toBe(false);
+  });
+
   it('rejects a preview module without a preview block', () => {
     const r = moduleSchema.safeParse({ id: 'x', track: 'sql', phase: 1, order: 1, title: 'x', status: 'preview' });
     expect(r.success).toBe(false);
