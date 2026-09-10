@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Changed
+- Full-pass fixes: inline code in prose wraps (fenced blocks still never wrap), long tokens in prose break instead of widening the page, every text link is a 44px target. `npm run audit:ui` runs the headless UI audit at 380px and 1280px.
 - No locking: every module with a lesson is readable; "Passed" badge at 60% drill mastery replaces the old gate. The UI no longer mentions Claude. Built-in questions are the default interviewer; AI providers are optional.
 
 ### Added

@@ -82,18 +82,30 @@ code {
   font-family: var(--font-mono);
   font-size: 13.5px;
 }
+/* Inline code (a few tokens inside a sentence) may wrap so it never widens the page.
+   Fenced code blocks (pre) never wrap and scroll sideways. */
 :not(pre) > code {
   background: #eceeea;
   padding: 1px 5px;
   border-radius: 5px;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* Text links are thumb targets too. */
+.tap {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
 }
 @media (prefers-color-scheme: dark) {
   pre { background: #171a21; border-color: #2a2e38; }
   :not(pre) > code { background: #23272f; }
 }
 
-/* Markdown prose */
+/* Markdown prose. Long unbroken tokens (a one-line snippet written as text) must break
+   instead of widening the page; fenced blocks are exempt because they scroll. */
+.prose { overflow-wrap: anywhere; }
 .prose p { margin: 0 0 0.75em; }
 .prose p:last-child { margin-bottom: 0; }
 .prose ul, .prose ol { margin: 0 0 0.75em; padding-left: 1.4em; }

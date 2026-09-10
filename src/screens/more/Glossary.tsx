@@ -35,7 +35,7 @@ export function Glossary() {
           <div className="text-[15px]">{e.plain}</div>
           {settings.lang === 'en-bn' && e.bn && <div className="bn mt-1 text-[15px]">{e.bn}</div>}
           <Muted className="mt-1">
-            <Link to={`/learn/${e.track}/${e.moduleId}`} className="text-accent">{e.moduleTitle} →</Link>
+            <Link to={`/learn/${e.track}/${e.moduleId}`} className="tap text-accent">{e.moduleTitle} →</Link>
           </Muted>
         </Card>
       ))}

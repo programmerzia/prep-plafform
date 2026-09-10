@@ -129,7 +129,7 @@ export function Interview() {
             </Button>
           </div>
           <Muted className="mt-2">
-            Interviewer: {provName} · <Link to="/more/settings" className="text-accent">change</Link>
+            Interviewer: {provName} · <Link to="/more/settings" className="tap text-accent">change</Link>
           </Muted>
           {error && <div className="mt-2 text-sm text-danger">{error}</div>}
         </Card>

@@ -20,7 +20,7 @@ his phone. Nothing here is a demo — it is his only study environment.
 - Mobile-first: 380px wide is the primary viewport. Bottom tab bar. Thumb-sized buttons (min 44px). No dropdowns for choosing topics — use tappable chips/lists.
 - Every answer, solution, and model answer is hidden until the user taps "Show". Never render solutions expanded by default.
 - Bangla appears everywhere a summary appears. Global toggle: EN / EN+BN. Bangla text uses a font that renders Bengali cleanly (Noto Sans Bengali via CSS, self-hosted in /public/fonts).
-- Code blocks scroll horizontally; never wrap code. Font size ≥ 13.5px.
+- Code blocks scroll horizontally; never wrap code. Font size ≥ 13.5px. (Fenced blocks never wrap. Inline `code` inside a sentence may wrap, otherwise one long token widens the whole page on a phone.)
 - Simulators are React components in `src/simulators/<id>.tsx`, referenced from a module by id. They must work by touch. Full spec in `SIMULATORS.md`; every simulator is built on `src/simulators/kit/SimShell` with its pure step logic in `src/simulators/logic/<id>.ts` (tested).
 - Plain language in all UI. No jargon in labels. The UI never mentions Claude or any mentor; the learner just sees lessons, previews and his own progress.
 - Dark mode follows system preference.
@@ -92,7 +92,7 @@ Done (2026-09-09) by `scripts/migrate-legacy.mjs`; `src/content/content.test.ts`
 
 ## Working agreements for Claude Code
 - Read this file first every session. Keep it updated when architecture decisions change.
-- Small commits with clear messages. Run `npm run build` and `npm test` before finishing any task.
+- Small commits with clear messages. Run `npm run build` and `npm test` before finishing any task. For UI changes, also run the headless audit: `npx vite preview --port 4173 &` then `npm run audit:ui` (checks every route at 380px and 1280px for errors, overflow, wrapped code, small targets, expanded solutions and missing lesson sections).
 - Never expand solutions by default. Never remove Bangla. Never add a dropdown.
 - When new module JSON files arrive in `content/modules/`, no code changes should be needed; if they are, fix the loader, not the content.
 - Keep a `CHANGELOG.md`.

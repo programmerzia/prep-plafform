@@ -46,7 +46,7 @@ export function SimulatorScreen() {
       </Card>
       {mod && (
         <Muted>
-          Lesson: <Link to={`/learn/${mod.track}/${mod.id}`} className="text-accent">{mod.title} →</Link>
+          Lesson: <Link to={`/learn/${mod.track}/${mod.id}`} className="tap text-accent">{mod.title} →</Link>
         </Muted>
       )}
     </Page>

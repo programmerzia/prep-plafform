@@ -196,7 +196,7 @@ function LessonView({ id }: { id: string }) {
             <H3>Official docs</H3>
             <ul className="list-disc pl-5">
               {L.docs.map((d) => (
-                <li key={d.url}><a className="text-accent underline" href={d.url} target="_blank" rel="noreferrer">{d.label}</a></li>
+                <li key={d.url}><a className="tap text-accent underline" href={d.url} target="_blank" rel="noreferrer">{d.label}</a></li>
               ))}
             </ul>
           </>
@@ -214,7 +214,7 @@ function LessonView({ id }: { id: string }) {
               <PracticeItem key={i} index={i} task={p.task} hint={p.hint} solution={p.solution} why={p.why} />
             ))}
           </div>
-          <Link to={`/practice/${m.id}`} className="mt-3 inline-block text-sm font-medium text-accent">Open in Practice →</Link>
+          <Link to={`/practice/${m.id}`} className="tap mt-1 text-sm font-medium text-accent">Open in Practice →</Link>
         </Card>
       )}
 

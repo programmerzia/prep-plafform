@@ -107,7 +107,7 @@ export function Today() {
                 <span>{w.card.q}</span>
               </div>
             ))}
-            <Link to="/drill?mode=weak" className="inline-flex min-h-[44px] items-center text-accent text-sm font-medium">Drill weak spots →</Link>
+            <Link to="/drill?mode=weak" className="tap text-accent text-sm font-medium">Drill weak spots →</Link>
           </div>
         ) : (
           <Muted>Do a drill first.</Muted>
