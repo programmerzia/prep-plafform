@@ -26,19 +26,18 @@ export function SimShell<S>(props: SimShellProps<S>) {
   const last = steps.length - 1;
   const done = index >= last;
   const current = steps[Math.min(index, last)];
-  const scenarioKey = `${mode}|${preset ?? ''}`;
-
-  // A new scenario (mode or preset change) means a fresh prediction and a fresh run.
-  const prevKey = useRef(scenarioKey);
+  // A new scenario means a fresh prediction and a fresh run. Simulators memoise `steps` on
+  // every input (mode, preset, extras), so a new steps array is the signal.
+  const prevSteps = useRef(steps);
   useEffect(() => {
-    if (prevKey.current !== scenarioKey) {
-      prevKey.current = scenarioKey;
+    if (prevSteps.current !== steps) {
+      prevSteps.current = steps;
       setIndex(0);
       setPlaying(false);
       setPicked(null);
       setScored(false);
     }
-  }, [scenarioKey]);
+  }, [steps]);
 
   const reset = useCallback(() => {
     setIndex(0);
