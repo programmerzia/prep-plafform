@@ -120,3 +120,11 @@ textarea, input {
   body { background: #fff; color: #000; }
   pre { border: 1px solid #ccc; background: #fff; }
 }
+
+/* Simulators: no transitions or animations when the user asked for reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  [data-sim] *, [data-sim] *::before, [data-sim] *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
