@@ -159,13 +159,13 @@ function LessonView({ id }: { id: string }) {
             {/* Under 600px: one card per concept. 600px and up: the table. */}
             <div className="flex flex-col gap-2 min-[600px]:hidden">
               {L.crossStack.map((r, i) => (
-                <div key={i} className="rounded-xl border border-line p-3 text-[14px] dark:border-[#2a2e38]">
+                <div key={i} className="min-w-0 rounded-xl border border-line p-3 text-[14px] [overflow-wrap:anywhere] dark:border-[#2a2e38]">
                   <div className="mb-1 font-semibold">{r.concept}</div>
                   {(['laravel', 'symfony', 'dotnet', 'node'] as const).map((k) =>
                     r[k] ? (
                       <div key={k} className="flex gap-2 py-0.5">
                         <span className="w-16 shrink-0 text-neutral-500">{STACK_LABEL[k]}</span>
-                        <span className="min-w-0 flex-1">{r[k]}</span>
+                        <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">{r[k]}</span>
                       </div>
                     ) : null,
                   )}
@@ -173,7 +173,7 @@ function LessonView({ id }: { id: string }) {
               ))}
             </div>
             <div className="hidden overflow-x-auto min-[600px]:block">
-              <table className="min-w-full text-[13.5px]">
+              <table className="min-w-full text-[13.5px] [overflow-wrap:anywhere]">
                 <thead>
                   <tr className="text-left text-neutral-500">
                     <th className="pr-3">Concept</th><th className="pr-3">Laravel</th><th className="pr-3">Symfony</th><th className="pr-3">.NET</th><th>Node</th>
