@@ -12,6 +12,7 @@ export const SIMULATORS: Record<string, LazyExoticComponent<ComponentType>> = {
   'vue-reactivity': lazy(() => import('./vue-reactivity')),
   'lru-cache': lazy(() => import('./lru-cache')),
   'queue-backoff': lazy(() => import('./queue-backoff')),
+  'tenant-isolation': lazy(() => import('./tenant-isolation')),
   'design-canvas': lazy(() => import('./design-canvas')),
 };
 
@@ -27,9 +28,8 @@ export const SIM_LIST: { id: string; title: string; story: string; moduleId?: st
   { id: 'vue-reactivity', title: 'Vue reactivity', story: 'The spreadsheet cell that stopped updating.', moduleId: 'vue-reactivity' },
   { id: 'lru-cache', title: 'LRU cache', story: 'A small shelf: the least-used item falls off.', moduleId: 'problem-stacks-queues-lru' },
   { id: 'queue-backoff', title: 'Queue retries and backoff', story: 'Re-cooking a failed dish, but not forever.', moduleId: 'laravel-queues-jobs' },
+  { id: 'tenant-isolation', title: 'Tenant isolation', story: 'One building, many apartments; whose mail is whose?', moduleId: 'multi-tenancy' },
   { id: 'design-canvas', title: 'Design canvas', story: 'Drawing the building before laying bricks.' },
 ];
 
-export const PLANNED_SIMULATORS = [
-  'tenant-isolation',
-];
+export const PLANNED_SIMULATORS: string[] = [];

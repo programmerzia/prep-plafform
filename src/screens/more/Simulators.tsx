@@ -22,9 +22,11 @@ export function Simulators() {
           );
         })}
       </div>
-      <Card>
-        <Muted>Coming next: {PLANNED_SIMULATORS.join(', ')}.</Muted>
-      </Card>
+      {PLANNED_SIMULATORS.length > 0 && (
+        <Card>
+          <Muted>Coming next: {PLANNED_SIMULATORS.join(', ')}.</Muted>
+        </Card>
+      )}
     </Page>
   );
 }
